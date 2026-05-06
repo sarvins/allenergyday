@@ -85,30 +85,6 @@ function _render(canvas, inputs, isDark, s) {
   const isCorner  = aptType === 3 || aptType === 4;
   const isTwoSide = aptType === 1 || aptType === 4;
 
-  // ── Sky + Ground background (always visible, drawn before any 3D) ────────────
-  // Estimate the horizon Y by projecting the front base of the building.
-  // Clamped so ground is always a visible strip even if projection fails.
-  // We draw this BEFORE the 3D projection so it is always present.
-  const _frontBase = proj(0, 0, -hd);
-  const horizonY   = _frontBase
-    ? Math.min(H * 0.92, Math.max(H * 0.10, _frontBase[1]))
-    : H * 0.60;
-
-  // Ground strip (below horizon)
-  ctx.fillStyle = isDark ? '#1e293b' : '#d1d5db';
-  ctx.fillRect(0, horizonY, W, H - horizonY);
-
-  // Sky gradient (above horizon)
-  const sky = ctx.createLinearGradient(0, 0, 0, horizonY);
-  if (climate2050) {
-    sky.addColorStop(0, isDark?'#1c0500':'#fde68a');
-    sky.addColorStop(1, isDark?'#451a03':'#fcd34d');
-  } else {
-    sky.addColorStop(0, isDark?'#0f172a':'#dbeafe');
-    sky.addColorStop(1, isDark?'#1e293b':'#bfdbfe');
-  }
-  ctx.fillStyle = sky; ctx.fillRect(0, 0, W, horizonY);
-
   // ── Building world dimensions (metres) ───────────────────────────────────────
   const FH = 3.2;
   const bH = FH * totalFloors;
@@ -142,6 +118,26 @@ function _render(canvas, inputs, isDark, s) {
     if (pz < 0.01) return null;
     return [ W/2 + (px/pz)*focal,  H/2 - (py/pz)*focal,  pz ];
   };
+
+  // ── Sky + Ground background (always visible) ──────────────────────────────────
+  // Estimate horizon Y from front-base projection; clamp so ground strip always shows.
+  const _frontBase = proj(0, 0, -hd);
+  const horizonY   = _frontBase
+    ? Math.min(H * 0.92, Math.max(H * 0.10, _frontBase[1]))
+    : H * 0.60;
+
+  ctx.fillStyle = isDark ? '#1e293b' : '#d1d5db';
+  ctx.fillRect(0, horizonY, W, H - horizonY);
+
+  const sky = ctx.createLinearGradient(0, 0, 0, horizonY);
+  if (climate2050) {
+    sky.addColorStop(0, isDark?'#1c0500':'#fde68a');
+    sky.addColorStop(1, isDark?'#451a03':'#fcd34d');
+  } else {
+    sky.addColorStop(0, isDark?'#0f172a':'#dbeafe');
+    sky.addColorStop(1, isDark?'#1e293b':'#bfdbfe');
+  }
+  ctx.fillStyle = sky; ctx.fillRect(0, 0, W, horizonY);
 
   // ── 8 box vertices ────────────────────────────────────────────────────────────
   // Faces use CCW winding viewed from outside:

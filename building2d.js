@@ -1,46 +1,80 @@
-// building2d.js — Rotatable 3D building, Canvas 2D + orthographic projection
-// Drag horizontally to rotate around Y axis. No CDN needed.
+// building2d.js — Orbit-camera 3D building on Canvas 2D
+// Drag horizontally = orbit left/right
+// Drag vertically   = orbit up/down (bird's eye to ground)
+// Scroll            = zoom in/out
+// No CDN. Pure Canvas 2D + perspective projection.
 
-const _bs = new WeakMap(); // per-canvas rotation state
+const _bs = new WeakMap(); // per-canvas orbit state
 
-// ── Attach drag handlers once per canvas ─────────────────────────────────────
-function _initDrag(canvas) {
+// ── Vector math ───────────────────────────────────────────────────────────────
+const _sub  = (a,b) => [a[0]-b[0], a[1]-b[1], a[2]-b[2]];
+const _dot  = (a,b) => a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
+const _cross= (a,b) => [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]];
+const _norm = a => { const l=Math.sqrt(_dot(a,a)); return l<1e-9?[0,1,0]:[a[0]/l,a[1]/l,a[2]/l]; };
+
+// ── Init orbit controls (once per canvas) ─────────────────────────────────────
+function _initOrbit(canvas) {
   if (_bs.has(canvas)) return;
-  const s = { rotY: 0.55, dragging: false, lastX: 0, inp: null, dark: true };
+  const s = {
+    az:   -0.55,  // azimuth  (rad): camera horizontal angle around building
+    el:    0.32,  // elevation (rad): 0 = horizon, PI/2 = straight down
+    zoom:  1.0,   // distance multiplier
+    drag:  false,
+    lx: 0, ly: 0,
+    inp: null, dark: true
+  };
   _bs.set(canvas, s);
   canvas.style.cursor = 'grab';
 
-  const start = x => { s.dragging = true; s.lastX = x; canvas.style.cursor = 'grabbing'; };
-  const move  = x => {
-    if (!s.dragging || !s.inp) return;
-    s.rotY += (x - s.lastX) * 0.007;
-    s.lastX = x;
-    _draw(canvas, s.inp, s.dark, s.rotY);
-  };
-  const end = () => { s.dragging = false; canvas.style.cursor = 'grab'; };
+  const getXY = e => e.touches
+    ? [e.touches[0].clientX, e.touches[0].clientY]
+    : [e.clientX, e.clientY];
 
-  canvas.addEventListener('mousedown',  e => start(e.clientX));
-  canvas.addEventListener('touchstart', e => { e.preventDefault(); start(e.touches[0].clientX); }, {passive:false});
-  window.addEventListener('mousemove',  e => move(e.clientX));
-  window.addEventListener('touchmove',  e => { if (s.dragging) { e.preventDefault(); move(e.touches[0].clientX); } }, {passive:false});
-  window.addEventListener('mouseup',    end);
-  window.addEventListener('touchend',   end);
+  canvas.addEventListener('mousedown',  e => {
+    s.drag = true; [s.lx, s.ly] = getXY(e); canvas.style.cursor = 'grabbing';
+  });
+  canvas.addEventListener('touchstart', e => {
+    e.preventDefault(); s.drag = true; [s.lx, s.ly] = getXY(e);
+  }, {passive:false});
+
+  const onMove = (nx, ny) => {
+    if (!s.drag || !s.inp) return;
+    s.az += (nx - s.lx) * 0.008;           // horizontal drag → azimuth
+    s.el -= (ny - s.ly) * 0.006;           // vertical drag   → elevation
+    s.el  = Math.max(0.05, Math.min(Math.PI/2 - 0.03, s.el));
+    s.lx = nx; s.ly = ny;
+    _render(canvas, s.inp, s.dark, s);
+  };
+  window.addEventListener('mousemove', e => onMove(e.clientX, e.clientY));
+  window.addEventListener('touchmove', e => {
+    if (s.drag) { e.preventDefault(); const [x,y]=getXY(e); onMove(x,y); }
+  }, {passive:false});
+
+  window.addEventListener('mouseup',  () => { s.drag=false; canvas.style.cursor='grab'; });
+  window.addEventListener('touchend', () => { s.drag=false; });
+
+  canvas.addEventListener('wheel', e => {
+    e.preventDefault();
+    s.zoom *= (1 + e.deltaY * 0.001);
+    s.zoom = Math.max(0.25, Math.min(5.0, s.zoom));
+    if (s.inp) _render(canvas, s.inp, s.dark, s);
+  }, {passive:false});
 }
 
-// ── Public API ────────────────────────────────────────────────────────────────
+// ── Public API ─────────────────────────────────────────────────────────────────
 function drawBuilding2D(canvas, inputs, isDark) {
-  _initDrag(canvas);
+  _initOrbit(canvas);
   const s = _bs.get(canvas);
   s.inp = inputs; s.dark = isDark;
-  _draw(canvas, inputs, isDark, s.rotY);
+  _render(canvas, inputs, isDark, s);
 }
 
-// ── Renderer ──────────────────────────────────────────────────────────────────
-function _draw(canvas, inputs, isDark, rotY) {
+// ── Renderer ───────────────────────────────────────────────────────────────────
+function _render(canvas, inputs, isDark, s) {
   const ctx = canvas.getContext('2d');
   const DPR = Math.min(window.devicePixelRatio || 1, 2);
-  const W   = Math.max(100, canvas.clientWidth  || 500);
-  const H   = Math.max(100, canvas.clientHeight || 340);
+  const W   = Math.max(200, canvas.clientWidth  || 500);
+  const H   = Math.max(200, canvas.clientHeight || 680);
   canvas.width  = W * DPR;
   canvas.height = H * DPR;
   ctx.scale(DPR, DPR);
@@ -52,101 +86,130 @@ function _draw(canvas, inputs, isDark, rotY) {
   const isTwoSide = aptType === 1 || aptType === 4;
 
   // ── Sky ──────────────────────────────────────────────────────────────────────
-  const sky = ctx.createLinearGradient(0, 0, 0, H * 0.85);
+  const sky = ctx.createLinearGradient(0, 0, 0, H);
   if (climate2050) {
-    sky.addColorStop(0, isDark ? '#1c0500' : '#fde68a');
-    sky.addColorStop(1, isDark ? '#451a03' : '#fcd34d');
+    sky.addColorStop(0, isDark?'#1c0500':'#fde68a');
+    sky.addColorStop(1, isDark?'#451a03':'#fcd34d');
   } else {
-    sky.addColorStop(0, isDark ? '#0f172a' : '#dbeafe');
-    sky.addColorStop(1, isDark ? '#1e293b' : '#bfdbfe');
+    sky.addColorStop(0, isDark?'#0f172a':'#dbeafe');
+    sky.addColorStop(1, isDark?'#1e293b':'#bfdbfe');
   }
   ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
 
-  // ── Ground ───────────────────────────────────────────────────────────────────
-  const gY = H - 30;
-  ctx.fillStyle = isDark ? '#1e293b' : '#d1d5db'; ctx.fillRect(0, gY, W, H - gY);
-  ctx.fillStyle = isDark ? '#334155' : '#9ca3af'; ctx.fillRect(0, gY, W, 1.5);
+  // ── Building world dimensions (metres) ───────────────────────────────────────
+  const FH = 3.2;
+  const bH = FH * totalFloors;
+  const bW = isGallery ? 20 : 14;
+  const bD = isGallery ? 8  : 14;
+  const hw = bW/2, hd = bD/2;
+  const midY = bH/2;  // orbit target: vertical center of building
 
-  // ── Building dimensions in SCREEN PIXELS ────────────────────────────────────
-  // Define in pixels so orthographic projection is clean — no world-unit confusion.
-  const FH_px = Math.max(8, Math.min(28, (gY - 22) * 0.88 / totalFloors));
-  const bH    = FH_px * totalFloors;                        // building height px
-  const bW    = W * 0.44;                                   // building width px
-  const bD    = isGallery ? bW * 0.42 : bW * 0.80;         // building depth px
-  const hw    = bW / 2,  hd = bD / 2;
-  const cx    = W / 2;  // horizontal centre
+  // ── Orbit camera: spherical coords → Cartesian position ──────────────────────
+  const radius   = Math.sqrt(hw*hw + midY*midY + hd*hd) * 3.0 * s.zoom;
+  const camX = radius * Math.cos(s.el) * Math.sin(s.az);
+  const camY = midY   + radius * Math.sin(s.el);
+  const camZ = radius * Math.cos(s.el) * Math.cos(s.az);
+  const cam  = [camX, camY, camZ];
+  const tgt  = [0, midY, 0];
 
-  // ── Orthographic projection with Y-rotation ──────────────────────────────────
-  // Input: world-pixel coords (same scale as bW, bH)
-  // Output: [screenX, screenY, depthZ]  — depthZ for back-to-front sorting
-  const cos = Math.cos(rotY), sin = Math.sin(rotY);
-  const proj = (wx, wy, wz) => [
-    cx + wx * cos + wz * sin,   // screenX
-    gY - wy,                    // screenY (Y=0 at ground)
-    -wx * sin + wz * cos        // depthZ  (more positive = farther back)
-  ];
+  // Camera axes: forward, right, up
+  const fwd  = _norm(_sub(tgt, cam));
+  const wUp  = Math.abs(_dot(fwd, [0,1,0])) > 0.98 ? [1,0,0] : [0,1,0];
+  const rgt  = _norm(_cross(fwd, wUp));
+  const upV  = _cross(rgt, fwd);
+
+  // Perspective projection — 45° vertical FOV
+  const focal = (H / 2) / Math.tan(22.5 * Math.PI / 180);
+
+  const proj = (wx, wy, wz) => {
+    const d  = _sub([wx, wy, wz], cam);
+    const px = _dot(d, rgt);
+    const py = _dot(d, upV);
+    const pz = _dot(d, fwd);
+    if (pz < 0.01) return null;
+    return [ W/2 + (px/pz)*focal,  H/2 - (py/pz)*focal,  pz ];
+  };
 
   // ── 8 box vertices ────────────────────────────────────────────────────────────
-  const V3 = [
-    [-hw, 0,   -hd], // 0  front-left-bottom
-    [+hw, 0,   -hd], // 1  front-right-bottom
-    [+hw, bH,  -hd], // 2  front-right-top
-    [-hw, bH,  -hd], // 3  front-left-top
-    [-hw, 0,   +hd], // 4  back-left-bottom
-    [+hw, 0,   +hd], // 5  back-right-bottom
-    [+hw, bH,  +hd], // 6  back-right-top
-    [-hw, bH,  +hd], // 7  back-left-top
+  // Faces use CCW winding viewed from outside:
+  // v[0]=bottom-left, v[1]=bottom-right, v[2]=top-right, v[3]=top-left (face local)
+  const V = [
+    [-hw, 0,  -hd], // 0  front-left-bottom
+    [+hw, 0,  -hd], // 1  front-right-bottom
+    [+hw, bH, -hd], // 2  front-right-top
+    [-hw, bH, -hd], // 3  front-left-top
+    [-hw, 0,  +hd], // 4  back-left-bottom
+    [+hw, 0,  +hd], // 5  back-right-bottom
+    [+hw, bH, +hd], // 6  back-right-top
+    [-hw, bH, +hd], // 7  back-left-top
   ];
-  const P3 = V3.map(v => proj(...v));               // projected [sx, sy, sz]
-  const P  = P3.map(p => [p[0], p[1]]);             // 2D screen coords only
+  const P3 = V.map(v => proj(...v));
+  const P2 = P3.map(p => p ? [p[0],p[1]] : null);
 
-  // ── Faces: vertex indices in CCW order (outside-facing = visible) ─────────────
+  // ── Face definitions ──────────────────────────────────────────────────────────
   const FACES = [
-    { id:'front', v:[0,1,2,3], lum:1.00, wall:true,  main:true  },
-    { id:'back',  v:[5,4,7,6], lum:0.65, wall:true,  main:false }, // gallery corridor side
-    { id:'right', v:[1,5,6,2], lum:0.78, wall:isCorner||isTwoSide, main:false },
-    { id:'left',  v:[4,0,3,7], lum:0.72, wall:isTwoSide,           main:false },
-    { id:'top',   v:[3,2,6,7], lum:0.88, wall:false, main:false },
+    {id:'front', v:[0,1,2,3], n:[0,0,-1],  lum:1.00, wall:true,  main:true  },
+    {id:'back',  v:[5,4,7,6], n:[0,0,+1],  lum:0.65, wall:true,  main:false },
+    {id:'right', v:[1,5,6,2], n:[+1,0,0],  lum:0.78, wall:isCorner||isTwoSide, main:false},
+    {id:'left',  v:[4,0,3,7], n:[-1,0,0],  lum:0.72, wall:isTwoSide,           main:false},
+    {id:'top',   v:[3,2,6,7], n:[0,+1,0],  lum:0.90, wall:false, main:false },
+    {id:'bot',   v:[0,4,5,1], n:[0,-1,0],  lum:0.30, wall:false, main:false },
   ];
 
-  // ── Visibility: face is visible when its 2D polygon has positive signed area ──
-  const signedArea = vi => {
-    let a = 0;
-    for (let i = 0; i < vi.length; i++) {
-      const j = (i+1) % vi.length;
-      a += P[vi[i]][0] * P[vi[j]][1] - P[vi[j]][0] * P[vi[i]][1];
-    }
-    return a;
+  // ── Backface culling: visible if normal · (cam − faceCenter) > 0 ──────────────
+  const fctr = vi => {
+    const ps = vi.map(i=>V[i]);
+    return [ps.reduce((a,p)=>a+p[0],0)/ps.length,
+            ps.reduce((a,p)=>a+p[1],0)/ps.length,
+            ps.reduce((a,p)=>a+p[2],0)/ps.length];
   };
-  const visible = FACES.filter(f => signedArea(f.v) > 0);
+  const visible = FACES.filter(f => _dot(f.n, _sub(cam, fctr(f.v))) > 0);
 
-  // ── Sort back to front (painter's algorithm) ──────────────────────────────────
-  const faceDepth = f => f.v.reduce((s, i) => s + P3[i][2], 0) / f.v.length;
-  visible.sort((a, b) => faceDepth(b) - faceDepth(a));
+  // ── Depth sort (painter's algorithm): draw back faces first ───────────────────
+  const fDepth = f => f.v.reduce((s,i) => s + (P3[i]?P3[i][2]:0), 0) / f.v.length;
+  visible.sort((a,b) => fDepth(b) - fDepth(a));
 
-  // ── UV helpers ────────────────────────────────────────────────────────────────
-  // Bilinear interpolation on face: u=0..1 left→right, v=0..1 bottom→top
+  // ── Ground plane ──────────────────────────────────────────────────────────────
+  const ext = Math.max(bW, bD) * 2.5;
+  const gps = [proj(-ext,-0.05,-ext), proj(ext,-0.05,-ext),
+                proj(ext,-0.05,ext),   proj(-ext,-0.05,ext)];
+  if (gps.every(Boolean)) {
+    ctx.fillStyle = isDark?'#1e293b':'#d1d5db';
+    ctx.beginPath();
+    ctx.moveTo(gps[0][0],gps[0][1]); ctx.lineTo(gps[1][0],gps[1][1]);
+    ctx.lineTo(gps[2][0],gps[2][1]); ctx.lineTo(gps[3][0],gps[3][1]);
+    ctx.closePath(); ctx.fill();
+    // Ground edge line
+    ctx.strokeStyle = isDark?'#334155':'#9ca3af'; ctx.lineWidth=1.5;
+    ctx.stroke();
+  }
+
+  // ── Drawing helpers ───────────────────────────────────────────────────────────
+  const darken = (hex,f) => {
+    const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+    return `rgb(${~~(r*f)},${~~(g*f)},${~~(b*f)})`;
+  };
+
+  // Bilinear UV on face: u=0..1 left→right, v=0..1 bottom→top
   const uv = (fv, u, v) => {
-    const [p0,p1,p2,p3] = fv.map(i => P[i]);
-    const bx = p0[0]+(p1[0]-p0[0])*u, by = p0[1]+(p1[1]-p0[1])*u;
-    const tx = p3[0]+(p2[0]-p3[0])*u, ty = p3[1]+(p2[1]-p3[1])*u;
+    const ps = fv.map(i => P2[i] || [W/2,H/2]);
+    const [p0,p1,p2,p3] = ps;
+    const bx=p0[0]+(p1[0]-p0[0])*u, by=p0[1]+(p1[1]-p0[1])*u;
+    const tx=p3[0]+(p2[0]-p3[0])*u, ty=p3[1]+(p2[1]-p3[1])*u;
     return [bx+(tx-bx)*v, by+(ty-by)*v];
   };
+
   const fillQ = (a,b,c,d, col, alpha=1) => {
+    if (!a||!b||!c||!d) return;
     ctx.globalAlpha=alpha; ctx.fillStyle=col;
     ctx.beginPath();
     ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]);
     ctx.lineTo(c[0],c[1]); ctx.lineTo(d[0],d[1]);
     ctx.closePath(); ctx.fill(); ctx.globalAlpha=1;
   };
-  const fRect = (fv, u0,v0,u1,v1, col, alpha=1) =>
+  const fRect = (fv,u0,v0,u1,v1,col,alpha=1) =>
     fillQ(uv(fv,u0,v0), uv(fv,u1,v0), uv(fv,u1,v1), uv(fv,u0,v1), col, alpha);
 
-  // ── Colours ───────────────────────────────────────────────────────────────────
-  const darken = (hex, f) => {
-    const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
-    return `rgb(${~~(r*f)},${~~(g*f)},${~~(b*f)})`;
-  };
   const BASE = (isDark
     ? ['#7c3d12','#57534e','#57534e','#475569','#334155']
     : ['#b45309','#78716c','#78716c','#94a3b8','#64748b']
@@ -156,136 +219,129 @@ function _draw(canvas, inputs, isDark, rotY) {
   // ── Draw each visible face ────────────────────────────────────────────────────
   for (const face of visible) {
     const fv = face.v;
-    const [p0,p1,p2,p3] = fv.map(i => P[i]);
+    const corners = fv.map(i => P2[i] || [W/2,H/2]);
 
-    // Base colour
-    fillQ(p0,p1,p2,p3, darken(BASE, face.lum));
+    fillQ(...corners, darken(BASE, face.lum));
 
-    // ── Top / Roof ──
+    // ── Top face + roof ──
     if (face.id === 'top') {
       if (roofType > 0) {
         const rc = roofType===2 ? (isDark?'#22c55e':'#16a34a') : (isDark?'#0f172a':'#374151');
-        fillQ(p0,p1,p2,p3, rc);
+        fillQ(...corners, rc);
         if (roofType === 2) {
-          for (let i=0; i<5; i++) {
+          for (let i=0;i<5;i++) {
             const pt = uv(fv, 0.1+i*0.2, 0.5);
             ctx.fillStyle='#4ade80'; ctx.globalAlpha=0.8;
-            ctx.beginPath(); ctx.arc(pt[0],pt[1],3.5,0,Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(pt[0],pt[1],4,0,Math.PI*2); ctx.fill();
             ctx.globalAlpha=1;
           }
         }
       }
       continue;
     }
+    if (face.id === 'bot') continue;
 
-    // ── Wall faces ──
-    if (!face.wall) continue;
+    // ── Wall: decide which faces get windows ──
+    const isGalBack = isGallery && face.id==='back';
+    const hasWin = face.main
+      || isGalBack                                          // gallery: two-sided
+      || (face.id==='right' && (isCorner||isTwoSide))
+      || (face.id==='left'  && isTwoSide);
+    if (!hasWin) continue;
 
-    const isGalBack = isGallery && face.id === 'back';
-    // Gallery: windows on front (main façade) AND back (gallery side — two-sided!)
-    const shouldDrawWindows = face.main || isGalBack || (isCorner && face.id==='right') || (isTwoSide && (face.id==='right'||face.id==='left'));
-    if (!shouldDrawWindows) continue;
+    const cols = face.main ? (isGallery?6:3) : (isGalBack?4:2);
+    const wWf  = Math.min(0.84, glassRatio*1.78) / cols;
+    const wHf  = Math.min(0.75, glassRatio*1.55);
+    const gapW = (1/cols - wWf) / 2;
+    const gapH = (1 - wHf) / 2 / totalFloors;
 
-    const cols  = face.main ? (isGallery ? 6 : 3) : (isGalBack ? 4 : 2);
-    const wWf   = Math.min(0.85, glassRatio * 1.80) / cols;  // window width fraction per col
-    const wHf   = Math.min(0.76, glassRatio * 1.58);         // window height fraction per floor
-    const gapW  = (1/cols - wWf) / 2;
-    const gapH  = (1 - wHf) / 2 / totalFloors;
+    // Approximate floor height in projected pixels (for label/divider threshold)
+    const FH_px = Math.abs(uv(fv,0.5,1/totalFloors)[1] - uv(fv,0.5,0)[1]);
 
-    for (let fl = 0; fl < totalFloors; fl++) {
+    for (let fl=0; fl<totalFloors; fl++) {
       const isApt = fl === floor - 1;
-      const v0    = fl / totalFloors;
-      const v1    = (fl+1) / totalFloors;
+      const v0 = fl / totalFloors;
+      const v1 = (fl+1) / totalFloors;
 
-      // Apartment highlight (all visible wall faces show the floor band)
+      // Apartment highlight band
       if (isApt) {
-        fRect(fv, 0, v0, 1, v1, face.main ? '#3b82f618' : '#3b82f610', 1);
-        if (face.main) fRect(fv, 0, v0+0.003, 0.016, v1-0.003, '#3b82f6', 0.9);
+        fRect(fv, 0, v0, 1, v1, face.main?'#3b82f620':'#3b82f60e', 1);
+        if (face.main) fRect(fv, 0, v0+0.002, 0.014, v1-0.002, '#3b82f6', 0.92);
       }
 
       // Windows
-      for (let wc = 0; wc < cols; wc++) {
-        const u0w = wc/cols + gapW;
-        const u1w = (wc+1)/cols - gapW;
-        const v0w = v0 + gapH;
-        const v1w = v1 - gapH;
-        const wCol   = (isApt && face.main) ? '#60a5fa' : WIN;
-        const wAlpha = (isApt && face.main) ? 0.90 : (isDark ? 0.50 : 0.42);
+      for (let wc=0; wc<cols; wc++) {
+        const u0w=wc/cols+gapW, u1w=(wc+1)/cols-gapW;
+        const v0w=v0+gapH,      v1w=v1-gapH;
+        const wCol   = (isApt&&face.main) ? '#60a5fa' : WIN;
+        const wAlpha = (isApt&&face.main) ? 0.90 : (isDark?0.50:0.42);
         fRect(fv, u0w, v0w, u1w, v1w, wCol, wAlpha);
-        fRect(fv, u0w, v0w, u1w, v0w+(v1w-v0w)*0.28, '#ffffff', 0.15); // shimmer
+        fRect(fv, u0w, v0w, u1w, v0w+(v1w-v0w)*0.28, '#ffffff', 0.14); // shimmer
       }
 
-      // Floor divider
-      if (fl > 0 && FH_px > 9) {
-        const la = uv(fv,0,v0), lb = uv(fv,1,v0);
-        ctx.globalAlpha=0.25; ctx.strokeStyle=isDark?'#334155':'#e2e8f0'; ctx.lineWidth=0.6;
+      // Floor divider line
+      if (fl > 0 && FH_px > 7) {
+        const la=uv(fv,0,v0), lb=uv(fv,1,v0);
+        ctx.globalAlpha=0.22; ctx.strokeStyle=isDark?'#334155':'#e2e8f0'; ctx.lineWidth=0.6;
         ctx.beginPath(); ctx.moveTo(la[0],la[1]); ctx.lineTo(lb[0],lb[1]); ctx.stroke();
         ctx.globalAlpha=1;
       }
 
-      // Gallery ledge on back face
+      // Gallery corridor ledge + railing on back face
       if (isGalBack) {
-        fRect(fv, 0, v0, 1, v0+0.02, isDark?'#334155':'#9ca3af', 0.88);
-        // Railing
-        const railV = v0 + (v1-v0)*0.42;
-        const ra = uv(fv,0,railV), rb = uv(fv,1,railV);
+        fRect(fv, 0, v0, 1, v0+0.018, isDark?'#334155':'#9ca3af', 0.9);
+        const rv = v0+(v1-v0)*0.42;
+        const ra=uv(fv,0,rv), rb=uv(fv,1,rv);
         ctx.globalAlpha=0.40; ctx.strokeStyle=isDark?'#475569':'#6b7280'; ctx.lineWidth=0.9;
         ctx.beginPath(); ctx.moveTo(ra[0],ra[1]); ctx.lineTo(rb[0],rb[1]); ctx.stroke();
         ctx.globalAlpha=1;
       }
     }
 
-    // Apartment floor label on main (front) face
-    if (face.main && FH_px >= 10) {
-      const vMid = (floor - 0.5) / totalFloors;
+    // Apartment floor label on front face
+    if (face.main && FH_px >= 9) {
+      const vMid = (floor-0.5) / totalFloors;
       const lp   = uv(fv, 0.03, vMid);
-      const fs   = Math.max(9, Math.min(12, FH_px * 0.50));
-      ctx.fillStyle = isDark ? '#93c5fd' : '#1d4ed8';
+      const fs   = Math.max(9, Math.min(13, FH_px*0.48));
+      ctx.fillStyle = isDark?'#93c5fd':'#1d4ed8';
       ctx.font = `bold ${fs}px 'Segoe UI',sans-serif`;
       ctx.fillText(`▶ ${floor}`, lp[0]+2, lp[1]+fs*0.35);
     }
   }
 
-  // ── Compass ───────────────────────────────────────────────────────────────────
-  _compass(ctx, W-42, 42, orientation, isDark);
+  // ── Compass rose ──────────────────────────────────────────────────────────────
+  _compass(ctx, W-44, 44, orientation, isDark);
 
-  // ── Climate 2050 badge ────────────────────────────────────────────────────────
+  // ── Climate badge ─────────────────────────────────────────────────────────────
   if (climate2050) {
-    ctx.fillStyle = isDark?'#fb923c':'#ea580c'; ctx.font='bold 10px sans-serif';
+    ctx.fillStyle=isDark?'#fb923c':'#ea580c'; ctx.font='bold 10px sans-serif';
     ctx.fillText('🌡 2050', 10, 18);
   }
 
-  // ── Drag hint ─────────────────────────────────────────────────────────────────
-  ctx.fillStyle = isDark?'#334155':'#94a3b8'; ctx.font='10px sans-serif';
-  ctx.textAlign = 'right';
-  ctx.fillText('↔ sleep om te draaien', W-8, H-7);
-  ctx.textAlign = 'left';
+  // ── Hint ──────────────────────────────────────────────────────────────────────
+  ctx.fillStyle=isDark?'#334155':'#94a3b8'; ctx.font='10px sans-serif'; ctx.textAlign='right';
+  ctx.fillText('↕↔ sleep  ·  scroll = zoom', W-8, H-8);
+  ctx.textAlign='left';
 }
 
-// ── Compass rose ──────────────────────────────────────────────────────────────
+// ── Compass ───────────────────────────────────────────────────────────────────
 function _compass(ctx, cx, cy, orientation, isDark) {
-  const r = 19;
-  ctx.globalAlpha = 0.88;
-  ctx.fillStyle = isDark?'#1e293b':'#ffffff';
-  ctx.beginPath(); ctx.arc(cx,cy,r+3,0,Math.PI*2); ctx.fill();
-  ctx.globalAlpha = 1;
-  ctx.strokeStyle = isDark?'#475569':'#94a3b8'; ctx.lineWidth = 1.2;
+  const r=20;
+  ctx.globalAlpha=0.9; ctx.fillStyle=isDark?'#1e293b':'#ffffff';
+  ctx.beginPath(); ctx.arc(cx,cy,r+3,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1;
+  ctx.strokeStyle=isDark?'#475569':'#94a3b8'; ctx.lineWidth=1.2;
   ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.stroke();
-
-  const arrow = (deg, len, hw2, color) => {
-    const a = (deg-90)*Math.PI/180;
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.moveTo(cx+Math.cos(a)*r*len,     cy+Math.sin(a)*r*len);
-    ctx.lineTo(cx+Math.cos(a+hw2)*r*0.30, cy+Math.sin(a+hw2)*r*0.30);
-    ctx.lineTo(cx+Math.cos(a-hw2)*r*0.30, cy+Math.sin(a-hw2)*r*0.30);
+  const arrow=(deg,len,hw2,col)=>{
+    const a=(deg-90)*Math.PI/180;
+    ctx.fillStyle=col; ctx.beginPath();
+    ctx.moveTo(cx+Math.cos(a)*r*len,   cy+Math.sin(a)*r*len);
+    ctx.lineTo(cx+Math.cos(a+hw2)*r*.3, cy+Math.sin(a+hw2)*r*.3);
+    ctx.lineTo(cx+Math.cos(a-hw2)*r*.3, cy+Math.sin(a-hw2)*r*.3);
     ctx.closePath(); ctx.fill();
   };
   arrow(0,   0.85, 0.42, '#ef4444');
   arrow(180, 0.52, 0.38, isDark?'#475569':'#9ca3af');
   arrow(orientation*45, 0.78, 0.48, '#3b82f6');
-
-  ctx.fillStyle = isDark?'#94a3b8':'#64748b';
-  ctx.font = 'bold 8px sans-serif'; ctx.textAlign='center';
+  ctx.fillStyle=isDark?'#94a3b8':'#64748b'; ctx.font='bold 8px sans-serif'; ctx.textAlign='center';
   ctx.fillText('N', cx, cy-r-4); ctx.textAlign='left';
 }

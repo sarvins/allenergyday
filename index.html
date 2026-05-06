@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="nl" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Energy Workshop</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <style>
+    :root {
+      --bg:#0f172a; --bg2:#1e293b; --bg3:#0a1020;
+      --border:#334155; --border2:#475569;
+      --text:#e2e8f0; --text2:#94a3b8; --text3:#64748b;
+      --accent:#3b82f6; --accent2:#1d4ed8;
+      --green:#22c55e; --yellow:#eab308; --red:#ef4444;
+    }
+    html[data-theme="light"] {
+      --bg:#f1f5f9; --bg2:#ffffff; --bg3:#e2e8f0;
+      --border:#cbd5e1; --border2:#94a3b8;
+      --text:#0f172a; --text2:#475569; --text3:#94a3b8;
+      --accent:#2563eb; --accent2:#1d4ed8;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;line-height:1.5;min-height:100vh}
+    .card{background:var(--bg2);border:1px solid var(--border);border-radius:12px}
+    select,input[type=number],input[type=text]{background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px 10px;width:100%;font-size:.85rem;transition:border-color .15s}
+    select:focus,input:focus{outline:none;border-color:var(--accent)}
+    input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer}
+    input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px;cursor:pointer;flex-shrink:0}
+    .plabel{display:flex;align-items:center;gap:5px;font-size:.72rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+    .shdr{font-size:.68rem;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;padding-bottom:6px;border-bottom:1px solid var(--border);margin-bottom:10px}
+    .btn-p{background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 22px;font-weight:700;cursor:pointer;transition:background .15s;font-size:.9rem}
+    .btn-p:hover{background:var(--accent2)}
+    .btn-s{background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:7px 14px;font-weight:600;cursor:pointer;font-size:.83rem;transition:background .15s}
+    .btn-s:hover{background:var(--border)}
+    .iBtn{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:rgba(59,130,246,.18);border:1px solid rgba(59,130,246,.45);color:var(--accent);font-size:.65rem;font-weight:700;cursor:pointer;flex-shrink:0;transition:all .15s}
+    .iBtn:hover{background:var(--accent);color:#fff}
+    .score-g{background:rgba(34,197,94,.18);color:#4ade80;border:1px solid #16a34a}
+    .score-y{background:rgba(234,179,8,.18);color:#facc15;border:1px solid #ca8a04}
+    .score-r{background:rgba(239,68,68,.18);color:#f87171;border:1px solid #dc2626}
+    .badge{display:inline-block;padding:3px 12px;border-radius:20px;font-weight:700;font-size:1rem}
+    .gpill{display:inline-flex;align-items:center;padding:3px 11px;border-radius:20px;font-size:.8rem;font-weight:700;border:1px solid}
+    .insight{background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.35);border-radius:9px;padding:10px 14px;font-size:.82rem;color:rgba(147,197,253,1)}
+    html[data-theme="light"] .insight{color:#1d4ed8;background:rgba(37,99,235,.08);border-color:rgba(37,99,235,.25)}
+    .spin{width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    #compare-panel{display:none}
+    /* Floating tooltip */
+    #ftip{display:none;position:fixed;z-index:9999;background:#1e293b;color:#e2e8f0;border:1px solid #475569;border-radius:9px;padding:10px 13px;font-size:.79rem;line-height:1.5;max-width:270px;box-shadow:0 10px 30px rgba(0,0,0,.6);pointer-events:none}
+    html[data-theme="light"] #ftip{background:#fff;color:#0f172a;border-color:#cbd5e1;box-shadow:0 8px 24px rgba(0,0,0,.15)}
+    .apt-note{margin-top:7px;padding-top:7px;border-top:1px solid #334155;font-style:italic;color:#93c5fd;font-size:.75rem}
+    html[data-theme="light"] .apt-note{color:#1d4ed8;border-top-color:#cbd5e1}
+    /* Info drawer */
+    #drawer{position:fixed;top:0;right:-440px;width:420px;max-width:92vw;height:100vh;background:var(--bg2);border-left:1px solid var(--border);z-index:200;overflow-y:auto;transition:right .28s cubic-bezier(.4,0,.2,1);box-shadow:-6px 0 28px rgba(0,0,0,.4)}
+    #drawer.open{right:0}
+    #droverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:199}
+    #droverlay.open{display:block}
+    #drawer h3{font-size:1.05rem;font-weight:700;color:var(--text);margin-bottom:10px}
+    #drawer h4{font-size:.84rem;font-weight:700;color:var(--accent);margin:14px 0 5px}
+    #drawer p{color:var(--text2);font-size:.84rem;margin-bottom:8px}
+    #drawer ul,#drawer ol{color:var(--text2);font-size:.84rem;padding-left:18px;margin-bottom:8px}
+    #drawer li{margin-bottom:3px}
+    #drawer table{border-collapse:collapse;width:100%;font-size:.81rem}
+    #drawer th{color:var(--text3);padding:4px 8px;text-align:left;border-bottom:1px solid var(--border)}
+    #drawer td{padding:4px 8px;color:var(--text2);border-bottom:1px solid rgba(51,65,85,.5)}
+    #drawer strong{color:var(--text)}
+    /* Metric cards */
+    .mc{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:4px}
+    .mc-big{font-size:2rem;font-weight:900;line-height:1}
+    .mc-label{font-size:.7rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em}
+    .mc-sub{font-size:.75rem;color:var(--text3)}
+    /* 2-col grid */
+    #mgrid{display:grid;grid-template-columns:1fr;gap:12px;padding:12px;max-width:1400px;margin:0 auto}
+    @media(min-width:860px){#mgrid{grid-template-columns:340px 1fr}}
+    @media(min-width:1100px){#mgrid{grid-template-columns:360px 1fr}}
+    /* Range value display */
+    .rv{font-weight:700;color:var(--text);margin-left:4px}
+    /* Mini bar (heating vs cooling) */
+    .mini-bar{height:8px;border-radius:4px;overflow:hidden;background:var(--bg3);margin-top:4px;display:flex}
+    .mini-heat{background:#ef4444;transition:width .4s}
+    .mini-cool{background:#3b82f6;transition:width .4s}
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════ SETUP SCREEN ══════════════════ -->
+<div id="sscreen" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px">
+  <div class="card" style="padding:32px;width:100%;max-width:420px">
+    <div style="text-align:center;margin-bottom:28px">
+      <div style="font-size:3rem;margin-bottom:8px">⚡</div>
+      <h1 style="font-size:1.5rem;font-weight:800">Energy Workshop</h1>
+      <p style="color:var(--text2);margin-top:6px;font-size:.88rem" data-nl="Ontwerp jullie appartement en minimaliseer het energieverbruik" data-en="Design your apartment and minimise energy use">Ontwerp jullie appartement en minimaliseer het energieverbruik</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div>
+        <div class="plabel" data-nl="Workshop Code" data-en="Workshop Code">Workshop Code</div>
+        <input type="text" id="wcode" placeholder="bijv. energy2025" style="text-transform:uppercase;letter-spacing:.1em"/>
+      </div>
+      <div>
+        <div class="plabel" data-nl="Jullie Groep" data-en="Your Group">Jullie Groep</div>
+        <div id="gsel" style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px"></div>
+      </div>
+      <div>
+        <div class="plabel" data-nl="Groepsnaam (optioneel)" data-en="Group name (optional)">Groepsnaam (optioneel)</div>
+        <input type="text" id="gname" placeholder="bijv. Team Rood"/>
+      </div>
+      <div id="sstatus" style="font-size:.82rem;color:var(--text2);text-align:center;min-height:1.2rem"></div>
+      <button class="btn-p" style="width:100%" onclick="startWS()" data-nl="Start →" data-en="Start →">Start →</button>
+      <div style="display:flex;justify-content:center;gap:14px;align-items:center;font-size:.8rem">
+        <a href="teacher.html" style="color:var(--text3)" data-nl="📊 Docent" data-en="📊 Teacher">📊 Docent</a>
+        <button class="btn-s" onclick="toggleLang()" id="lbtn">🌐 EN</button>
+        <button class="btn-s" onclick="toggleTheme()" id="tbtn">☀️</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ MAIN SCREEN ══════════════════ -->
+<div id="mscreen" style="display:none">
+
+  <!-- Header -->
+  <header style="background:var(--bg2);border-bottom:1px solid var(--border);padding:9px 14px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:50">
+    <span style="font-size:1.2rem">⚡</span>
+    <span style="font-weight:800;font-size:.95rem">Energy Workshop</span>
+    <span id="gbadge" class="gpill"></span>
+    <div style="flex:1"></div>
+    <span id="hscore" class="badge score-y" style="font-size:.9rem">— kWh/m²</span>
+    <button class="btn-s" onclick="toggleCompare()" data-nl="📊 Vergelijk" data-en="📊 Compare">📊 Vergelijk</button>
+    <button class="btn-s" onclick="toggleLang()" id="lbtn2">🌐 EN</button>
+    <button class="btn-s" onclick="toggleTheme()" id="tbtn2">☀️</button>
+  </header>
+
+  <!-- Compare strip -->
+  <div id="compare-panel" style="background:var(--bg2);border-bottom:1px solid var(--border);padding:10px 16px">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <span style="font-weight:700;font-size:.88rem" data-nl="Alle groepen – live" data-en="All groups – live">Alle groepen – live</span>
+      <div class="spin" id="cspin"></div>
+    </div>
+    <div style="position:relative;height:160px"><canvas id="cchart"></canvas></div>
+  </div>
+
+  <!-- Floating tooltip -->
+  <div id="ftip"></div>
+
+  <!-- Info drawer -->
+  <div id="droverlay" onclick="closeDr()"></div>
+  <div id="drawer">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg2);z-index:1">
+      <span id="drtitle" style="font-weight:700"></span>
+      <button class="btn-s" style="padding:5px 10px" onclick="closeDr()">✕</button>
+    </div>
+    <div id="drcontent" style="padding:20px"></div>
+  </div>
+
+  <!-- Main 2-col grid -->
+  <div id="mgrid">
+
+    <!-- ── LEFT: Inputs ── -->
+    <div style="display:flex;flex-direction:column;gap:10px">
+
+      <!-- Type & hoogte -->
+      <div class="card" style="padding:14px">
+        <div class="shdr">🏢 <span data-nl="Type & Hoogte" data-en="Type & Height">Type & Hoogte</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div style="grid-column:1/-1">
+            <div class="plabel">
+              <span class="iBtn" onclick="openDr('aptType')">i</span>
+              <span data-nl="Type appartement" data-en="Apartment type">Type appartement</span>
+            </div>
+            <select id="in-aptType" onchange="onInput()">
+              <option value="0" data-nl="Eenzijdig toren (gesloten kern)" data-en="Single-sided tower (closed core)">Eenzijdig toren (gesloten kern)</option>
+              <option value="1" data-nl="Tweezijdig toren (open kern)" data-en="Two-sided tower (open core)">Tweezijdig toren (open kern)</option>
+              <option value="2" selected data-nl="Gallerij flat" data-en="Gallery flat">Gallerij flat</option>
+              <option value="3" data-nl="Hoekappartement toren" data-en="Corner tower apartment">Hoekappartement toren</option>
+              <option value="4" data-nl="Hoek + tweezijdig" data-en="Corner + two-sided">Hoek + tweezijdig</option>
+            </select>
+            <div id="aptnote" class="insight" style="margin-top:7px;font-size:.77rem"></div>
+          </div>
+          <div>
+            <div class="plabel"><span class="iBtn" onclick="openDr('floor')">i</span><span data-nl="Verdieping" data-en="Floor">Verdieping</span></div>
+            <input type="number" id="in-floor" value="5" min="1" max="30" onchange="onInput()"/>
+          </div>
+          <div>
+            <div class="plabel" data-nl="Totaal verdiepingen" data-en="Total floors">Totaal verdiepingen</div>
+            <input type="number" id="in-totalFloors" value="10" min="2" max="40" onchange="onInput()"/>
+          </div>
+        </div>
+        <div id="liftinfo" style="margin-top:8px;padding:6px 10px;background:var(--bg3);border-radius:6px;font-size:.75rem;color:var(--text2)"></div>
+      </div>
+
+      <!-- Vorm & oriëntatie -->
+      <div class="card" style="padding:14px">
+        <div class="shdr">📐 <span data-nl="Vorm & Oriëntatie" data-en="Form & Orientation">Vorm & Oriëntatie</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div style="grid-column:1/-1">
+            <div class="plabel"><span class="iBtn" onclick="openDr('size')">i</span><span data-nl="Grootte" data-en="Size">Grootte</span>: <span id="sv" class="rv">88 m²</span></div>
+            <input type="range" id="in-size" min="40" max="150" value="88" step="2" oninput="onInput();document.getElementById('sv').textContent=this.value+' m²'"/>
+            <div style="display:flex;justify-content:space-between;font-size:.68rem;color:var(--text3);margin-top:2px"><span>40 m²</span><span>150 m²</span></div>
+          </div>
+          <div>
+            <div class="plabel"><span class="iBtn" onclick="openDr('orientation')">i</span><span data-nl="Oriëntatie" data-en="Orientation">Oriëntatie</span></div>
+            <select id="in-orientation" onchange="onInput()">
+              <option value="0">N – Noord</option><option value="1">NO – Noordoost</option>
+              <option value="2">O – Oost</option><option value="3">ZO – Zuidoost</option>
+              <option value="4" selected>Z – Zuid</option><option value="5">ZW – Zuidwest</option>
+              <option value="6">W – West</option><option value="7">NW – Noordwest</option>
+            </select>
+          </div>
+          <div>
+            <div class="plabel"><span class="iBtn" onclick="openDr('glassRatio')">i</span><span data-nl="Glas %" data-en="Glass %">Glas %</span>: <span id="gv" class="rv">40%</span></div>
+            <input type="range" id="in-glassRatio" min="20" max="70" value="40" step="2" oninput="onInput();document.getElementById('gv').textContent=this.value+'%'"/>
+            <div style="display:flex;justify-content:space-between;font-size:.68rem;color:var(--text3);margin-top:2px"><span>20%</span><span>70%</span></div>
+          </div>
+          <div>
+            <div class="plabel"><span class="iBtn" onclick="openDr('construction')">i</span><span data-nl="Constructie" data-en="Construction">Constructie</span></div>
+            <select id="in-construction" onchange="onInput()">
+              <option value="0" data-nl="Volledig hout" data-en="Full timber">Volledig hout</option>
+              <option value="1" data-nl="Hybride hout-staal" data-en="Hybrid timber-steel">Hybride hout-staal</option>
+              <option value="2" data-nl="Hybride hout-beton" data-en="Hybrid timber-concrete">Hybride hout-beton</option>
+              <option value="3" selected data-nl="Beton + staal" data-en="Concrete + steel">Beton + staal</option>
+              <option value="4" data-nl="Volledig beton" data-en="Full concrete">Volledig beton</option>
+            </select>
+          </div>
+          <div style="grid-column:1/-1">
+            <div class="plabel"><span class="iBtn" onclick="openDr('roofType')">i</span><span data-nl="Dak (top verdieping)" data-en="Roof (top floor)">Dak</span></div>
+            <select id="in-roofType" onchange="onInput()">
+              <option value="0" data-nl="Geen dak / niet top verdieping" data-en="No roof / not top floor">Geen dak / niet top verdieping</option>
+              <option value="1" data-nl="Zwart dak (bitumen)" data-en="Black roof (bitumen)">Zwart dak (bitumen)</option>
+              <option value="2" data-nl="Groen dak (vegetatie)" data-en="Green roof (vegetation)">Groen dak (vegetatie)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Installaties -->
+      <div class="card" style="padding:14px">
+        <div class="shdr">⚙️ <span data-nl="Installaties" data-en="Systems">Installaties</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <div class="plabel"><span class="iBtn" onclick="openDr('ventilation')">i</span><span data-nl="Ventilatie" data-en="Ventilation">Ventilatie</span></div>
+            <select id="in-ventilation" onchange="onInput()">
+              <option value="0" data-nl="Nat. + mech. afzuiging" data-en="Nat. + mech. extraction">Nat. + mech. afzuiging</option>
+              <option value="1" data-nl="Nat. + indirecte WTW" data-en="Nat. + indirect HRV">Indirecte WTW</option>
+              <option value="2" data-nl="Passive House" data-en="Passive House">Passive House</option>
+              <option value="3" selected data-nl="Balans met WTW" data-en="Balanced with HRV">Balans met WTW</option>
+            </select>
+            <div id="ventnote" style="font-size:.71rem;color:var(--text3);margin-top:3px"></div>
+          </div>
+          <div>
+            <div class="plabel"><span class="iBtn" onclick="openDr('heatCool')">i</span><span data-nl="Verw./Koeling" data-en="Heat/Cool">Verw./Koeling</span></div>
+            <select id="in-heatCool" onchange="onInput()">
+              <option value="0">WP Lucht (COP 3.5)</option>
+              <option value="1">WP WKO (COP 6.0)</option>
+              <option value="2" selected>SV + koelmachine</option>
+              <option value="3">SV TW + WP</option>
+              <option value="4">SV + WP (T-afh.)</option>
+            </select>
+          </div>
+          <div>
+            <div class="plabel"><span class="iBtn" onclick="openDr('solarCollector')">i</span><span data-nl="Zonnecollector" data-en="Solar collector">Zonnecollector</span></div>
+            <select id="in-solarCollector" onchange="onInput()">
+              <option value="0" data-nl="Geen" data-en="None">Geen</option>
+              <option value="1">PVT (1.5 m²)</option>
+              <option value="2" data-nl="Standaard (2 m²)" data-en="Standard (2 m²)">Standaard (2 m²)</option>
+              <option value="3" data-nl="Vacuum (2 m²)" data-en="Vacuum (2 m²)">Vacuum (2 m²)</option>
+            </select>
+          </div>
+          <div>
+            <div class="plabel"><span class="iBtn" onclick="openDr('showerWTW')">i</span><span data-nl="Douche WTW" data-en="Shower HRV">Douche WTW</span></div>
+            <select id="in-showerWTW" onchange="onInput()">
+              <option value="0" data-nl="Geen" data-en="None">Geen</option>
+              <option value="1" selected data-nl="Individueel (−30%)" data-en="Individual (−30%)">Individueel (−30%)</option>
+              <option value="2" data-nl="Collectief (−40%)" data-en="Collective (−40%)">Collectief (−40%)</option>
+            </select>
+          </div>
+          <div style="grid-column:1/-1">
+            <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer">
+              <input type="checkbox" id="in-co2Control" checked onchange="onInput()" style="margin-top:2px"/>
+              <div>
+                <span style="font-size:.84rem;font-weight:600" data-nl="CO₂-gestuurde ventilatie" data-en="CO₂-controlled ventilation">CO₂-gestuurde ventilatie</span>
+                <span style="font-size:.71rem;color:var(--text3);display:block" data-nl="~35% besparing door vraagregeling" data-en="~35% savings via demand control">~35% besparing door vraagregeling</span>
+              </div>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bewoners & Klimaat -->
+      <div class="card" style="padding:14px">
+        <div class="shdr">👥 <span data-nl="Bewoners & Klimaat" data-en="Occupants & Climate">Bewoners & Klimaat</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start">
+          <div>
+            <div class="plabel"><span class="iBtn" onclick="openDr('occupants')">i</span><span data-nl="Bewoners" data-en="Occupants">Bewoners</span>: <span id="ov" class="rv">2</span></div>
+            <input type="range" id="in-occupants" min="1" max="5" value="2" step="1" oninput="onInput();document.getElementById('ov').textContent=this.value"/>
+            <div style="display:flex;justify-content:space-between;font-size:.68rem;color:var(--text3);margin-top:2px"><span>1</span><span>5</span></div>
+          </div>
+          <div>
+            <label id="climlabel" style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;padding:10px;border:1px solid var(--border);border-radius:8px;transition:border-color .2s">
+              <input type="checkbox" id="in-climate2050" onchange="onInput()" style="margin-top:2px"/>
+              <div>
+                <span style="font-size:.84rem;font-weight:700;color:#fb923c" data-nl="🌡️ Klimaat 2050" data-en="🌡️ Climate 2050">🌡️ Klimaat 2050</span>
+                <span style="font-size:.71rem;color:var(--text3);display:block" data-nl="+40% koeling · −18% verwarming" data-en="+40% cooling · −18% heating">+40% koeling · −18% verwarming</span>
+              </div>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Save -->
+      <button class="btn-p" style="width:100%;padding:13px;display:flex;align-items:center;justify-content:center;gap:8px" onclick="doSave()">
+        <span data-nl="💾 Opslaan & Delen" data-en="💾 Save & Share">💾 Opslaan & Delen</span>
+        <span id="sspin" class="spin" style="display:none"></span>
+      </button>
+      <div id="savest" style="text-align:center;font-size:.8rem;color:var(--text2);min-height:1.2rem"></div>
+    </div><!-- /inputs -->
+
+    <!-- ── RIGHT: Dashboard ── -->
+    <div style="display:flex;flex-direction:column;gap:10px">
+
+      <!-- Building visualization -->
+      <div class="card" style="overflow:hidden">
+        <div style="padding:9px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:.72rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em" data-nl="Gebouw visualisatie" data-en="Building visualization">Gebouw visualisatie</span>
+          <div style="display:flex;gap:12px;font-size:.7rem;color:var(--text3)">
+            <span style="display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;border-radius:2px;background:#3b82f6;display:inline-block"></span><span data-nl="Uw appartement" data-en="Your apartment">Uw appartement</span></span>
+            <span style="display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;border-radius:2px;background:#ef4444;display:inline-block"></span>N</span>
+            <span style="display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;border-radius:2px;background:#3b82f6;display:inline-block"></span><span data-nl="Gevel" data-en="Façade">Gevel</span></span>
+          </div>
+        </div>
+        <canvas id="bcanvas" style="display:block;width:100%;height:340px"></canvas>
+      </div>
+
+      <!-- 4 metric cards (2×2) -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <!-- Score -->
+        <div class="mc">
+          <div class="mc-label" data-nl="Totaal verbruik" data-en="Total use">Totaal verbruik</div>
+          <div class="mc-big" id="mc-score">—</div>
+          <div class="mc-sub">kWh / m² / jaar</div>
+          <div style="height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-top:4px">
+            <div id="mc-bar" style="height:100%;border-radius:3px;transition:width .4s,background .4s;width:0%"></div>
+          </div>
+          <div id="mc-rating" style="font-size:.7rem;color:var(--text3);margin-top:2px"></div>
+        </div>
+        <!-- CO2 -->
+        <div class="mc">
+          <div class="mc-label">CO₂</div>
+          <div class="mc-big" id="mc-co2" style="color:#fb923c">—</div>
+          <div class="mc-sub">kg CO₂ / jaar</div>
+          <div id="mc-co2sub" style="font-size:.7rem;color:var(--text3);margin-top:4px"></div>
+        </div>
+        <!-- Heating vs Cooling -->
+        <div class="mc">
+          <div class="mc-label" data-nl="Verwarming vs Koeling" data-en="Heating vs Cooling">Verwarming vs Koeling</div>
+          <div style="display:flex;justify-content:space-between;font-size:.8rem;font-weight:700;margin-top:2px">
+            <span style="color:#ef4444" id="mc-heat-val">—</span>
+            <span style="color:#3b82f6" id="mc-cool-val">—</span>
+          </div>
+          <div class="mini-bar"><div class="mini-heat" id="mc-hbar" style="width:50%"></div><div class="mini-cool" id="mc-cbar" style="width:50%"></div></div>
+          <div id="mc-hcsub" style="font-size:.7rem;color:var(--text3);margin-top:3px"></div>
+        </div>
+        <!-- User energy % -->
+        <div class="mc">
+          <div class="mc-label" data-nl="Gebruikersenergie" data-en="User energy">Gebruikersenergie</div>
+          <div class="mc-big" id="mc-user-pct" style="color:#a855f7">—</div>
+          <div class="mc-sub" data-nl="van totaal (apparaten + media)" data-en="of total (appliances + media)">van totaal</div>
+          <div id="mc-usersub" style="font-size:.7rem;color:var(--text3);margin-top:4px"></div>
+        </div>
+      </div>
+
+      <!-- Energy breakdown chart -->
+      <div class="card" style="padding:14px">
+        <div style="font-size:.72rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px" data-nl="Energieverdeling (kWh/jaar)" data-en="Energy breakdown (kWh/yr)">Energieverdeling (kWh/jaar)</div>
+        <div style="position:relative;height:210px"><canvas id="bchart"></canvas></div>
+      </div>
+
+      <!-- Detail rows -->
+      <div class="card" style="padding:12px" id="detrows"></div>
+
+      <!-- Insight -->
+      <div class="insight" id="insightbox">Pas de parameters aan voor inzichten.</div>
+
+    </div><!-- /dashboard -->
+  </div><!-- /mgrid -->
+</div><!-- /mscreen -->
+
+<script src="energy.js"></script>
+<script src="building2d.js"></script>
+<script src="info-content.js"></script>
+<script>
+// ── FIREBASE CONFIG ──────────────────────────────────────────────────────────
+const FIREBASE_CONFIG = {
+  apiKey:"YOUR_API_KEY", authDomain:"YOUR_PROJECT.firebaseapp.com",
+  databaseURL:"https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+  projectId:"YOUR_PROJECT", storageBucket:"YOUR_PROJECT.appspot.com",
+  messagingSenderId:"YOUR_SENDER_ID", appId:"YOUR_APP_ID"
+};
+
+// ── STATE ────────────────────────────────────────────────────────────────────
+const APP = {
+  lang:'nl', isDark:true, workshopCode:'', groupLetter:'', groupName:'',
+  db:null, fbReady:false, brkChart:null, cmpChart:null,
+  compareOpen:false, lastResults:null, saveTimer:null
+};
+const GC = { A:'#ef4444',B:'#f97316',C:'#eab308',D:'#22c55e',E:'#3b82f6',F:'#a855f7' };
+
+// ── LANG ─────────────────────────────────────────────────────────────────────
+function toggleLang() { APP.lang = APP.lang==='nl'?'en':'nl'; applyLang(); }
+function applyLang() {
+  const L = APP.lang;
+  document.documentElement.lang = L;
+  document.querySelectorAll('[data-nl]').forEach(el => {
+    const v = el.getAttribute('data-'+L); if(v) el.textContent = v;
+  });
+  document.querySelectorAll('select option[data-nl]').forEach(o => {
+    const v = o.getAttribute('data-'+L); if(v) o.textContent = v;
+  });
+  ['lbtn','lbtn2'].forEach(id => { const e=document.getElementById(id); if(e) e.textContent='🌐 '+(L==='nl'?'EN':'NL'); });
+  if(APP.lastResults) { updateAptNote(getInputs()); }
+}
+
+// ── THEME ────────────────────────────────────────────────────────────────────
+function toggleTheme() {
+  APP.isDark = !APP.isDark;
+  document.documentElement.setAttribute('data-theme', APP.isDark?'dark':'light');
+  ['tbtn','tbtn2'].forEach(id => { const e=document.getElementById(id); if(e) e.textContent=APP.isDark?'☀️':'🌙'; });
+  localStorage.setItem('ew_theme', APP.isDark?'dark':'light');
+  if(APP.lastResults) drawBuilding2D(document.getElementById('bcanvas'), getInputs(), APP.isDark);
+}
+
+// ── SETUP ────────────────────────────────────────────────────────────────────
+function initSetup() {
+  const saved = localStorage.getItem('ew_theme');
+  if(saved==='light') { APP.isDark=false; document.documentElement.setAttribute('data-theme','light'); ['tbtn','tbtn2'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent='🌙';}); }
+  ['A','B','C','D','E','F'].forEach(g => {
+    const b = document.createElement('button');
+    b.textContent=g; b.id='gb-'+g;
+    b.style.cssText='padding:10px 0;border-radius:8px;font-weight:700;font-size:1rem;border:2px solid transparent;background:var(--bg3);color:var(--text2);cursor:pointer;transition:all .15s;width:100%';
+    b.onclick=()=>pickGroup(g);
+    document.getElementById('gsel').appendChild(b);
+  });
+  try {
+    const s = JSON.parse(localStorage.getItem('ew_setup')||'{}');
+    if(s.code) document.getElementById('wcode').value=s.code;
+    if(s.name) document.getElementById('gname').value=s.name;
+    if(s.letter) pickGroup(s.letter);
+  } catch(_){}
+}
+function pickGroup(g) {
+  document.querySelectorAll('#gsel button').forEach(b=>{b.style.borderColor='transparent';b.style.background='var(--bg3)';b.style.color='var(--text2)';});
+  const b=document.getElementById('gb-'+g);
+  if(b){b.style.borderColor=GC[g];b.style.background=GC[g]+'22';b.style.color=GC[g];}
+  APP.groupLetter=g;
+}
+function startWS() {
+  const code=document.getElementById('wcode').value.trim().toLowerCase().replace(/\s+/g,'-');
+  const name=document.getElementById('gname').value.trim();
+  if(!code){setMsg('sstatus','⚠️ Voer een workshop code in','color:var(--yellow)');return;}
+  if(!APP.groupLetter){setMsg('sstatus','⚠️ Kies een groep','color:var(--yellow)');return;}
+  APP.workshopCode=code; APP.groupName=name||'Groep '+APP.groupLetter;
+  localStorage.setItem('ew_setup',JSON.stringify({code,letter:APP.groupLetter,name}));
+  initFB(); showMain();
+}
+
+// ── FIREBASE ─────────────────────────────────────────────────────────────────
+function initFB() {
+  try {
+    if(FIREBASE_CONFIG.apiKey==='YOUR_API_KEY') return;
+    const app=firebase.initializeApp(FIREBASE_CONFIG);
+    APP.db=firebase.database(app); APP.fbReady=true;
+    APP.db.ref('workshops/'+APP.workshopCode+'/groups').on('value', s=>{
+      if(APP.compareOpen) renderCmp(s.val()||{});
+    });
+  } catch(e){console.warn('Firebase:',e.message);}
+}
+function dbPath(){return 'workshops/'+APP.workshopCode+'/groups/'+APP.groupLetter;}
+function doSave() {
+  if(!APP.lastResults) return;
+  document.getElementById('sspin').style.display='inline-block';
+  const pl={groupName:APP.groupName,letter:APP.groupLetter,inputs:getInputs(),results:APP.lastResults,savedAt:Date.now()};
+  if(APP.fbReady&&APP.db) {
+    APP.db.ref(dbPath()).set(pl)
+      .then(()=>{document.getElementById('sspin').style.display='none';setMsg('savest','✅ Opgeslagen!','color:var(--green)');})
+      .catch(e=>{document.getElementById('sspin').style.display='none';setMsg('savest','⚠️ '+e.message,'color:var(--red)');});
+  } else {
+    setTimeout(()=>{document.getElementById('sspin').style.display='none';setMsg('savest','💾 Opgeslagen (lokaal)','color:var(--text2)');},400);
+  }
+}
+
+// ── SHOW MAIN ────────────────────────────────────────────────────────────────
+function showMain() {
+  document.getElementById('sscreen').style.display='none';
+  document.getElementById('mscreen').style.display='block';
+  const badge=document.getElementById('gbadge');
+  badge.textContent=APP.groupName;
+  badge.style.cssText+=`;background:${GC[APP.groupLetter]||'#3b82f6'}22;color:${GC[APP.groupLetter]||'#3b82f6'};border-color:${GC[APP.groupLetter]||'#3b82f6'}`;
+  setupTooltips();
+  // Wait for layout then init canvas-based elements
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    initChart();
+    if(typeof INFO!=='undefined') initTooltipContent();
+    onInput();
+  }));
+}
+
+// ── INPUTS ───────────────────────────────────────────────────────────────────
+function getInputs() {
+  return {
+    aptType:       +document.getElementById('in-aptType').value,
+    floor:         +document.getElementById('in-floor').value,
+    totalFloors:   +document.getElementById('in-totalFloors').value,
+    size:          +document.getElementById('in-size').value,
+    orientation:   +document.getElementById('in-orientation').value,
+    glassRatio:    +document.getElementById('in-glassRatio').value/100,
+    construction:  +document.getElementById('in-construction').value,
+    roofType:      +document.getElementById('in-roofType').value,
+    ventilation:   +document.getElementById('in-ventilation').value,
+    heatCool:      +document.getElementById('in-heatCool').value,
+    solarCollector:+document.getElementById('in-solarCollector').value,
+    showerWTW:     +document.getElementById('in-showerWTW').value,
+    co2Control:    document.getElementById('in-co2Control').checked,
+    occupants:     +document.getElementById('in-occupants').value,
+    climate2050:   document.getElementById('in-climate2050').checked,
+  };
+}
+
+// ── MAIN LOOP ────────────────────────────────────────────────────────────────
+function onInput() {
+  let inputs, results;
+  try { inputs=getInputs(); results=calcAll(inputs); }
+  catch(e) { console.error(e); document.getElementById('insightbox').textContent='⚠️ '+e.message; return; }
+  APP.lastResults=results;
+
+  // Building canvas
+  const canvas=document.getElementById('bcanvas');
+  if(canvas) drawBuilding2D(canvas, inputs, APP.isDark);
+
+  // Metric cards
+  updateMetricCards(results, inputs);
+
+  // Chart
+  updateChart(results);
+
+  // Detail rows
+  updateDetail(results, inputs);
+
+  // Notes
+  updateAptNote(inputs);
+  updateVentNote(inputs);
+  updateLiftInfo(results, inputs);
+  updateInsight(results, inputs);
+
+  // Climate label pulse
+  document.getElementById('climlabel').style.borderColor = inputs.climate2050?'#fb923c':'var(--border)';
+
+  // Header score
+  const v=results.totalPerM2;
+  const hs=document.getElementById('hscore');
+  hs.textContent=v+' kWh/m²';
+  hs.className='badge '+(v<40?'score-g':v<80?'score-y':'score-r');
+
+  // Auto-save
+  clearTimeout(APP.saveTimer);
+  APP.saveTimer=setTimeout(()=>{
+    if(APP.fbReady&&APP.db) APP.db.ref(dbPath()).set({groupName:APP.groupName,letter:APP.groupLetter,inputs,results,savedAt:Date.now()}).catch(()=>{});
+  },1800);
+}
+
+// ── METRIC CARDS ─────────────────────────────────────────────────────────────
+function updateMetricCards(r, inp) {
+  const L=APP.lang;
+  const v=r.totalPerM2;
+  // Score
+  document.getElementById('mc-score').textContent=v;
+  const bar=document.getElementById('mc-bar');
+  bar.style.width=Math.min(100,(v/120)*100)+'%';
+  bar.style.background=v<40?'var(--green)':v<80?'var(--yellow)':'var(--red)';
+  document.getElementById('mc-rating').textContent=v<40?(L==='nl'?'🟢 Bijna energieneutraal':'🟢 Near zero energy'):v<80?(L==='nl'?'🟡 Gemiddeld goed':'🟡 Average good'):(L==='nl'?'🔴 Verbeteringen mogelijk':'🔴 Room to improve');
+
+  // CO2
+  document.getElementById('mc-co2').textContent=r.co2.toLocaleString('nl');
+  document.getElementById('mc-co2sub').textContent=L==='nl'?`≈ ${Math.round(r.co2/1000*2.5)} kg vliegtuig-equiv.`:`≈ ${Math.round(r.co2/1000*2.5)} kg flight-equiv.`;
+
+  // Heating vs cooling
+  const hv=r.heating, cv=r.cooling, hc=hv+cv||1;
+  document.getElementById('mc-heat-val').textContent=hv+' kWh';
+  document.getElementById('mc-cool-val').textContent=cv+' kWh';
+  document.getElementById('mc-hbar').style.width=(hv/hc*100)+'%';
+  document.getElementById('mc-cbar').style.width=(cv/hc*100)+'%';
+  const dom=hv>cv*2?(L==='nl'?'Verwarming domineert':'Heating dominates'):cv>hv*2?(L==='nl'?'Koeling domineert':'Cooling dominates'):(L==='nl'?'Gebalanceerd':'Balanced');
+  document.getElementById('mc-hcsub').textContent=dom;
+
+  // User energy %
+  const userTotal=r.appliances+r.media;
+  const userPct=Math.round(userTotal/r.total*100);
+  document.getElementById('mc-user-pct').textContent=userPct+'%';
+  document.getElementById('mc-usersub').textContent=`${userTotal.toLocaleString('nl')} kWh/yr — ${L==='nl'?'gedrag telt!':'behaviour matters!'}`;
+}
+
+// ── CHART ────────────────────────────────────────────────────────────────────
+const CATS=[
+  {key:'heating',    nl:'Verwarming',  en:'Heating',     c:'#ef4444'},
+  {key:'hotWater',   nl:'Warm water',  en:'Hot water',   c:'#f97316'},
+  {key:'cooling',    nl:'Koeling',     en:'Cooling',     c:'#3b82f6'},
+  {key:'ventilation',nl:'Ventilatie',  en:'Ventilation', c:'#06b6d4'},
+  {key:'lighting',   nl:'Verlichting', en:'Lighting',    c:'#eab308'},
+  {key:'appliances', nl:'Apparaten',   en:'Appliances',  c:'#22c55e'},
+  {key:'media',      nl:'Media',       en:'Media',       c:'#a855f7'},
+  {key:'lift',       nl:'Lift',        en:'Lift',        c:'#64748b'},
+];
+function initChart() {
+  const ctx=document.getElementById('bchart')?.getContext('2d');
+  if(!ctx||typeof Chart==='undefined') return;
+  APP.brkChart=new Chart(ctx,{
+    type:'bar',
+    data:{labels:[''],datasets:CATS.map(c=>({label:c[APP.lang]||c.nl,data:[0],backgroundColor:c.c,borderRadius:4}))},
+    options:{
+      indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{position:'bottom',labels:{color:'var(--text2)',boxWidth:10,font:{size:10}}},
+        tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${Math.round(ctx.raw).toLocaleString('nl')} kWh`}},
+      },
+      scales:{
+        x:{stacked:true,ticks:{color:'var(--text3)'},grid:{color:'var(--border)'}},
+        y:{stacked:true,ticks:{display:false},grid:{display:false}},
+      }
+    }
+  });
+}
+function updateChart(r) {
+  if(!APP.brkChart) return;
+  CATS.forEach((c,i)=>{APP.brkChart.data.datasets[i].data=[r[c.key]];APP.brkChart.data.datasets[i].label=c[APP.lang]||c.nl;});
+  APP.brkChart.update('none');
+}
+
+// ── DETAIL ROWS ──────────────────────────────────────────────────────────────
+function updateDetail(r, inp) {
+  const hc=ENERGY_CONFIG.heatCoolSystems[inp.heatCool], L=APP.lang;
+  const rows=[
+    ['🔴',L==='nl'?'Verwarming':'Heating',    r.heating,   `${r.heatingThermal} kWh th · COP ${hc.copHeat}`],
+    ['🟠',L==='nl'?'Warm water':'Hot water',  r.hotWater,  `${r.hotWaterThermal} kWh th · COP ${hc.copHW}`],
+    ['🔵',L==='nl'?'Koeling':'Cooling',       r.cooling,   `${r.coolingThermal} kWh th · COP ${hc.copCool}`],
+    ['🩵',L==='nl'?'Ventilatie':'Ventilation',r.ventilation,inp.aptType===2?'✅ gallerij-bonus':''],
+    ['🟡',L==='nl'?'Verlichting':'Lighting',  r.lighting,  ''],
+    ['🟢',L==='nl'?'Apparaten':'Appliances',  r.appliances,L==='nl'?'(wasmachine, droger, vaatwasser)':'(washer, dryer, dishwasher)'],
+    ['🟣','Media',                            r.media,     ''],
+    ['⚫','Lift',                             r.lift,      `${L==='nl'?'verd.':'floor'} ${inp.floor}/${inp.totalFloors}`],
+  ];
+  document.getElementById('detrows').innerHTML=rows.map(([d,n,v,s])=>`
+    <div style="display:flex;align-items:start;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(51,65,85,.4);font-size:.82rem">
+      <span style="color:var(--text2)">${d} ${n}</span>
+      <div style="text-align:right">
+        <span style="font-weight:700;color:var(--text)">${v} kWh</span>
+        ${s?`<div style="font-size:.69rem;color:var(--text3)">${s}</div>`:''}
+      </div>
+    </div>`).join('');
+}
+
+// ── CONTEXT NOTES ────────────────────────────────────────────────────────────
+function updateAptNote(inp) {
+  if(typeof INFO==='undefined') return;
+  const L=APP.lang, key=inp.aptType;
+  const notes=INFO.aptType?.[L]?.aptNote||INFO.aptType?.nl?.aptNote;
+  const el=document.getElementById('aptnote');
+  if(el) el.textContent=(notes&&notes[key]!=null)?notes[key]:'';
+}
+function updateVentNote(inp) {
+  const sys=ENERGY_CONFIG.ventilation[inp.ventilation];
+  document.getElementById('ventnote').textContent=`U-gevel ${sys.uWall} · U-glas ${sys.uGlass} W/m²K · WTW ${Math.round(sys.wtw*100)}%`;
+}
+function updateLiftInfo(r, inp) {
+  const apt=ENERGY_CONFIG.aptTypes[inp.aptType], L=APP.lang;
+  const pct=Math.round((1-apt.liftFactor)*100);
+  const el=document.getElementById('liftinfo');
+  el.innerHTML=inp.aptType===2
+    ?`🛗 ${L==='nl'?'Gallerij':'Gallery'}: ${pct}% ${L==='nl'?'minder liftgebruik':'less lift use'} — <strong>${r.lift} kWh/jaar</strong>`
+    :`🛗 ${L==='nl'?'Verdieping':'Floor'} ${inp.floor}/${inp.totalFloors} — <strong>${r.lift} kWh/jaar</strong>`;
+}
+function updateInsight(r, inp) {
+  const L=APP.lang, tips=[];
+  if(r.heating>r.cooling*3) tips.push(L==='nl'?'🔴 Verwarming domineert — WTW of betere isolatie heeft groot effect.':'🔴 Heating dominates — HRV or better insulation has large impact.');
+  if(r.cooling>r.heating*2) tips.push(L==='nl'?'🔵 Koeling domineert — minder glas of zwaarder constructie helpt.':'🔵 Cooling dominates — less glass or heavier construction helps.');
+  if(inp.orientation>=4&&inp.orientation<=6&&inp.glassRatio>0.55) tips.push(L==='nl'?'☀️ Veel glas op zonnige gevel → grote koelbelasting, zeker in 2050.':'☀️ Much glazing on sunny façade → high cooling load, especially in 2050.');
+  if(inp.aptType===2) tips.push(L==='nl'?'🌬️ Gallerij = tweezijdig: voor- én achtergevel open → kruisventilatie actief. ~55% minder fan-energie, ~65% minder liftenergie. Twee gevels = iets meer transmissieverlies winter.':'🌬️ Gallery = two-sided: front façade + open gallery corridor → cross-ventilation active. ~55% less fan energy, ~65% less lift. Two façades = slightly more winter transmission loss.');
+  if(inp.floor>=8&&inp.aptType!==2) tips.push(L==='nl'?`🛗 Verdieping ${inp.floor}: liftenergie (${r.lift} kWh/j) wordt significant.`:`🛗 Floor ${inp.floor}: lift energy (${r.lift} kWh/yr) becomes significant.`);
+  if(inp.climate2050&&r.cooling>500) tips.push(L==='nl'?'🌡️ In 2050 stijgt koeling sterk. Gallerij + Passive House meest weerbaar.':'🌡️ In 2050 cooling rises sharply. Gallery + Passive House most resilient.');
+  if(r.appliances+r.media>r.heating+r.cooling) tips.push(L==='nl'?'💡 Gebruikersapparaten > klimaatinstallaties — gedrag telt!':'💡 User appliances > climate systems — behaviour matters!');
+  if(inp.showerWTW===0) tips.push(L==='nl'?'🚿 Douche WTW bespaart 30–40% warm water energie.':'🚿 Shower HRV saves 30–40% hot water energy.');
+  if(r.totalPerM2<40) tips.push(L==='nl'?'🏆 Bijna energieneutraal niveau!':'🏆 Near zero energy level!');
+  document.getElementById('insightbox').textContent=tips[0]||(L==='nl'?'✅ Pas parameters aan voor inzichten.':'✅ Adjust parameters for insights.');
+}
+
+// ── INFO DRAWER ──────────────────────────────────────────────────────────────
+function openDr(key) {
+  if(typeof INFO==='undefined') return;
+  const info=INFO[key], L=APP.lang, inp=getInputs();
+  const c=info[L]||info.nl;
+  document.getElementById('drtitle').textContent=info.icon+' '+(document.querySelector(`[onclick="openDr('${key}')"]`)?.closest('.plabel')?.querySelector('[data-nl]')?.getAttribute('data-'+L)||key);
+  let html=c.full||'<p>Geen extra info beschikbaar.</p>';
+  const notes=c.aptNote;
+  if(notes&&notes[inp.aptType]!=null) html+=`<div style="margin-top:14px;padding:12px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);border-radius:8px;font-size:.82rem"><strong style="color:var(--accent)">${L==='nl'?'Voor dit type':'For this type'}:</strong><br>${notes[inp.aptType]}</div>`;
+  document.getElementById('drcontent').innerHTML=html;
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('droverlay').classList.add('open');
+}
+function closeDr(){document.getElementById('drawer').classList.remove('open');document.getElementById('droverlay').classList.remove('open');}
+
+// ── TOOLTIPS ─────────────────────────────────────────────────────────────────
+function initTooltipContent() {
+  if(typeof INFO==='undefined') return;
+  const aptType=+document.getElementById('in-aptType').value;
+  INFO._cache={};
+  Object.keys(INFO).forEach(key=>{
+    const info=INFO[key], L=APP.lang;
+    const c=info[L]||info.nl;
+    const tip=c?.tooltip||'';
+    const notes=c?.aptNote;
+    const note=(notes&&notes[aptType]!=null)?notes[aptType]:'';
+    INFO._cache[key]=`<div>${tip}</div>${note?`<div class="apt-note">${note}</div>`:''}`;
+  });
+}
+function setupTooltips() {
+  const ftip=document.getElementById('ftip');
+  if(!ftip) return;
+  let hideT;
+  document.addEventListener('mouseenter',e=>{
+    const btn=e.target;
+    if(!btn||!btn.classList||!btn.classList.contains('iBtn')) return;
+    const key=btn.getAttribute('onclick')?.match(/openDr\('(\w+)'\)/)?.[1];
+    if(!key) return;
+    const html=(typeof INFO!=='undefined'&&INFO._cache)?INFO._cache[key]:null;
+    if(!html) return;
+    clearTimeout(hideT);
+    ftip.innerHTML=html; ftip.style.display='block';
+    const r=btn.getBoundingClientRect();
+    let top=r.top-ftip.offsetHeight-10, left=r.left;
+    if(top<8) top=r.bottom+8;
+    if(left+275>window.innerWidth) left=window.innerWidth-283;
+    ftip.style.top=top+'px'; ftip.style.left=left+'px';
+  },true);
+  document.addEventListener('mouseleave',e=>{
+    if(e.target?.classList?.contains('iBtn')) hideT=setTimeout(()=>ftip.style.display='none',200);
+  },true);
+}
+
+// ── COMPARE ──────────────────────────────────────────────────────────────────
+function toggleCompare() {
+  APP.compareOpen=!APP.compareOpen;
+  document.getElementById('compare-panel').style.display=APP.compareOpen?'block':'none';
+  if(APP.compareOpen) {
+    if(APP.fbReady&&APP.db) APP.db.ref('workshops/'+APP.workshopCode+'/groups').once('value',s=>{document.getElementById('cspin').style.display='none';renderCmp(s.val()||{});});
+    else {document.getElementById('cspin').style.display='none';renderCmp({[APP.groupLetter]:{groupName:APP.groupName,results:APP.lastResults}});}
+  }
+}
+function renderCmp(data) {
+  const letters=Object.keys(data).sort();
+  const labels=letters.map(l=>data[l].groupName||'Groep '+l);
+  const ctx=document.getElementById('cchart')?.getContext('2d');
+  if(!ctx||typeof Chart==='undefined') return;
+  if(APP.cmpChart) APP.cmpChart.destroy();
+  APP.cmpChart=new Chart(ctx,{
+    type:'bar',
+    data:{labels,datasets:CATS.map(c=>({label:c[APP.lang]||c.nl,data:letters.map(l=>(data[l].results||{})[c.key]||0),backgroundColor:c.c,borderRadius:3}))},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'var(--text2)',boxWidth:9,font:{size:9}}},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${Math.round(c.raw).toLocaleString('nl')} kWh`}}},scales:{x:{stacked:true,ticks:{color:'var(--text2)',font:{size:10}},grid:{color:'var(--border)'}},y:{stacked:true,ticks:{color:'var(--text3)'},grid:{color:'var(--border)'}}}}
+  });
+}
+
+// ── UTIL ─────────────────────────────────────────────────────────────────────
+function setMsg(id,msg,sty){const e=document.getElementById(id);e.textContent=msg;e.style.cssText=(sty||'');setTimeout(()=>e.textContent='',5000);}
+
+// ── BOOT ─────────────────────────────────────────────────────────────────────
+initSetup();
+</script>
+</body>
+</html>

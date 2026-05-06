@@ -39,7 +39,7 @@ function _initOrbit(canvas) {
 
   const onMove = (nx, ny) => {
     if (!s.drag || !s.inp) return;
-    s.az += (nx - s.lx) * 0.008;           // horizontal drag → azimuth
+    s.az -= (nx - s.lx) * 0.008;           // horizontal drag → azimuth
     s.el -= (ny - s.ly) * 0.006;           // vertical drag   → elevation
     s.el  = Math.max(0.05, Math.min(Math.PI/2 - 0.03, s.el));
     s.lx = nx; s.ly = ny;

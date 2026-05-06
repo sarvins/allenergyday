@@ -428,7 +428,8 @@ function toggleTheme() {
   document.documentElement.setAttribute('data-theme', APP.isDark?'dark':'light');
   ['tbtn','tbtn2'].forEach(id => { const e=document.getElementById(id); if(e) e.textContent=APP.isDark?'☀️':'🌙'; });
   localStorage.setItem('ew_theme', APP.isDark?'dark':'light');
-  if(APP.lastResults) drawBuilding2D(document.getElementById('bcanvas'), getInputs(), APP.isDark);
+  initChart();
+  if(APP.lastResults) { updateChart(APP.lastResults); drawBuilding2D(document.getElementById('bcanvas'), getInputs(), APP.isDark); }
 }
 
 // ── SETUP ────────────────────────────────────────────────────────────────────
@@ -536,7 +537,7 @@ function onInput() {
 
   // Building canvas
   const canvas=document.getElementById('bcanvas');
-  if(canvas) drawBuilding2D(canvas, inputs, APP.isDark);
+  if(canvas) { try { drawBuilding2D(canvas, inputs, APP.isDark); } catch(e) { console.error('3D render:', e); } }
 
   // Metric cards
   updateMetricCards(results, inputs);
@@ -611,20 +612,23 @@ const CATS=[
   {key:'media',      nl:'Media',       en:'Media',       c:'#a855f7'},
   {key:'lift',       nl:'Lift',        en:'Lift',        c:'#64748b'},
 ];
+function _cv(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()||n;}
 function initChart() {
-  const ctx=document.getElementById('bchart')?.getContext('2d');
-  if(!ctx||typeof Chart==='undefined') return;
+  const el=document.getElementById('bchart');
+  if(!el||typeof Chart==='undefined') return;
+  if(APP.brkChart){APP.brkChart.destroy();APP.brkChart=null;}
+  const ctx=el.getContext('2d');
   APP.brkChart=new Chart(ctx,{
     type:'bar',
     data:{labels:[''],datasets:CATS.map(c=>({label:c[APP.lang]||c.nl,data:[0],backgroundColor:c.c,borderRadius:4}))},
     options:{
       indexAxis:'y',responsive:true,maintainAspectRatio:false,
       plugins:{
-        legend:{position:'bottom',labels:{color:'var(--text2)',boxWidth:10,font:{size:10}}},
+        legend:{position:'bottom',labels:{color:_cv('--text2'),boxWidth:10,font:{size:10}}},
         tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${Math.round(ctx.raw).toLocaleString('nl')} kWh`}},
       },
       scales:{
-        x:{stacked:true,ticks:{color:'var(--text3)'},grid:{color:'var(--border)'}},
+        x:{stacked:true,ticks:{color:_cv('--text3')},grid:{color:_cv('--border')}},
         y:{stacked:true,ticks:{display:false},grid:{display:false}},
       }
     }

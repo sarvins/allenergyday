@@ -181,11 +181,11 @@
           </div>
           <div>
             <div class="plabel"><span class="iBtn" onclick="openDr('floor')">i</span><span data-nl="Verdieping" data-en="Floor">Verdieping</span></div>
-            <input type="number" id="in-floor" value="5" min="1" max="30" onchange="onInput()"/>
+            <input type="number" id="in-floor" value="5" min="1" max="30" onchange="clampFloor();onInput()"/>
           </div>
           <div>
             <div class="plabel" data-nl="Totaal verdiepingen" data-en="Total floors">Totaal verdiepingen</div>
-            <input type="number" id="in-totalFloors" value="10" min="2" max="40" onchange="onInput()"/>
+            <input type="number" id="in-totalFloors" value="10" min="2" max="40" onchange="clampFloor();onInput()"/>
           </div>
         </div>
         <div id="liftinfo" style="margin-top:8px;padding:6px 10px;background:var(--bg3);border-radius:6px;font-size:.75rem;color:var(--text2)"></div>
@@ -773,6 +773,12 @@ function renderCmp(data) {
 }
 
 // ── UTIL ─────────────────────────────────────────────────────────────────────
+function clampFloor(){
+  const f=document.getElementById('in-floor'), t=document.getElementById('in-totalFloors');
+  const max=+t.value||40;
+  f.max=max;
+  if(+f.value>max) f.value=max;
+}
 function setMsg(id,msg,sty){const e=document.getElementById(id);e.textContent=msg;e.style.cssText=(sty||'');setTimeout(()=>e.textContent='',5000);}
 
 // ── BOOT ─────────────────────────────────────────────────────────────────────

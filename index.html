@@ -97,7 +97,7 @@
     <div style="display:flex;flex-direction:column;gap:14px">
       <div>
         <div class="plabel" data-nl="Workshop Code" data-en="Workshop Code">Workshop Code</div>
-        <input type="text" id="wcode" placeholder="bijv. energy2025" style="text-transform:uppercase;letter-spacing:.1em"/>
+        <input type="text" id="wcode" placeholder="bijv. energy2025" data-placeholder-nl="bijv. energy2025" data-placeholder-en="e.g. energy2025" style="text-transform:uppercase;letter-spacing:.1em"/>
       </div>
       <div>
         <div class="plabel" data-nl="Jullie Groep" data-en="Your Group">Jullie Groep</div>
@@ -105,7 +105,7 @@
       </div>
       <div>
         <div class="plabel" data-nl="Groepsnaam (optioneel)" data-en="Group name (optional)">Groepsnaam (optioneel)</div>
-        <input type="text" id="gname" placeholder="bijv. Team Rood"/>
+        <input type="text" id="gname" placeholder="bijv. Team Rood" data-placeholder-nl="bijv. Team Rood" data-placeholder-en="e.g. Team Red"/>
       </div>
       <div id="sstatus" style="font-size:.82rem;color:var(--text2);text-align:center;min-height:1.2rem"></div>
       <button class="btn-p" style="width:100%" onclick="startWS()" data-nl="Start →" data-en="Start →">Start →</button>
@@ -204,10 +204,14 @@
           <div>
             <div class="plabel"><span class="iBtn" onclick="openDr('orientation')">i</span><span data-nl="Oriëntatie" data-en="Orientation">Oriëntatie</span></div>
             <select id="in-orientation" onchange="onInput()">
-              <option value="0">N – Noord</option><option value="1">NO – Noordoost</option>
-              <option value="2">O – Oost</option><option value="3">ZO – Zuidoost</option>
-              <option value="4" selected>Z – Zuid</option><option value="5">ZW – Zuidwest</option>
-              <option value="6">W – West</option><option value="7">NW – Noordwest</option>
+              <option value="0" data-nl="N – Noord"      data-en="N – North">N – Noord</option>
+              <option value="1" data-nl="NO – Noordoost" data-en="NE – Northeast">NO – Noordoost</option>
+              <option value="2" data-nl="O – Oost"       data-en="E – East">O – Oost</option>
+              <option value="3" data-nl="ZO – Zuidoost"  data-en="SE – Southeast">ZO – Zuidoost</option>
+              <option value="4" selected data-nl="Z – Zuid" data-en="S – South">Z – Zuid</option>
+              <option value="5" data-nl="ZW – Zuidwest"  data-en="SW – Southwest">ZW – Zuidwest</option>
+              <option value="6" data-nl="W – West"       data-en="W – West">W – West</option>
+              <option value="7" data-nl="NW – Noordwest" data-en="NW – Northwest">NW – Noordwest</option>
             </select>
           </div>
           <div>
@@ -253,11 +257,11 @@
           <div>
             <div class="plabel"><span class="iBtn" onclick="openDr('heatCool')">i</span><span data-nl="Verw./Koeling" data-en="Heat/Cool">Verw./Koeling</span></div>
             <select id="in-heatCool" onchange="onInput()">
-              <option value="0">WP Lucht (COP 3.5)</option>
-              <option value="1">WP WKO (COP 6.0)</option>
-              <option value="2" selected>SV + koelmachine</option>
-              <option value="3">SV TW + WP</option>
-              <option value="4">SV + WP (T-afh.)</option>
+              <option value="0" data-nl="WP Lucht (COP 3.5)"    data-en="Air HP (COP 3.5)">WP Lucht (COP 3.5)</option>
+              <option value="1" data-nl="WP WKO (COP 6.0)"      data-en="Grd-src HP (COP 6.0)">WP WKO (COP 6.0)</option>
+              <option value="2" selected data-nl="SV + koelmachine"  data-en="District heat + chiller">SV + koelmachine</option>
+              <option value="3" data-nl="SV TW + WP"             data-en="District HW + HP">SV TW + WP</option>
+              <option value="4" data-nl="SV + WP (T-afh.)"       data-en="District + HP (T-dep.)">SV + WP (T-afh.)</option>
             </select>
           </div>
           <div>
@@ -338,7 +342,7 @@
       <div class="mc" style="border-radius:12px">
         <div class="mc-label" data-nl="Totaal verbruik" data-en="Total use">Totaal verbruik</div>
         <div class="mc-big" id="mc-score">—</div>
-        <div class="mc-sub">kWh / m² / jaar</div>
+        <div class="mc-sub" data-nl="kWh / m² / jaar" data-en="kWh / m² / yr">kWh / m² / jaar</div>
         <div id="mc-total-kwh" style="font-size:.72rem;color:var(--text3);margin-top:1px">— kWh/jaar</div>
         <div style="height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-top:6px">
           <div id="mc-bar" style="height:100%;border-radius:3px;transition:width .4s,background .4s;width:0%"></div>
@@ -354,7 +358,7 @@
         <div class="mc">
           <div class="mc-label">CO₂</div>
           <div class="mc-big" id="mc-co2" style="color:#fb923c;font-size:1.5rem">—</div>
-          <div class="mc-sub">kg / jaar</div>
+          <div class="mc-sub" data-nl="kg / jaar" data-en="kg / yr">kg / jaar</div>
           <div id="mc-co2sub" style="font-size:.7rem;color:var(--text3);margin-top:3px"></div>
         </div>
         <div class="mc">
@@ -426,6 +430,9 @@ function applyLang() {
   document.querySelectorAll('select option[data-nl]').forEach(o => {
     const v = o.getAttribute('data-'+L); if(v) o.textContent = v;
   });
+  document.querySelectorAll('[data-placeholder-nl]').forEach(el => {
+    const v = el.getAttribute('data-placeholder-'+L); if(v) el.placeholder = v;
+  });
   ['lbtn','lbtn2'].forEach(id => { const e=document.getElementById(id); if(e) e.textContent='🌐 '+(L==='nl'?'EN':'NL'); });
   if(APP.lastResults) { updateAptNote(getInputs()); }
 }
@@ -465,11 +472,12 @@ function pickGroup(g) {
   APP.groupLetter=g;
 }
 function startWS() {
+  const L=APP.lang;
   const code=document.getElementById('wcode').value.trim().toLowerCase().replace(/\s+/g,'-');
   const name=document.getElementById('gname').value.trim();
-  if(!code){setMsg('sstatus','⚠️ Voer een workshop code in','color:var(--yellow)');return;}
-  if(!APP.groupLetter){setMsg('sstatus','⚠️ Kies een groep','color:var(--yellow)');return;}
-  APP.workshopCode=code; APP.groupName=name||'Groep '+APP.groupLetter;
+  if(!code){setMsg('sstatus',L==='nl'?'⚠️ Voer een workshop code in':'⚠️ Enter a workshop code','color:var(--yellow)');return;}
+  if(!APP.groupLetter){setMsg('sstatus',L==='nl'?'⚠️ Kies een groep':'⚠️ Choose a group','color:var(--yellow)');return;}
+  APP.workshopCode=code; APP.groupName=name||(L==='nl'?'Groep ':'Group ')+APP.groupLetter;
   localStorage.setItem('ew_setup',JSON.stringify({code,letter:APP.groupLetter,name}));
   initFB(); showMain();
 }
@@ -492,10 +500,10 @@ function doSave() {
   const pl={groupName:APP.groupName,letter:APP.groupLetter,inputs:getInputs(),results:APP.lastResults,savedAt:Date.now()};
   if(APP.fbReady&&APP.db) {
     APP.db.ref(dbPath()).set(pl)
-      .then(()=>{document.getElementById('sspin').style.display='none';setMsg('savest','✅ Opgeslagen!','color:var(--green)');})
+      .then(()=>{document.getElementById('sspin').style.display='none';setMsg('savest',APP.lang==='nl'?'✅ Opgeslagen!':'✅ Saved!','color:var(--green)');})
       .catch(e=>{document.getElementById('sspin').style.display='none';setMsg('savest','⚠️ '+e.message,'color:var(--red)');});
   } else {
-    setTimeout(()=>{document.getElementById('sspin').style.display='none';setMsg('savest','💾 Opgeslagen (lokaal)','color:var(--text2)');},400);
+    setTimeout(()=>{document.getElementById('sspin').style.display='none';setMsg('savest',APP.lang==='nl'?'💾 Opgeslagen (lokaal)':'💾 Saved (locally)','color:var(--text2)');},400);
   }
 }
 
@@ -655,14 +663,14 @@ function updateMetricCards(r, inp) {
   const v=r.totalPerM2;
   // Score
   document.getElementById('mc-score').textContent=v;
-  document.getElementById('mc-total-kwh').textContent=r.total.toLocaleString('nl')+' kWh/jaar';
+  document.getElementById('mc-total-kwh').textContent=r.total.toLocaleString(APP.lang==='nl'?'nl':'en-US')+(APP.lang==='nl'?' kWh/jaar':' kWh/yr');
   const bar=document.getElementById('mc-bar');
   bar.style.width=Math.min(100,(v/120)*100)+'%';
   bar.style.background=v<40?'var(--green)':v<80?'var(--yellow)':'var(--red)';
   document.getElementById('mc-rating').textContent=v<40?(L==='nl'?'🟢 Bijna energieneutraal':'🟢 Near zero energy'):v<80?(L==='nl'?'🟡 Gemiddeld goed':'🟡 Average good'):(L==='nl'?'🔴 Verbeteringen mogelijk':'🔴 Room to improve');
 
   // CO2
-  document.getElementById('mc-co2').textContent=r.co2.toLocaleString('nl');
+  document.getElementById('mc-co2').textContent=r.co2.toLocaleString(L==='nl'?'nl':'en-US');
   document.getElementById('mc-co2sub').textContent=L==='nl'?`≈ ${Math.round(r.co2/1000*2.5)} kg vliegtuig-equiv.`:`≈ ${Math.round(r.co2/1000*2.5)} kg flight-equiv.`;
 
   // Heating vs cooling
@@ -678,7 +686,7 @@ function updateMetricCards(r, inp) {
   const userTotal=r.appliances+r.media;
   const userPct=Math.round(userTotal/r.total*100);
   document.getElementById('mc-user-pct').textContent=userPct+'%';
-  document.getElementById('mc-usersub').textContent=`${userTotal.toLocaleString('nl')} kWh/yr — ${L==='nl'?'gedrag telt!':'behaviour matters!'}`;
+  document.getElementById('mc-usersub').textContent=`${userTotal.toLocaleString(L==='nl'?'nl':'en-US')} kWh/yr — ${L==='nl'?'gedrag telt!':'behaviour matters!'}`;
 }
 
 // ── CHART ────────────────────────────────────────────────────────────────────
@@ -705,7 +713,7 @@ function initChart() {
       indexAxis:'y',responsive:true,maintainAspectRatio:false,
       plugins:{
         legend:{position:'bottom',labels:{color:_cv('--text2'),boxWidth:10,font:{size:10}}},
-        tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${Math.round(ctx.raw).toLocaleString('nl')} kWh`}},
+        tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${Math.round(ctx.raw).toLocaleString(APP.lang==='nl'?'nl':'en-US')} kWh`}},
       },
       scales:{
         x:{stacked:true,ticks:{color:_cv('--text3')},grid:{color:_cv('--border')}},
@@ -743,7 +751,7 @@ function updateDetail(r, inp) {
     </div>`).join('')
   + `<div style="display:flex;justify-content:space-between;padding:7px 0 2px;font-size:.85rem;font-weight:700">
       <span style="color:var(--text2)">${L==='nl'?'Totaal':'Total'}</span>
-      <span style="color:var(--text)">${r.total.toLocaleString('nl')} kWh/jaar</span>
+      <span style="color:var(--text)">${r.total.toLocaleString(L==='nl'?'nl':'en-US')} ${L==='nl'?'kWh/jaar':'kWh/yr'}</span>
     </div>`;
 }
 
@@ -770,7 +778,7 @@ function updateBuildingOverview(ov, inp) {
         <div style="background:var(--bg3);border-radius:8px;padding:10px;text-align:center">
           <div style="font-size:1.4rem;font-weight:900;color:var(--accent)">${ov.perFloor}</div>
           <div style="color:var(--text2);font-size:.7rem">${L==='nl'?'app. per verdieping':'apts per floor'}</div>
-          <div style="font-size:.69rem;color:var(--text3);margin-top:2px">${ov.r.total.toLocaleString('nl')} kWh / app</div>
+          <div style="font-size:.69rem;color:var(--text3);margin-top:2px">${ov.r.total.toLocaleString(L==='nl'?'nl':'en-US')} kWh / app</div>
         </div>
         <div style="background:var(--bg3);border-radius:8px;padding:10px;text-align:center">
           <div style="font-size:1.4rem;font-weight:900;color:#22c55e">${(ov.buildingTotal/1000).toFixed(0)}</div>
@@ -794,12 +802,12 @@ function updateBuildingOverview(ov, inp) {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:.79rem">
         <div style="padding:8px;background:var(--bg3);border-radius:6px">
           <div style="color:var(--text2);font-size:.69rem;margin-bottom:2px">1-${L==='nl'?'zijdig':'sided'} (${ov.eenzPerFloor}×)</div>
-          <div style="font-weight:700">${ov.rEenz.total.toLocaleString('nl')} kWh</div>
+          <div style="font-weight:700">${ov.rEenz.total.toLocaleString(L==='nl'?'nl':'en-US')} kWh</div>
           <div style="font-size:.68rem;color:var(--text3)">${ov.rEenz.totalPerM2} kWh/m²</div>
         </div>
         <div style="padding:8px;background:var(--bg3);border-radius:6px">
           <div style="color:var(--text2);font-size:.69rem;margin-bottom:2px">${L==='nl'?'Hoek':'Corner'} (${ov.hoekPerFloor}×)</div>
-          <div style="font-weight:700">${ov.rHoek.total.toLocaleString('nl')} kWh</div>
+          <div style="font-weight:700">${ov.rHoek.total.toLocaleString(L==='nl'?'nl':'en-US')} kWh</div>
           <div style="font-size:.68rem;color:var(--text3)">${ov.rHoek.totalPerM2} kWh/m²</div>
         </div>
       </div>`;
@@ -826,15 +834,15 @@ function updateAptNote(inp) {
 }
 function updateVentNote(inp) {
   const sys=ENERGY_CONFIG.ventilation[inp.ventilation];
-  document.getElementById('ventnote').textContent=`U-gevel ${sys.uWall} · U-glas ${sys.uGlass} W/m²K · WTW ${Math.round(sys.wtw*100)}%`;
+  document.getElementById('ventnote').textContent=`${L==='nl'?'U-gevel':'U-wall'} ${sys.uWall} · ${L==='nl'?'U-glas':'U-glass'} ${sys.uGlass} W/m²K · ${L==='nl'?'WTW':'HRV'} ${Math.round(sys.wtw*100)}%`;
 }
 function updateLiftInfo(r, inp) {
   const L = APP.lang, el = document.getElementById('liftinfo');
   if (inp.buildingType === 1) {
     const pct = Math.round((1 - ENERGY_CONFIG.aptTypes[2].liftFactor) * 100);
-    el.innerHTML = `🛗 ${L==='nl'?'Gallerij':'Gallery'}: ${pct}% ${L==='nl'?'minder liftgebruik':'less lift use'} — <strong>${r.lift} kWh/jaar</strong>`;
+    el.innerHTML = `🛗 ${L==='nl'?'Gallerij':'Gallery'}: ${pct}% ${L==='nl'?'minder liftgebruik':'less lift use'} — <strong>${r.lift} ${L==='nl'?'kWh/jaar':'kWh/yr'}</strong>`;
   } else {
-    el.innerHTML = `🛗 ${L==='nl'?'Verdieping':'Floor'} ${inp.floor}/${inp.totalFloors} — <strong>${r.lift} kWh/jaar</strong>`;
+    el.innerHTML = `🛗 ${L==='nl'?'Verdieping':'Floor'} ${inp.floor}/${inp.totalFloors} — <strong>${r.lift} ${L==='nl'?'kWh/jaar':'kWh/yr'}</strong>`;
   }
 }
 function updateInsight(r, inp) {
@@ -857,7 +865,7 @@ function openDr(key) {
   const info=INFO[key], L=APP.lang, inp=getInputs();
   const c=info[L]||info.nl;
   document.getElementById('drtitle').textContent=info.icon+' '+(document.querySelector(`[onclick="openDr('${key}')"]`)?.closest('.plabel')?.querySelector('[data-nl]')?.getAttribute('data-'+L)||key);
-  let html=c.full||'<p>Geen extra info beschikbaar.</p>';
+  let html=c.full||(L==='nl'?'<p>Geen extra info beschikbaar.</p>':'<p>No additional info available.</p>');
   const notes=c.aptNote;
   if(notes&&notes[inp.aptType]!=null) html+=`<div style="margin-top:14px;padding:12px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);border-radius:8px;font-size:.82rem"><strong style="color:var(--accent)">${L==='nl'?'Voor dit type':'For this type'}:</strong><br>${notes[inp.aptType]}</div>`;
   document.getElementById('drcontent').innerHTML=html;
@@ -916,14 +924,14 @@ function toggleCompare() {
 }
 function renderCmp(data) {
   const letters=Object.keys(data).sort();
-  const labels=letters.map(l=>data[l].groupName||'Groep '+l);
+  const labels=letters.map(l=>data[l].groupName||(APP.lang==='nl'?'Groep ':'Group ')+l);
   const ctx=document.getElementById('cchart')?.getContext('2d');
   if(!ctx||typeof Chart==='undefined') return;
   if(APP.cmpChart) APP.cmpChart.destroy();
   APP.cmpChart=new Chart(ctx,{
     type:'bar',
     data:{labels,datasets:CATS.map(c=>({label:c[APP.lang]||c.nl,data:letters.map(l=>(data[l].results||{})[c.key]||0),backgroundColor:c.c,borderRadius:3}))},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'var(--text2)',boxWidth:9,font:{size:9}}},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${Math.round(c.raw).toLocaleString('nl')} kWh`}}},scales:{x:{stacked:true,ticks:{color:'var(--text2)',font:{size:10}},grid:{color:'var(--border)'}},y:{stacked:true,ticks:{color:'var(--text3)'},grid:{color:'var(--border)'}}}}
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'var(--text2)',boxWidth:9,font:{size:9}}},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${Math.round(c.raw).toLocaleString(APP.lang==='nl'?'nl':'en-US')} kWh`}}},scales:{x:{stacked:true,ticks:{color:'var(--text2)',font:{size:10}},grid:{color:'var(--border)'}},y:{stacked:true,ticks:{color:'var(--text3)'},grid:{color:'var(--border)'}}}}
   });
 }
 

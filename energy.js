@@ -79,6 +79,32 @@ const ENERGY_CONFIG = {
   co2Electricity:   0.42,    // kg CO2/kWh (NL 2025 grid mix, Resultaten Z6)
 };
 
+// ─── FACADE ORIENTATION HELPERS ───────────────────────────────────────────────
+// Orientation convention (from Excel opmerking):
+//   eenzijdig  → orientation = the single external facade direction
+//   gallerij   → orientation = front facade; back (gallery corridor) = orientation+4
+//   hoekapt    → orientation = corner direction; two facades are orientation±1
+// For gallerij the two facades are equal area (front + back, symmetric slab).
+// For hoek the two perpendicular facades are equal area.
+
+function effCoolingOrientation(aptType, orientation) {
+  const co = ENERGY_CONFIG.coolingOrientation;
+  if (aptType === 1) // hoek: two perpendicular facades at orientation±1
+    return 0.5 * co[(orientation - 1 + 8) % 8] + 0.5 * co[(orientation + 1) % 8];
+  if (aptType === 2) // gallerij: front + opposite back, equal areas
+    return 0.5 * co[orientation] + 0.5 * co[(orientation + 4) % 8];
+  return co[orientation]; // eenzijdig: single facade
+}
+
+function effHeatingSolar(aptType, orientation) {
+  const hs = ENERGY_CONFIG.heatingSolarByOrientation;
+  if (aptType === 1)
+    return 0.5 * hs[(orientation - 1 + 8) % 8] + 0.5 * hs[(orientation + 1) % 8];
+  if (aptType === 2)
+    return 0.5 * hs[orientation] + 0.5 * hs[(orientation + 4) % 8];
+  return hs[orientation];
+}
+
 // ─── OCCUPANCY ────────────────────────────────────────────────────────────────
 // Derived from Dutch demographic model in Basis waarden en tabellen
 // Smaller apartments attract more young singles; larger attract families
@@ -145,7 +171,7 @@ function calcVentilation(size, ventType, aptType, co2Control) {
 // Returns kWh THERMAL/year (before dividing by COP)
 function calcCooling(size, aptType, orientation, glassRatio, construction, ventType, roofType, floorNumber, totalFloors, climate2050) {
   const base_per_m2 = 25; // kWh/m².year (south reference)
-  let cooling = base_per_m2 * ENERGY_CONFIG.coolingOrientation[orientation];
+  let cooling = base_per_m2 * effCoolingOrientation(aptType, orientation);
 
   // Glass: more solar gain through windows (reference = 40% glass)
   const glass_factor = Math.pow(glassRatio / 0.40, 1.5);
@@ -211,8 +237,8 @@ function calcHeating(size, aptType, glassRatio, ventType, floorNumber, totalFloo
   // Internal gains: occupants, equipment, lighting ≈ 2W/m² average
   const internal_gains = (2.0 * size + 1.5 * occupants) * Hhours / 1000;
 
-  // Solar gains through windows (orientation-dependent winter solar)
-  const solar_per_m2_glass = ENERGY_CONFIG.heatingSolarByOrientation[orientation]; // kWh/m²
+  // Solar gains through windows (orientation-dependent winter solar, split by facade)
+  const solar_per_m2_glass = effHeatingSolar(aptType, orientation); // kWh/m²
   const solar_gains = glassArea * 0.35 * solar_per_m2_glass; // ZTA ≈ 0.35
 
   // Climate 2050: warmer winters → ~10% less heating needed

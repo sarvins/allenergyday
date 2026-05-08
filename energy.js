@@ -14,13 +14,16 @@ const ENERGY_CONFIG = {
 
   // Heating/cooling systems (Coeefficienten rows 19-23)
   // copHeat/copCool/copHW = coefficients of performance
+  // For SV systems, copHeat/copHW = CO2-equivalent COP = CO2_elec / (CO2_SV/delivery_eff)
+  //   = 0.42 / (37.44 kg/GJ / 277.78 kWh/GJ / 0.764 delivery_eff) = 2.38 (Excel J21-J23)
+  //   This makes "purchased energy" for SV = CO2-equivalent kWh, matching the Excel metric.
   // svFraction = fraction of heat supplied by district heating (stadsverwarming)
   heatCoolSystems: [
-    { name: 'Warmtepomp lucht (AP)',           short: 'WP Lucht', copHeat: 3.5, copCool: 3.5, copHW: 2.75, svFraction: 0.00 },
-    { name: 'Warmtepomp WKO (bodem)',          short: 'WP WKO',   copHeat: 6.0, copCool: 10.0,copHW: 4.00, svFraction: 0.00 },
-    { name: 'Stadsverwarming + koelmachine',   short: 'SV+Koel',  copHeat: 7.0, copCool: 3.5, copHW: 7.00, svFraction: 1.00 },
-    { name: 'SV tapwater + warmtepomp',        short: 'SV+WP',    copHeat: 3.5, copCool: 3.5, copHW: 7.00, svFraction: 0.50 },
-    { name: 'SV + WP (T-afhankelijk)',         short: 'SV+WP-T',  copHeat: 5.0, copCool: 3.5, copHW: 6.50, svFraction: 0.25 },
+    { name: 'Warmtepomp lucht (AP)',           short: 'WP Lucht', copHeat: 3.5, copCool: 3.5,  copHW: 2.75, svFraction: 0.00 },
+    { name: 'Warmtepomp WKO (bodem)',          short: 'WP WKO',   copHeat: 6.0, copCool: 6.0,  copHW: 4.00, svFraction: 0.00 },
+    { name: 'Stadsverwarming + koelmachine',   short: 'SV+Koel',  copHeat: 2.38,copCool: 3.5,  copHW: 2.38, svFraction: 1.00 },
+    { name: 'SV tapwater + warmtepomp',        short: 'SV+WP',    copHeat: 3.5, copCool: 3.5,  copHW: 2.38, svFraction: 0.50 },
+    { name: 'SV + WP (T-afhankelijk)',         short: 'SV+WP-T',  copHeat: 5.47,copCool: 3.5,  copHW: 2.38, svFraction: 0.25 },
   ],
 
   // Solar thermal collectors (Coeefficienten rows 26-29)
@@ -71,9 +74,9 @@ const ENERGY_CONFIG = {
     { name: 'Groen dak',                      coolingFactor: 1.06, uRoof: 0.18 },
   ],
 
-  // CO2 emission factors (from Resultaten sheet rows 6-7)
-  co2Electricity:   0.42,    // kg CO2/kWh (NL 2025 grid mix)
-  co2DistrictHeat:  0.0378,  // kg CO2/kWh thermal (37.44 kg/GJ, from Resultaten Z7)
+  // CO2 emission factor — single factor covers all systems
+  // SV copHeat/copHW are CO2-equivalent, so total × co2Electricity gives correct CO2 for all
+  co2Electricity:   0.42,    // kg CO2/kWh (NL 2025 grid mix, Resultaten Z6)
 };
 
 // ─── OCCUPANCY ────────────────────────────────────────────────────────────────
@@ -159,8 +162,8 @@ function calcCooling(size, aptType, orientation, glassRatio, construction, ventT
   else if (aptType === 2 && ventType === 1) cooling *= 0.55; // Gallery + indirect WTW
   else if (aptType === 2) cooling *= 0.70; // Gallery: wind cross-vent always helps
 
-  // Climate 2050: +1.7°C summer + more solar ≈ +40% cooling demand
-  if (climate2050) cooling *= 1.40;
+  // Climate 2050: +1.7°C summer + more solar ≈ +60% cooling demand
+  if (climate2050) cooling *= 1.60;
 
   // Urban Heat Island: strongest at street level, diminishes with height
   // Higher floors get wind cooling effect which counteracts UHI
@@ -212,8 +215,8 @@ function calcHeating(size, aptType, glassRatio, ventType, floorNumber, totalFloo
   const solar_per_m2_glass = ENERGY_CONFIG.heatingSolarByOrientation[orientation]; // kWh/m²
   const solar_gains = glassArea * 0.35 * solar_per_m2_glass; // ZTA ≈ 0.35
 
-  // Climate 2050: warmer winters → ~18% less heating needed
-  const cc_factor = climate2050 ? 0.82 : 1.00;
+  // Climate 2050: warmer winters → ~10% less heating needed
+  const cc_factor = climate2050 ? 0.90 : 1.00;
 
   const heating = Math.max(0,
     (transmission + vent_loss - internal_gains - solar_gains) * cc_factor
@@ -264,15 +267,13 @@ function calcAll(inputs) {
   const coolingPurch   = coolingThermal   / hcSys.copCool;
   const heatingPurch   = heatingThermal   / hcSys.copHeat;
 
-  // --- CO2 (kg/year) ---
-  // Electrical consumption uses grid CO2 factor
-  const elecConsumed = lighting + ventilationElec + coolingPurch + heatingPurch * (1 - hcSys.svFraction) + hotWaterPurch * (1 - hcSys.svFraction) + appliances + media + lift;
-  // District heating fraction uses lower CO2 factor
-  const svHeatThermal = (heatingThermal + hotWaterThermal) * hcSys.svFraction;
-  const co2kg = elecConsumed * ENERGY_CONFIG.co2Electricity + svHeatThermal * ENERGY_CONFIG.co2DistrictHeat;
-
   const total    = lighting + ventilationElec + coolingPurch + heatingPurch + hotWaterPurch + appliances + media + lift;
   const perM2    = total / size;
+
+  // --- CO2 (kg/year) ---
+  // SV systems use CO2-equivalent COP (2.38), so total purchased already encodes SV CO2 impact.
+  // CO2 = total × co2Electricity works uniformly for all system types.
+  const co2kg = total * ENERGY_CONFIG.co2Electricity;
 
   return {
     hotWater:    Math.round(hotWaterPurch),

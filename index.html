@@ -339,6 +339,7 @@
         <div class="mc-label" data-nl="Totaal verbruik" data-en="Total use">Totaal verbruik</div>
         <div class="mc-big" id="mc-score">—</div>
         <div class="mc-sub">kWh / m² / jaar</div>
+        <div id="mc-total-kwh" style="font-size:.72rem;color:var(--text3);margin-top:1px">— kWh/jaar</div>
         <div style="height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-top:6px">
           <div id="mc-bar" style="height:100%;border-radius:3px;transition:width .4s,background .4s;width:0%"></div>
         </div>
@@ -654,6 +655,7 @@ function updateMetricCards(r, inp) {
   const v=r.totalPerM2;
   // Score
   document.getElementById('mc-score').textContent=v;
+  document.getElementById('mc-total-kwh').textContent=r.total.toLocaleString('nl')+' kWh/jaar';
   const bar=document.getElementById('mc-bar');
   bar.style.width=Math.min(100,(v/120)*100)+'%';
   bar.style.background=v<40?'var(--green)':v<80?'var(--yellow)':'var(--red)';
@@ -738,7 +740,11 @@ function updateDetail(r, inp) {
         <span style="font-weight:700;color:var(--text)">${v} kWh</span>
         ${s?`<div style="font-size:.69rem;color:var(--text3)">${s}</div>`:''}
       </div>
-    </div>`).join('');
+    </div>`).join('')
+  + `<div style="display:flex;justify-content:space-between;padding:7px 0 2px;font-size:.85rem;font-weight:700">
+      <span style="color:var(--text2)">${L==='nl'?'Totaal':'Total'}</span>
+      <span style="color:var(--text)">${r.total.toLocaleString('nl')} kWh/jaar</span>
+    </div>`;
 }
 
 // ── BUILDING TYPE TOGGLE ─────────────────────────────────────────────────────

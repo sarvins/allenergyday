@@ -241,8 +241,8 @@ function calcHeating(size, aptType, glassRatio, ventType, floorNumber, totalFloo
   const solar_per_m2_glass = effHeatingSolar(aptType, orientation); // kWh/m²
   const solar_gains = glassArea * 0.35 * solar_per_m2_glass; // ZTA ≈ 0.35
 
-  // Climate 2050: warmer winters → ~10% less heating needed
-  const cc_factor = climate2050 ? 0.90 : 1.00;
+  // Climate 2050: warmer winters → ~5% less heating needed
+  const cc_factor = climate2050 ? 0.95 : 1.00;
 
   const heating = Math.max(0,
     (transmission + vent_loss - internal_gains - solar_gains) * cc_factor

@@ -82,8 +82,7 @@ function _render(canvas, inputs, isDark, s) {
   const { aptType, floor, totalFloors, size, glassRatio,
           construction, roofType, orientation, climate2050 } = inputs;
   const isGallery = aptType === 2;
-  const isCorner  = aptType === 3 || aptType === 4;
-  const isTwoSide = aptType === 1 || aptType === 4;
+  const isCorner  = aptType === 1; // hoekappartement: two external facades
 
   // ── Building world dimensions (metres) ───────────────────────────────────────
   const FH = 3.2;
@@ -159,8 +158,8 @@ function _render(canvas, inputs, isDark, s) {
   const FACES = [
     {id:'front', v:[0,1,2,3], n:[0,0,-1],  lum:1.00, wall:true,  main:true  },
     {id:'back',  v:[5,4,7,6], n:[0,0,+1],  lum:0.65, wall:true,  main:false },
-    {id:'right', v:[1,5,6,2], n:[+1,0,0],  lum:0.78, wall:isCorner||isTwoSide, main:false},
-    {id:'left',  v:[4,0,3,7], n:[-1,0,0],  lum:0.72, wall:isTwoSide,           main:false},
+    {id:'right', v:[1,5,6,2], n:[+1,0,0],  lum:0.78, wall:isCorner, main:false},
+    {id:'left',  v:[4,0,3,7], n:[-1,0,0],  lum:0.72, wall:isCorner, main:false},
     {id:'top',   v:[3,2,6,7], n:[0,+1,0],  lum:0.90, wall:false, main:false },
     {id:'bot',   v:[0,4,5,1], n:[0,-1,0],  lum:0.30, wall:false, main:false },
   ];
@@ -254,8 +253,8 @@ function _render(canvas, inputs, isDark, s) {
     const isGalBack = isGallery && face.id==='back';
     const hasWin = face.main
       || isGalBack                                          // gallery: two-sided
-      || (face.id==='right' && (isCorner||isTwoSide))
-      || (face.id==='left'  && isTwoSide);
+      || (face.id==='right' && isCorner)
+      || (face.id==='left'  && isCorner);
     if (!hasWin) continue;
 
     const cols = face.main ? (isGallery?6:3) : (isGalBack?4:2);

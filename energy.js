@@ -38,20 +38,17 @@ const ENERGY_CONFIG = {
     { name: 'Collectief',   reduction: 0.40 },
   ],
 
-  // Apartment types — key differences in ventilation potential + lift use
-  // ventBonus < 1 means less mechanical ventilation energy needed
-  //   Gallery (type 2): open gallery allows cross-ventilation → ~45% of normal fan energy
-  //   Open-core tower (type 1): some cross-vent through core → 85%
-  // liftFactor: gallery flats often have open stairs, lower lift dependency
-  // facadeRatio: m² facade per m² floor area (affects transmission losses)
+  // Apartment types — 3 types only (tower always has both eenzijdig + hoekappartement)
+  // ventBonus: multiplier on fan energy (gallery=0.45: 55% less due to cross-ventilation)
+  // liftFactor: gallery has open staircases → 0.35 of tower lift energy
+  // facadeRatio: m² external facade per m² floor area (drives transmission losses)
+  //   eenzijdig: 1 facade + 3 party/core walls → ~0.40
+  //   hoekappartement: 2 facades at 90° + 2 party/core walls → ~0.60
+  //   gallerij: front facade + gallery corridor facade, both external → ~0.75
   aptTypes: [
-    { name: 'Eenzijdig toren (gesloten kern)',   short: '1-zijdig toren',   ventBonus: 1.00, liftFactor: 1.00, facadeRatio: 0.65 },
-    { name: 'Tweezijdig toren (open kern)',      short: '2-zijdig toren',   ventBonus: 0.85, liftFactor: 1.00, facadeRatio: 0.55 },
-    // Gallery = two-sided: main façade + open gallery corridor on back → cross-ventilation
-    // facadeRatio higher than single-sided because BOTH sides contribute to heat loss/gain
-    { name: 'Gallerij flat',                     short: 'Gallerij',         ventBonus: 0.45, liftFactor: 0.35, facadeRatio: 0.70 },
-    { name: 'Hoekappartement toren',             short: 'Hoek toren',       ventBonus: 0.75, liftFactor: 1.00, facadeRatio: 0.90 },
-    { name: 'Hoek + tweezijdig toren',           short: 'Hoek+2-zijdig',    ventBonus: 0.65, liftFactor: 1.00, facadeRatio: 0.75 },
+    { name: 'Eenzijdig toren (gesloten kern)', short: '1-zijdig',  ventBonus: 1.00, liftFactor: 1.00, facadeRatio: 0.40 },
+    { name: 'Hoekappartement toren',           short: 'Hoek',      ventBonus: 0.80, liftFactor: 1.00, facadeRatio: 0.60 },
+    { name: 'Gallerij flat',                   short: 'Gallerij',  ventBonus: 0.45, liftFactor: 0.35, facadeRatio: 0.75 },
   ],
 
   // Cooling orientation factors (N, NE, E, SE, S, SW, W, NW) with South = 1.00
@@ -159,7 +156,7 @@ function calcCooling(size, aptType, orientation, glassRatio, construction, ventT
 
   // Ventilation system (Passive House night-purge nearly eliminates mech cooling)
   if (ventType === 2) cooling *= 0.12; // Passive House: residual only
-  else if (ventType === 1 && aptType === 2) cooling *= 0.55; // Gallery + indirect WTW
+  else if (aptType === 2 && ventType === 1) cooling *= 0.55; // Gallery + indirect WTW
   else if (aptType === 2) cooling *= 0.70; // Gallery: wind cross-vent always helps
 
   // Climate 2050: +1.7°C summer + more solar ≈ +40% cooling demand
@@ -295,5 +292,40 @@ function calcAll(inputs) {
     heatingThermal:   Math.round(heatingThermal),
     copHeat:          hcSys.copHeat,
     copCool:          hcSys.copCool,
+  };
+}
+
+// ─── BUILDING OVERVIEW ───────────────────────────────────────────────────────
+// Derives apartment count per floor from size (no extra input needed).
+// Tower: always 4 corner (hoek) + remaining single-sided (eenzijdig) per floor.
+// Gallery: through-apartments spanning the full block width.
+function calcBuildingOverview(inputs) {
+  const { size, totalFloors, buildingType } = inputs;
+
+  if (buildingType === 1) {
+    // Gallery: 60m block length, each apartment ~size m² → floor width ≈ size/8m depth
+    const perFloor = Math.max(2, Math.floor(480 / size));
+    const r = calcAll({ ...inputs, aptType: 2 });
+    return {
+      type: 'gallery',
+      perFloor,
+      r,
+      buildingTotal: Math.round(r.total * perFloor * totalFloors),
+    };
+  }
+
+  // Tower: 4 hoek (corner) + remaining eenzijdig (single-sided) per floor
+  const totalPerFloor = Math.max(6, Math.round(500 / size));
+  const hoekPerFloor  = 4;
+  const eenzPerFloor  = Math.max(2, totalPerFloor - 4);
+  const rHoek = calcAll({ ...inputs, aptType: 1 });
+  const rEenz = calcAll({ ...inputs, aptType: 0 });
+  return {
+    type: 'tower',
+    hoekPerFloor,
+    eenzPerFloor,
+    rHoek,
+    rEenz,
+    buildingTotal: Math.round((rHoek.total * hoekPerFloor + rEenz.total * eenzPerFloor) * totalFloors),
   };
 }

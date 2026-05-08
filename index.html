@@ -168,16 +168,16 @@
           <div style="grid-column:1/-1">
             <div class="plabel">
               <span class="iBtn" onclick="openDr('aptType')">i</span>
-              <span data-nl="Type appartement" data-en="Apartment type">Type appartement</span>
+              <span data-nl="Gebouwtype" data-en="Building type">Gebouwtype</span>
             </div>
-            <select id="in-aptType" onchange="onInput()">
-              <option value="0" data-nl="Eenzijdig toren (gesloten kern)" data-en="Single-sided tower (closed core)">Eenzijdig toren (gesloten kern)</option>
-              <option value="1" data-nl="Tweezijdig toren (open kern)" data-en="Two-sided tower (open core)">Tweezijdig toren (open kern)</option>
-              <option value="2" selected data-nl="Gallerij flat" data-en="Gallery flat">Gallerij flat</option>
-              <option value="3" data-nl="Hoekappartement toren" data-en="Corner tower apartment">Hoekappartement toren</option>
-              <option value="4" data-nl="Hoek + tweezijdig" data-en="Corner + two-sided">Hoek + tweezijdig</option>
-            </select>
-            <div id="aptnote" class="insight" style="margin-top:7px;font-size:.77rem"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <button id="btn-tower" onclick="setBuildingType(0)" style="padding:10px;font-size:.84rem;font-weight:700;border-radius:10px;border:2px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer;transition:all .15s">
+                🏢 <span data-nl="Toren" data-en="Tower">Toren</span>
+              </button>
+              <button id="btn-gallery" onclick="setBuildingType(1)" style="padding:10px;font-size:.84rem;font-weight:700;border-radius:10px;border:2px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;transition:all .15s">
+                🌬️ <span data-nl="Gallerij" data-en="Gallery">Gallerij</span>
+              </button>
+            </div>
           </div>
           <div>
             <div class="plabel"><span class="iBtn" onclick="openDr('floor')">i</span><span data-nl="Verdieping" data-en="Floor">Verdieping</span></div>
@@ -199,6 +199,7 @@
             <div class="plabel"><span class="iBtn" onclick="openDr('size')">i</span><span data-nl="Grootte" data-en="Size">Grootte</span>: <span id="sv" class="rv">88 m²</span></div>
             <input type="range" id="in-size" min="40" max="150" value="88" step="2" oninput="onInput();document.getElementById('sv').textContent=this.value+' m²'"/>
             <div style="display:flex;justify-content:space-between;font-size:.68rem;color:var(--text3);margin-top:2px"><span>40 m²</span><span>150 m²</span></div>
+            <div id="apt-count-legend" style="font-size:.72rem;color:var(--accent);margin-top:4px;text-align:center;font-weight:600"></div>
           </div>
           <div>
             <div class="plabel"><span class="iBtn" onclick="openDr('orientation')">i</span><span data-nl="Oriëntatie" data-en="Orientation">Oriëntatie</span></div>
@@ -380,6 +381,9 @@
       <!-- Detail rows -->
       <div class="card" style="padding:12px" id="detrows"></div>
 
+      <!-- Building overview -->
+      <div class="card" style="padding:14px" id="bov-card"></div>
+
       <!-- Insight -->
       <div class="insight" id="insightbox">Pas de parameters aan voor inzichten.</div>
 
@@ -403,7 +407,7 @@ const FIREBASE_CONFIG = {
 const APP = {
   lang:'nl', isDark:true, workshopCode:'', groupLetter:'', groupName:'',
   db:null, fbReady:false, brkChart:null, cmpChart:null,
-  compareOpen:false, lastResults:null, saveTimer:null
+  compareOpen:false, lastResults:null, saveTimer:null, buildingType:0
 };
 const GC = { A:'#ef4444',B:'#f97316',C:'#eab308',D:'#22c55e',E:'#3b82f6',F:'#a855f7' };
 
@@ -502,6 +506,7 @@ function showMain() {
   // Wait for layout then init canvas-based elements
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
     initChart();
+    setBuildingType(APP.buildingType); // style toggle buttons correctly
     if(typeof INFO!=='undefined') initTooltipContent();
     onInput();
   }));
@@ -509,8 +514,11 @@ function showMain() {
 
 // ── INPUTS ───────────────────────────────────────────────────────────────────
 function getInputs() {
+  const buildingType = APP.buildingType !== undefined ? APP.buildingType : 0;
+  const aptType = buildingType === 1 ? 2 : 0; // gallery=2, tower shows eenzijdig in 3D
   return {
-    aptType:       +document.getElementById('in-aptType').value,
+    aptType,
+    buildingType,
     floor:         +document.getElementById('in-floor').value,
     totalFloors:   +document.getElementById('in-totalFloors').value,
     size:          +document.getElementById('in-size').value,
@@ -530,8 +538,8 @@ function getInputs() {
 
 // ── MAIN LOOP ────────────────────────────────────────────────────────────────
 function onInput() {
-  let inputs, results;
-  try { inputs=getInputs(); results=calcAll(inputs); }
+  let inputs, results, overview;
+  try { inputs=getInputs(); results=calcAll(inputs); overview=calcBuildingOverview(inputs); }
   catch(e) { console.error(e); document.getElementById('insightbox').textContent='⚠️ '+e.message; return; }
   APP.lastResults=results;
 
@@ -544,6 +552,10 @@ function onInput() {
 
   // Chart
   updateChart(results);
+
+  // Building overview + apt count legend
+  updateBuildingOverview(overview, inputs);
+  updateAptCountLegend(overview);
 
   // Detail rows
   updateDetail(results, inputs);
@@ -647,7 +659,7 @@ function updateDetail(r, inp) {
     ['🔴',L==='nl'?'Verwarming':'Heating',    r.heating,   `${r.heatingThermal} kWh th · COP ${hc.copHeat}`],
     ['🟠',L==='nl'?'Warm water':'Hot water',  r.hotWater,  `${r.hotWaterThermal} kWh th · COP ${hc.copHW}`],
     ['🔵',L==='nl'?'Koeling':'Cooling',       r.cooling,   `${r.coolingThermal} kWh th · COP ${hc.copCool}`],
-    ['🩵',L==='nl'?'Ventilatie':'Ventilation',r.ventilation,inp.aptType===2?'✅ gallerij-bonus':''],
+    ['🩵',L==='nl'?'Ventilatie':'Ventilation',r.ventilation,inp.buildingType===1?'✅ gallerij-bonus':''],
     ['🟡',L==='nl'?'Verlichting':'Lighting',  r.lighting,  ''],
     ['🟢',L==='nl'?'Apparaten':'Appliances',  r.appliances,L==='nl'?'(wasmachine, droger, vaatwasser)':'(washer, dryer, dishwasher)'],
     ['🟣','Media',                            r.media,     ''],
@@ -663,6 +675,75 @@ function updateDetail(r, inp) {
     </div>`).join('');
 }
 
+// ── BUILDING TYPE TOGGLE ─────────────────────────────────────────────────────
+function setBuildingType(type) {
+  APP.buildingType = type;
+  const isGallery = type === 1;
+  const btnT = document.getElementById('btn-tower');
+  const btnG = document.getElementById('btn-gallery');
+  if (btnT) { btnT.style.background=!isGallery?'var(--accent)':'var(--bg3)'; btnT.style.color=!isGallery?'#fff':'var(--text)'; btnT.style.borderColor=!isGallery?'var(--accent)':'var(--border)'; }
+  if (btnG) { btnG.style.background=isGallery?'var(--accent)':'var(--bg3)'; btnG.style.color=isGallery?'#fff':'var(--text)'; btnG.style.borderColor=isGallery?'var(--accent)':'var(--border)'; }
+  onInput();
+}
+
+// ── BUILDING OVERVIEW ─────────────────────────────────────────────────────────
+function updateBuildingOverview(ov, inp) {
+  const el = document.getElementById('bov-card');
+  if (!el) return;
+  const L = APP.lang;
+  if (ov.type === 'gallery') {
+    el.innerHTML = `
+      <div style="font-size:.72rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">${L==='nl'?'🏗️ Gebouwoverzicht – gallerij':'🏗️ Building overview – gallery'}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div style="background:var(--bg3);border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:1.4rem;font-weight:900;color:var(--accent)">${ov.perFloor}</div>
+          <div style="color:var(--text2);font-size:.7rem">${L==='nl'?'app. per verdieping':'apts per floor'}</div>
+          <div style="font-size:.69rem;color:var(--text3);margin-top:2px">${ov.r.total.toLocaleString('nl')} kWh / app</div>
+        </div>
+        <div style="background:var(--bg3);border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:1.4rem;font-weight:900;color:#22c55e">${(ov.buildingTotal/1000).toFixed(0)}</div>
+          <div style="color:var(--text2);font-size:.7rem">MWh / ${L==='nl'?'jaar':'year'}</div>
+          <div style="font-size:.69rem;color:var(--text3);margin-top:2px">${inp.totalFloors} ${L==='nl'?'verd. ×':'floors ×'} ${ov.perFloor} app</div>
+        </div>
+      </div>`;
+  } else {
+    el.innerHTML = `
+      <div style="font-size:.72rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">${L==='nl'?'🏗️ Gebouwoverzicht – toren':'🏗️ Building overview – tower'}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+        <div style="background:var(--bg3);border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:1.1rem;font-weight:900;color:var(--accent)">${ov.hoekPerFloor} + ${ov.eenzPerFloor}</div>
+          <div style="color:var(--text2);font-size:.7rem">${L==='nl'?'hoek + 1-zijdig / verd.':'corner + 1-sided / floor'}</div>
+        </div>
+        <div style="background:var(--bg3);border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:1.1rem;font-weight:900;color:#22c55e">${(ov.buildingTotal/1000).toFixed(0)}</div>
+          <div style="color:var(--text2);font-size:.7rem">MWh / ${L==='nl'?'jaar':'year'}</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:.79rem">
+        <div style="padding:8px;background:var(--bg3);border-radius:6px">
+          <div style="color:var(--text2);font-size:.69rem;margin-bottom:2px">1-${L==='nl'?'zijdig':'sided'} (${ov.eenzPerFloor}×)</div>
+          <div style="font-weight:700">${ov.rEenz.total.toLocaleString('nl')} kWh</div>
+          <div style="font-size:.68rem;color:var(--text3)">${ov.rEenz.totalPerM2} kWh/m²</div>
+        </div>
+        <div style="padding:8px;background:var(--bg3);border-radius:6px">
+          <div style="color:var(--text2);font-size:.69rem;margin-bottom:2px">${L==='nl'?'Hoek':'Corner'} (${ov.hoekPerFloor}×)</div>
+          <div style="font-weight:700">${ov.rHoek.total.toLocaleString('nl')} kWh</div>
+          <div style="font-size:.68rem;color:var(--text3)">${ov.rHoek.totalPerM2} kWh/m²</div>
+        </div>
+      </div>`;
+  }
+}
+function updateAptCountLegend(ov) {
+  const el = document.getElementById('apt-count-legend');
+  if (!el) return;
+  const L = APP.lang;
+  if (ov.type === 'gallery') {
+    el.textContent = `${ov.perFloor} ${L==='nl'?'app. per verdieping':'apts per floor'}`;
+  } else {
+    el.textContent = `${ov.hoekPerFloor} ${L==='nl'?'hoek':'corner'} + ${ov.eenzPerFloor} ${L==='nl'?'eenzijdig':'1-sided'} = ${ov.hoekPerFloor+ov.eenzPerFloor} ${L==='nl'?'per verdieping':'per floor'}`;
+  }
+}
+
 // ── CONTEXT NOTES ────────────────────────────────────────────────────────────
 function updateAptNote(inp) {
   if(typeof INFO==='undefined') return;
@@ -676,12 +757,13 @@ function updateVentNote(inp) {
   document.getElementById('ventnote').textContent=`U-gevel ${sys.uWall} · U-glas ${sys.uGlass} W/m²K · WTW ${Math.round(sys.wtw*100)}%`;
 }
 function updateLiftInfo(r, inp) {
-  const apt=ENERGY_CONFIG.aptTypes[inp.aptType], L=APP.lang;
-  const pct=Math.round((1-apt.liftFactor)*100);
-  const el=document.getElementById('liftinfo');
-  el.innerHTML=inp.aptType===2
-    ?`🛗 ${L==='nl'?'Gallerij':'Gallery'}: ${pct}% ${L==='nl'?'minder liftgebruik':'less lift use'} — <strong>${r.lift} kWh/jaar</strong>`
-    :`🛗 ${L==='nl'?'Verdieping':'Floor'} ${inp.floor}/${inp.totalFloors} — <strong>${r.lift} kWh/jaar</strong>`;
+  const L = APP.lang, el = document.getElementById('liftinfo');
+  if (inp.buildingType === 1) {
+    const pct = Math.round((1 - ENERGY_CONFIG.aptTypes[2].liftFactor) * 100);
+    el.innerHTML = `🛗 ${L==='nl'?'Gallerij':'Gallery'}: ${pct}% ${L==='nl'?'minder liftgebruik':'less lift use'} — <strong>${r.lift} kWh/jaar</strong>`;
+  } else {
+    el.innerHTML = `🛗 ${L==='nl'?'Verdieping':'Floor'} ${inp.floor}/${inp.totalFloors} — <strong>${r.lift} kWh/jaar</strong>`;
+  }
 }
 function updateInsight(r, inp) {
   const L=APP.lang, tips=[];
@@ -689,7 +771,7 @@ function updateInsight(r, inp) {
   if(r.cooling>r.heating*2) tips.push(L==='nl'?'🔵 Koeling domineert — minder glas of zwaarder constructie helpt.':'🔵 Cooling dominates — less glass or heavier construction helps.');
   if(inp.orientation>=4&&inp.orientation<=6&&inp.glassRatio>0.55) tips.push(L==='nl'?'☀️ Veel glas op zonnige gevel → grote koelbelasting, zeker in 2050.':'☀️ Much glazing on sunny façade → high cooling load, especially in 2050.');
   if(inp.aptType===2) tips.push(L==='nl'?'🌬️ Gallerij = tweezijdig: voor- én achtergevel open → kruisventilatie actief. ~55% minder fan-energie, ~65% minder liftenergie. Twee gevels = iets meer transmissieverlies winter.':'🌬️ Gallery = two-sided: front façade + open gallery corridor → cross-ventilation active. ~55% less fan energy, ~65% less lift. Two façades = slightly more winter transmission loss.');
-  if(inp.floor>=8&&inp.aptType!==2) tips.push(L==='nl'?`🛗 Verdieping ${inp.floor}: liftenergie (${r.lift} kWh/j) wordt significant.`:`🛗 Floor ${inp.floor}: lift energy (${r.lift} kWh/yr) becomes significant.`);
+  if(inp.floor>=8&&inp.buildingType!==1) tips.push(L==='nl'?`🛗 Verdieping ${inp.floor}: liftenergie (${r.lift} kWh/j) wordt significant.`:`🛗 Floor ${inp.floor}: lift energy (${r.lift} kWh/yr) becomes significant.`);
   if(inp.climate2050&&r.cooling>500) tips.push(L==='nl'?'🌡️ In 2050 stijgt koeling sterk. Gallerij + Passive House meest weerbaar.':'🌡️ In 2050 cooling rises sharply. Gallery + Passive House most resilient.');
   if(r.appliances+r.media>r.heating+r.cooling) tips.push(L==='nl'?'💡 Gebruikersapparaten > klimaatinstallaties — gedrag telt!':'💡 User appliances > climate systems — behaviour matters!');
   if(inp.showerWTW===0) tips.push(L==='nl'?'🚿 Douche WTW bespaart 30–40% warm water energie.':'🚿 Shower HRV saves 30–40% hot water energy.');
@@ -715,7 +797,8 @@ function closeDr(){document.getElementById('drawer').classList.remove('open');do
 // ── TOOLTIPS ─────────────────────────────────────────────────────────────────
 function initTooltipContent() {
   if(typeof INFO==='undefined') return;
-  const aptType=+document.getElementById('in-aptType').value;
+  const bType = APP.buildingType !== undefined ? APP.buildingType : 0;
+  const aptType = bType === 1 ? 2 : 0;
   INFO._cache={};
   Object.keys(INFO).forEach(key=>{
     const info=INFO[key], L=APP.lang;

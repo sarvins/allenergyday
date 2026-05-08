@@ -10,25 +10,23 @@ const INFO = {
       tooltip: 'Bepaalt de bouwvorm, ventilatiemogelijkheden en liftgebruik. Gallerij-flats hebben unieke voordelen voor koeling en ventilatie.',
       aptNote: [
         'Eenzijdig toren: alle verse lucht via mechanisch systeem — geen doorstroming mogelijk. Hogere ventilatie-energie, sterk afhankelijk van WTW-systeem.',
-        'Tweezijdig (open kern): beperkte kruisventilatie via het open trappenhuis. Gevel aan twee kanten helpt lichtopbrengst.',
-        '🌬️ Gallerij-flat is tweezijdig: hoofdgevel (ramen, voorkant) + open galerijgang (achterkant). Die twee open zijden creëren kruisventilatie — lucht stroomt door het appartement van voor naar achter. Resultaat: ~55% minder ventilatie-elektriciteit en ~65% minder liftenergie dan toren. Let op: twee gevels betekent ook meer transmissieverliezen in de winter.',
         'Hoekappartement: twee loodrechte gevels geven meer daglicht én kruisventilatie-mogelijkheid, maar ook een grotere koelbelasting op de zonhoek.',
-        'Hoek + tweezijdig: maximale geveloppervlak en ventilatiepotentie, maar ook de meeste blootstelling aan zon én wind — hogere koeling én meer verliesoppervlak.',
+        '🌬️ Gallerij-flat is tweezijdig: hoofdgevel (ramen, voorkant) + open galerijgang (achterkant). Die twee open zijden creëren kruisventilatie — lucht stroomt door het appartement van voor naar achter. Resultaat: ~55% minder ventilatie-elektriciteit en ~65% minder liftenergie dan toren. Let op: twee gevels betekent ook meer transmissieverliezen in de winter.',
       ],
       full: `<h3>Type appartement</h3>
 <p>De bouwvorm is een van de meest bepalende factoren voor energieverbruik — niet alleen via isolatie, maar via de <strong>mogelijkheid tot passieve ventilatie en koeling</strong>.</p>
 
 <h4>🌬️ Gallerij — tweezijdig appartement</h4>
-<p>Een galerijflat is <strong>tweezijdig</strong>: de hoofdgevel (ramen) aan de voorkant, en een open galerijgang aan de achterkant. Beide zijden zijn blootgesteld aan de buitenlucht. Die twee open zijden maken echte <em>kruisventilatie</em> mogelijk: frisse buitenlucht stroomt via de voorgevel door het appartement en vertrekt via de open galerij.</p>
+<p>Een galerijflat is <strong>tweezijdig</strong>: de hoofdgevel (ramen) aan de voorkant, en een open galerijgang aan de achterkant. Beide zijden zijn blootgesteld aan de buitenlucht. Die twee open zijden maken echte <em>kruisventilatie</em> mogelijk.</p>
 <ul>
-  <li><strong>~55% minder ventilatie-elektriciteit</strong> — wind drijft ventilatie aan, minder mechanische hulp nodig</li>
-  <li><strong>~65% minder liftenergie</strong> — open trappenhuizen worden vaker gebruikt dan de lift</li>
-  <li>Betere passieve nachtkoeling: warme lucht verdwijnt via de galerij</li>
-  <li>Let op: twee gevels = ook meer transmissieverliezen in de winter dan eenzijdig</li>
+  <li><strong>~55% minder ventilatie-elektriciteit</strong> — wind drijft ventilatie aan</li>
+  <li><strong>~65% minder liftenergie</strong> — open trappenhuizen worden vaker gebruikt</li>
+  <li>Betere passieve nachtkoeling</li>
+  <li>Let op: twee gevels = ook meer transmissieverliezen in de winter</li>
 </ul>
 
-<h4>🔲 Eenzijdig vs. Tweezijdig (toren)</h4>
-<p>Een torentje met gevel aan twee kanten (tweezijdig of hoek) heeft enige kruisventilatie-potentie via het trappenhuis, maar geen echte doorstroming zoals bij de gallerij. Meer glasoppervlak op twee kanten betekent meer koelbelasting op de zonzijde én meer warmteverlies in de winter.</p>
+<h4>🔲 Toren: eenzijdig vs. hoekappartement</h4>
+<p>Een toren heeft altijd 4 hoekappartementen (twee loodrechte gevels) en een aantal eenzijdige appartementen (één gevel, rest naar kern). Hoekappartementen hebben meer daglicht maar ook hogere koelbelasting op de zonhoek.</p>
 
 <h4>🛗 Liftenergie per type</h4>
 <table style="width:100%;border-collapse:collapse;font-size:0.82rem;margin-top:8px">
@@ -41,10 +39,8 @@ const INFO = {
       tooltip: 'Determines building form, ventilation potential and lift use. Gallery flats have unique advantages for cooling and ventilation.',
       aptNote: [
         'Single-sided tower: all fresh air via mechanical system — no cross-ventilation. Higher fan energy, strongly dependent on heat recovery system.',
-        'Two-sided (open core): limited cross-ventilation via open stairwell. Façade on two sides improves daylight.',
-        '🌬️ Gallery flat is two-sided: main façade (windows, front) + open gallery corridor (back). Those two open sides create cross-ventilation — air flows through the apartment front-to-back. Result: ~55% less ventilation electricity and ~65% less lift energy than a tower. Note: two façades also mean more transmission losses in winter.',
         'Corner apartment: two perpendicular façades give more daylight and cross-ventilation, but also higher cooling load at the sun-facing corner.',
-        'Corner + two-sided: maximum façade area and ventilation potential, but also most exposure to sun and wind — higher cooling AND more heat loss.',
+        '🌬️ Gallery flat is two-sided: main façade (windows, front) + open gallery corridor (back). Those two open sides create cross-ventilation — air flows through the apartment front-to-back. Result: ~55% less ventilation electricity and ~65% less lift energy than a tower. Note: two façades also mean more transmission losses in winter.',
       ],
       full: `<h3>Apartment type</h3>
 <p>Building form is one of the most decisive factors for energy use — not just through insulation, but through the <strong>potential for passive ventilation and cooling</strong>.</p>
@@ -67,10 +63,8 @@ const INFO = {
       tooltip: 'Hogere verdiepingen hebben meer liftenergie maar minder Urban Heat Island effect. Wind koelt de gevel beter op hoogte.',
       aptNote: [
         'Toren, eenzijdig: liftenergie neemt lineair toe met verdieping. Op verdieping 15 gebruik je ~3× meer liftenergie dan op verdieping 5.',
-        'Toren, tweezijdig: zelfde liftpatroon. Open kern geeft iets minder liftstimulans.',
-        '✅ Gallerij: open trappenhuizen en lage gebouwhoogte reduceren liftenergie sterk — factor ~35% van een toren.',
         'Hoekappartement: liftverbruik gelijk aan standaard toren maar hoger windblootstelling op de hoek bij hogere verdiepingen.',
-        'Hoek + tweezijdig: hogere windblootstelling gunstig voor passieve koeling op hogere verdiepingen.',
+        '✅ Gallerij: open trappenhuizen en lage gebouwhoogte reduceren liftenergie sterk — factor ~35% van een toren.',
       ],
       full: `<h3>Verdieping & hoogte</h3>
 
@@ -97,10 +91,8 @@ const INFO = {
       tooltip: 'Higher floors mean more lift energy but less Urban Heat Island effect. Wind cools the façade better at height.',
       aptNote: [
         'Single-sided tower: lift energy increases linearly with floor. At floor 15 you use ~3× more lift energy than floor 5.',
-        'Two-sided tower: same lift pattern. Open core offers slightly less lift incentive.',
-        '✅ Gallery: open staircases and low building height reduce lift energy strongly — factor ~35% of a tower.',
         'Corner apartment: lift use equal to standard tower but higher wind exposure at corner on upper floors.',
-        'Corner + two-sided: higher wind exposure beneficial for passive cooling on upper floors.',
+        '✅ Gallery: open staircases and low building height reduce lift energy strongly — factor ~35% of a tower.',
       ],
       full: `<h3>Floor & height</h3>
 <h4>🛗 Lift energy</h4>
@@ -141,10 +133,8 @@ const INFO = {
       tooltip: 'Oriëntatie heeft enorme invloed op koeling: een zuidgevel heeft tot 5× meer koelbelasting dan een noordgevel. Verwarming verschilt minder.',
       aptNote: [
         'Eenzijdig toren: oriëntatie bepaalt alles — er is maar één gevel. Zuid is het warmst in de zomer.',
-        'Tweezijdig toren: twee tegenoverliggende gevels balanceren de oriëntatie-effecten gedeeltelijk.',
-        'Gallerij: de gallerij-zijde heeft minder directe zoninstraling. De hoofdoriëntatie is de gevel tegenover de galerij.',
         'Hoekappartement: twee loodrechte gevels → oriëntatie is de hoekrichting. ZO-ZW hoek is de warmste combinatie.',
-        'Hoek + tweezijdig: drie of meer gevels, gemiddelde oriëntatie-impact maar meer totale blootstelling.',
+        'Gallerij: de gallerij-zijde heeft minder directe zoninstraling. De hoofdoriëntatie is de gevel tegenover de galerij.',
       ],
       full: `<h3>Oriëntatie</h3>
 <p>Oriëntatie is de meest onderschatte parameter voor <strong>koeling</strong>. Een zuidgevel ontvangt tot 5× meer zonne-instraling in de zomer dan een noordgevel.</p>
@@ -163,10 +153,8 @@ const INFO = {
       tooltip: 'Orientation has enormous impact on cooling: a south façade can have up to 5× more cooling load than a north façade.',
       aptNote: [
         'Single-sided tower: orientation determines everything — there is only one façade. South is hottest in summer.',
-        'Two-sided tower: opposite façades partially balance the orientation effects.',
-        'Gallery: the gallery side has less direct solar radiation. Main orientation is the façade opposite the gallery.',
         'Corner apartment: two perpendicular façades — orientation is the corner direction. SE-SW corner is warmest.',
-        'Corner + two-sided: three or more façades, averaged orientation impact but more total exposure.',
+        'Gallery: the gallery side has less direct solar radiation. Main orientation is the façade opposite the gallery.',
       ],
       full: `<h3>Orientation</h3>
 <p>Orientation is the most underestimated parameter for <strong>cooling</strong>. A south façade receives up to 5× more solar radiation in summer than a north façade. For heating, south orientation provides solar gains in winter, reducing heating demand.</p>`,
@@ -180,10 +168,8 @@ const INFO = {
       tooltip: 'Meer glas = meer daglicht (minder verlichting), maar ook meer zonnewarmte (meer koeling) en meer warmteverlies (meer verwarming). De balans is oriëntatie-afhankelijk.',
       aptNote: [
         'Eenzijdig toren: hoog glaspercentage op zuidgevel is risicovol voor oververhitting zonder zonwering.',
-        'Tweezijdig toren: glas op beide gevels geeft meer flexibiliteit — windzijde cooler, zonnezijde warmer.',
-        '🟡 Gallerij: de galerij-overhang werkt als natuurlijke zonwering voor het onderste deel van de gevel. Meer glas minder problematisch dan bij een vrije toren.',
         'Hoekappartement: glaspercentage op twee richtingen — meer strategisch kiezen welke zijde meer glas krijgt.',
-        'Hoek + tweezijdig: hoog glaspercentage op meerdere gevels kan leiden tot sterk verhoogde koelkosten.',
+        '🟡 Gallerij: de galerij-overhang werkt als natuurlijke zonwering voor het onderste deel van de gevel. Meer glas minder problematisch dan bij een vrije toren.',
       ],
       full: `<h3>Glaspercentage</h3>
 <p>Glas is een dubbelzinnig materaal: het laat licht door (positief), maar ook warmte (positief in winter, negatief in zomer) en verliest meer warmte dan een goed geïsoleerde muur (negatief in winter).</p>
@@ -203,10 +189,8 @@ const INFO = {
       tooltip: 'More glass = more daylight (less lighting), but also more solar heat gain (more cooling) and more heat loss (more heating). The balance is orientation-dependent.',
       aptNote: [
         'Single-sided tower: high glass % on south façade risks overheating without shading.',
-        'Two-sided tower: glass on both façades allows more flexibility.',
-        '🟡 Gallery: the gallery overhang acts as natural shading. Higher glass % less problematic than free-standing tower.',
         'Corner apartment: glass on two directions — strategic choice which side gets more glazing.',
-        'Corner + two-sided: high glass % on multiple façades can lead to significantly higher cooling costs.',
+        '🟡 Gallery: the gallery overhang acts as natural shading. Higher glass % less problematic than free-standing tower.',
       ],
       full: `<h3>Glass percentage</h3>
 <p>Glass is ambiguous: it admits light (positive), but also heat (positive in winter, negative in summer) and loses more heat than well-insulated wall (negative in winter).</p>
@@ -281,10 +265,8 @@ const INFO = {
       tooltip: 'Ventilatiesysteem bepaalt warmteterugwinning (WTW) én de thermische kwaliteit van de schil (U-waarden). Passive House combineert 90% WTW met superieure isolatie.',
       aptNote: [
         '⚠️ Eenzijdig toren met nat.+mech.: geen kruisventilatie mogelijk. Volledig afhankelijk van mechanisch systeem — hogere ventilatie-elektriciteit.',
-        'Tweezijdig toren: beperkte ondersteuning van natuurlijke ventilatie via open kern.',
-        '✅ Gallerij + nat.+mech.: de open galerij compenseert het gebrek aan WTW door passieve kruisventilatie. Dit systeem werkt goed voor gallerij-flats.',
         'Hoekappartement: twee gevels helpen bij indirecte WTW of balans-systemen.',
-        'Hoek + tweezijdig: beste kandidaat voor passieve systemen door maximale ventilatiemogelijkheden.',
+        '✅ Gallerij + nat.+mech.: de open galerij compenseert het gebrek aan WTW door passieve kruisventilatie. Dit systeem werkt goed voor gallerij-flats.',
       ],
       full: `<h3>Ventilatiesysteem</h3>
 
@@ -307,10 +289,8 @@ const INFO = {
       tooltip: 'Ventilation system determines heat recovery (HRV) AND shell quality (U-values). Passive House combines 90% HRV with superior insulation.',
       aptNote: [
         '⚠️ Single-sided tower with nat.+mech.: no cross-ventilation possible. Fully dependent on mechanical system — higher fan electricity.',
-        'Two-sided tower: limited support from natural ventilation via open core.',
-        '✅ Gallery + nat.+mech.: open gallery compensates for lack of HRV through passive cross-ventilation. Works well for gallery flats.',
         'Corner apartment: two façades help with indirect HRV or balanced systems.',
-        'Corner + two-sided: best candidate for passive systems due to maximum ventilation options.',
+        '✅ Gallery + nat.+mech.: open gallery compensates for lack of HRV through passive cross-ventilation. Works well for gallery flats.',
       ],
       full: `<h3>Ventilation system</h3>
 <p>The ventilation system determines two key things: <strong>heat recovery efficiency</strong> and <strong>building shell quality</strong> (U-values are linked to the system in the scenarios).</p>
@@ -473,10 +453,8 @@ const INFO = {
       tooltip: 'Klimaatscenario 2050 simuleert +1.7°C warmer zomer, +1.4°C warmer winter en meer zon. Gevolg: +40% koeling, −18% verwarming, én sterker Urban Heat Island effect.',
       aptNote: [
         'Eenzijdig toren: in 2050 raakt een slecht ontworpen toren met veel zuidglas snel oververhit. Cooling wordt dominant.',
-        'Tweezijdig toren: iets beter bestand door windventilatie, maar nog steeds kwetsbaar bij hoog glaspercentage.',
-        '✅ Gallerij: de kruisventilatie van een gallerij-flat is het meest robuust in 2050 — de bouwvorm koelt passief ook bij hogere temperaturen.',
         'Hoekappartement: twee zonzijden betekent meer risico in 2050 — thermische massa wordt kritisch.',
-        'Hoek + tweezijdig: hoogste risico in 2050 scenario door maximale blootstelling. Passive House ventilatie essentieel.',
+        '✅ Gallerij: de kruisventilatie van een gallerij-flat is het meest robuust in 2050 — de bouwvorm koelt passief ook bij hogere temperaturen.',
       ],
       full: `<h3>Klimaatscenario 2050</h3>
 <p>Gebaseerd op het KNMI klimaatscenario voor Nederland (W+-scenario):</p>
@@ -504,10 +482,8 @@ const INFO = {
       tooltip: '2050 climate scenario simulates +1.7°C warmer summer, +1.4°C warmer winter and more sun. Effect: +40% cooling, −18% heating, stronger Urban Heat Island.',
       aptNote: [
         'Single-sided tower: in 2050 a poorly designed tower with much south glass quickly overheats. Cooling becomes dominant.',
-        'Two-sided tower: slightly more resistant through wind ventilation, but still vulnerable at high glass %.',
-        '✅ Gallery: cross-ventilation is most robust in 2050 — the building type passively cools even at higher temperatures.',
         'Corner apartment: two sun-facing sides means more risk in 2050 — thermal mass becomes critical.',
-        'Corner + two-sided: highest risk in 2050 due to maximum exposure. Passive House ventilation essential.',
+        '✅ Gallery: cross-ventilation is most robust in 2050 — the building type passively cools even at higher temperatures.',
       ],
       full: `<h3>Climate scenario 2050</h3>
 <p>Based on KNMI climate scenario for the Netherlands: +1.7°C warmer summers, +1.4°C warmer winters, more solar radiation.</p>

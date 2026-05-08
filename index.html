@@ -345,6 +345,9 @@
         <div id="mc-rating" style="font-size:.7rem;color:var(--text3);margin-top:3px"></div>
       </div>
 
+      <!-- WEii thresholds -->
+      <div class="card" style="padding:14px" id="weii-card"></div>
+
       <!-- CO2 + user row -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div class="mc">
@@ -549,6 +552,7 @@ function onInput() {
 
   // Metric cards
   updateMetricCards(results, inputs);
+  updateWeii(results);
 
   // Chart
   updateChart(results);
@@ -580,6 +584,68 @@ function onInput() {
   APP.saveTimer=setTimeout(()=>{
     if(APP.fbReady&&APP.db) APP.db.ref(dbPath()).set({groupName:APP.groupName,letter:APP.groupLetter,inputs,results,savedAt:Date.now()}).catch(()=>{});
   },1800);
+}
+
+// ── WEII THRESHOLDS (Woonfunctie – Appartement) ──────────────────────────────
+const WEII = [
+  { max:  45, nl: 'Paris Proof', en: 'Paris Proof', color: '#16a34a' },
+  { max:  65, nl: 'Zeer zuinig', en: 'Very efficient', color: '#84cc16' },
+  { max: 100, nl: 'Zuinig',      en: 'Efficient',      color: '#eab308' },
+  { max: 150, nl: 'Gemiddeld',   en: 'Average',         color: '#f97316' },
+  { max: 180, nl: 'Onzuinig',    en: 'Inefficient',     color: '#ef4444' },
+  { max: Infinity, nl: 'Zeer onzuinig', en: 'Very inefficient', color: '#dc2626' },
+];
+const WEII_SCALE = 200; // display cap
+
+function updateWeii(r) {
+  const el = document.getElementById('weii-card');
+  if (!el) return;
+  const score = r.totalPerM2, L = APP.lang;
+  const cat = WEII.find(t => score <= t.max) || WEII[WEII.length-1];
+
+  // Colored bar segments
+  let segs = '';
+  WEII.forEach((t, i) => {
+    const from = i === 0 ? 0 : WEII[i-1].max;
+    const to   = Math.min(isFinite(t.max) ? t.max : WEII_SCALE, WEII_SCALE);
+    const w    = ((to - from) / WEII_SCALE * 100).toFixed(1);
+    segs += `<div style="width:${w}%;height:100%;background:${t.color}"></div>`;
+  });
+
+  // Marker position (clamped 1–99%)
+  const pos = Math.min(99, Math.max(1, score / WEII_SCALE * 100)).toFixed(1);
+
+  // Tick labels — positions as % of scale
+  const ticks = [45, 65, 100, 150, 180];
+  const tickHtml = ticks.map(v =>
+    `<span style="position:absolute;left:${(v/WEII_SCALE*100).toFixed(1)}%;transform:translateX(-50%)">${v}</span>`
+  ).join('');
+
+  el.innerHTML = `
+    <div style="font-size:.72rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">WEii – ${L==='nl'?'Appartement':'Apartment'}</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <div style="font-size:2rem;font-weight:900;line-height:1;color:${cat.color}">${score}</div>
+      <div>
+        <div style="font-weight:700;color:${cat.color};font-size:.9rem">${cat[L]||cat.nl}</div>
+        <div style="font-size:.7rem;color:var(--text3)">kWh/m²/jaar</div>
+      </div>
+    </div>
+    <div style="position:relative;margin-bottom:20px">
+      <div style="display:flex;height:12px;border-radius:6px;overflow:hidden">${segs}</div>
+      <div style="position:absolute;top:-3px;left:${pos}%;transform:translateX(-50%);transition:left .4s;pointer-events:none">
+        <div style="width:3px;height:18px;background:var(--text);border-radius:2px;margin:0 auto;box-shadow:0 0 4px rgba(0,0,0,.5)"></div>
+      </div>
+    </div>
+    <div style="position:relative;height:14px;font-size:.62rem;color:var(--text3)">${tickHtml}</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:10px">
+      ${WEII.map(t => {
+        const active = t === cat;
+        return `<div style="padding:5px 6px;border-radius:6px;background:${active?t.color:t.color+'22'};border:1px solid ${t.color}${active?'':'55'}">
+          <div style="font-size:.63rem;font-weight:700;color:${active?'#fff':t.color};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t[L]||t.nl}</div>
+          <div style="font-size:.6rem;color:${active?'rgba(255,255,255,.75)':'var(--text3)'}">≤ ${isFinite(t.max)?t.max:'∞'}</div>
+        </div>`;
+      }).join('')}
+    </div>`;
 }
 
 // ── METRIC CARDS ─────────────────────────────────────────────────────────────

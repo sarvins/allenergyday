@@ -80,15 +80,18 @@ function _render(canvas, inputs, isDark, s) {
   ctx.scale(DPR, DPR);
 
   const { aptType, floor, totalFloors, size, glassRatio,
-          construction, roofType, orientation, climate2050 } = inputs;
+          construction, roofType, orientation, climate2050, buildingType } = inputs;
   const isGallery = aptType === 2;
-  const isCorner  = aptType === 1; // hoekappartement: two external facades
+  // Tower always has corner (hoek) apartments → show windows on side faces
+  const isCorner  = aptType === 1 || (!isGallery && inputs.buildingType === 0);
 
   // ── Building world dimensions (metres) ───────────────────────────────────────
   const FH = 3.2;
   const bH = FH * totalFloors;
-  const bW = isGallery ? 20 : 14;
-  const bD = isGallery ? 8  : 14;
+  // Tower: footprint grows with apartment size (bigger apts = larger floor plate)
+  // Gallery: fixed slab length, depth grows with size (larger apts = deeper)
+  const bW = isGallery ? 20 : Math.round(Math.max(10, Math.sqrt(size * 3)));
+  const bD = isGallery ? Math.round(Math.max(6, size / 10)) : bW;
   const hw = bW/2, hd = bD/2;
   const midY = bH/2;  // orbit target: vertical center of building
 
@@ -250,14 +253,16 @@ function _render(canvas, inputs, isDark, s) {
     if (face.id === 'bot') continue;
 
     // ── Wall: decide which faces get windows ──
-    const isGalBack = isGallery && face.id==='back';
+    const isGalBack   = isGallery && face.id==='back';
+    const isTowerBack = !isGallery && buildingType === 0 && face.id==='back';
     const hasWin = face.main
-      || isGalBack                                          // gallery: two-sided
+      || isGalBack
+      || isTowerBack
       || (face.id==='right' && isCorner)
       || (face.id==='left'  && isCorner);
     if (!hasWin) continue;
 
-    const cols = face.main ? (isGallery?6:3) : (isGalBack?4:2);
+    const cols = face.main ? (isGallery?6:3) : isGalBack ? 4 : isTowerBack ? 3 : isGallery ? 2 : 3;
     const wWf  = Math.min(0.84, glassRatio*1.78) / cols;
     const wHf  = Math.min(0.75, glassRatio*1.55);
     const gapW = (1/cols - wWf) / 2;

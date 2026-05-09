@@ -240,12 +240,16 @@
     /* ── MAIN GRID ──────────────────────────────────────────────────── */
     #mgrid {
       display:grid;
-      grid-template-columns: 380px 1fr 360px;
+      grid-template-columns: 340px 1fr 560px;
+      grid-template-rows: 1fr;
       gap:10px; padding:10px;
       width:100%;
+      height: calc(100vh - 54px);
       min-width: 0;
     }
-    #mgrid > * { min-width: 0; overflow: hidden; }
+    #mgrid > * { min-width: 0; overflow: hidden; height: 100%; }
+    /* Left inputs panel scrolls internally */
+    #mgrid > *:first-child { overflow-y: auto; }
 
     /* ── MINI BAR ───────────────────────────────────────────────────── */
     .mini-bar { height:5px; border-radius:3px; overflow:hidden; background:rgba(255,255,255,0.06); margin-top:4px; display:flex; }
@@ -371,7 +375,7 @@
   <div id="mgrid">
 
     <!-- ══ LEFT: Inputs ══ -->
-    <div style="display:flex;flex-direction:column;gap:10px">
+    <div style="display:flex;flex-direction:column;gap:10px;height:100%">
 
       <div style="display:flex;align-items:center;justify-content:space-between;padding:2px 0">
         <span style="font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent)">· 01 Inputs</span>
@@ -540,7 +544,7 @@
     </div><!-- /inputs -->
 
     <!-- ══ CENTER: Building canvas ══ -->
-    <div class="card" style="overflow:hidden;display:flex;flex-direction:column;position:relative;min-height:680px;min-width:0">
+    <div class="card" style="overflow:hidden;display:flex;flex-direction:column;position:relative;min-width:0">
       <!-- Telemetry overlays -->
       <div style="position:absolute;top:14px;left:16px;font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;display:flex;flex-direction:column;gap:3px;z-index:2;pointer-events:none">
         <span style="color:var(--accent)">· 02 <span data-nl="Massing" data-en="Massing">Massing</span></span>
@@ -557,73 +561,85 @@
       </div>
     </div>
 
-    <!-- ══ RIGHT: Results ══ -->
-    <div style="display:flex;flex-direction:column;gap:10px">
+    <!-- ══ RIGHT: Results — 2 sub-columns ══ -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;overflow:hidden;height:100%">
 
-      <div style="font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);padding:2px 0">· 03 Results</div>
+      <!-- ── Sub-col A: scores & metrics ── -->
+      <div style="display:flex;flex-direction:column;gap:10px;overflow-y:auto;height:100%;padding-right:2px">
 
-      <!-- Score card -->
-      <div class="mc">
-        <div class="mc-label" data-nl="Totaal verbruik" data-en="Total use">Totaal verbruik</div>
-        <div class="mc-big" id="mc-score">—</div>
-        <div class="mc-sub" data-nl="kWh / m² / jaar" data-en="kWh / m² / yr">kWh / m² / jaar</div>
-        <div id="mc-total-kwh" style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-top:2px">— kWh/jaar</div>
-        <div style="height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;margin-top:8px">
-          <div id="mc-bar" style="height:100%;border-radius:2px;transition:width .4s,background .4s;width:0%"></div>
+        <div style="font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);padding:2px 0;flex-shrink:0">· 03 Results</div>
+
+        <!-- Score card -->
+        <div class="mc" style="flex-shrink:0">
+          <div class="mc-label" data-nl="Totaal verbruik" data-en="Total use">Totaal verbruik</div>
+          <div class="mc-big" id="mc-score">—</div>
+          <div class="mc-sub" data-nl="kWh / m² / jaar" data-en="kWh / m² / yr">kWh / m² / jaar</div>
+          <div id="mc-total-kwh" style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-top:2px">— kWh/jaar</div>
+          <div style="height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;margin-top:8px">
+            <div id="mc-bar" style="height:100%;border-radius:2px;transition:width .4s,background .4s;width:0%"></div>
+          </div>
+          <div id="mc-rating" style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-top:3px;letter-spacing:.5px"></div>
         </div>
-        <div id="mc-rating" style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-top:3px;letter-spacing:.5px"></div>
-      </div>
 
-      <!-- WEii -->
-      <div class="card" style="padding:14px" id="weii-card"></div>
+        <!-- WEii -->
+        <div class="card" style="padding:14px;flex-shrink:0" id="weii-card"></div>
 
-      <!-- CO2 + user -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div class="mc">
+        <!-- CO2 -->
+        <div class="mc" style="flex-shrink:0">
           <div class="mc-label">CO₂</div>
           <div class="mc-big" id="mc-co2" style="color:var(--amber);font-size:1.5rem">—</div>
           <div class="mc-sub" data-nl="kg / jaar" data-en="kg / yr">kg / jaar</div>
           <div id="mc-co2sub" style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-top:3px"></div>
         </div>
-        <div class="mc">
+
+        <!-- User % -->
+        <div class="mc" style="flex-shrink:0">
           <div class="mc-label" data-nl="Gebruikers %" data-en="User energy %">Gebruikers %</div>
           <div class="mc-big" id="mc-user-pct" style="color:var(--accent);font-size:1.5rem">—</div>
           <div class="mc-sub" data-nl="van totaal" data-en="of total">van totaal</div>
           <div id="mc-usersub" style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-top:3px"></div>
         </div>
-      </div>
 
-      <!-- Heating vs Cooling -->
-      <div class="mc">
-        <div class="mc-label" data-nl="Verwarming vs Koeling" data-en="Heating vs Cooling">Verwarming vs Koeling</div>
-        <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-top:4px;font-family:var(--mono)">
-          <span style="color:var(--orange)" id="mc-heat-val">—</span>
-          <span style="color:var(--accent)" id="mc-cool-val">—</span>
+        <!-- Heating vs Cooling -->
+        <div class="mc" style="flex-shrink:0">
+          <div class="mc-label" data-nl="Verwarming vs Koeling" data-en="Heating vs Cooling">Verwarming vs Koeling</div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-top:4px;font-family:var(--mono)">
+            <span style="color:var(--orange)" id="mc-heat-val">—</span>
+            <span style="color:var(--accent)" id="mc-cool-val">—</span>
+          </div>
+          <div class="mini-bar" style="margin-top:6px"><div class="mini-heat" id="mc-hbar" style="width:50%"></div><div class="mini-cool" id="mc-cbar" style="width:50%"></div></div>
+          <div id="mc-hcsub" style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-top:4px;letter-spacing:.5px"></div>
         </div>
-        <div class="mini-bar" style="margin-top:6px"><div class="mini-heat" id="mc-hbar" style="width:50%"></div><div class="mini-cool" id="mc-cbar" style="width:50%"></div></div>
-        <div id="mc-hcsub" style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-top:4px;letter-spacing:.5px"></div>
-      </div>
 
-      <!-- End-use chart -->
-      <div class="card" style="padding:14px">
-        <div style="font-family:var(--mono);font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px" data-nl="Energieverdeling (kWh/jaar)" data-en="Energy breakdown (kWh/yr)">Energieverdeling (kWh/jaar)</div>
-        <div style="position:relative;height:220px"><canvas id="bchart"></canvas></div>
-      </div>
+      </div><!-- /sub-col A -->
 
-      <!-- Detail rows -->
-      <div class="card" style="padding:12px" id="detrows"></div>
+      <!-- ── Sub-col B: charts & details ── -->
+      <div style="display:flex;flex-direction:column;gap:10px;overflow-y:auto;height:100%;padding-left:2px">
 
-      <!-- Building overview -->
-      <div class="card" style="padding:14px" id="bov-card"></div>
+        <div style="font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);padding:2px 0;flex-shrink:0">· 04 Detail</div>
 
-      <!-- Insight strip -->
-      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;display:flex;gap:12px;align-items:flex-start">
-        <div style="width:3px;align-self:stretch;background:var(--amber);border-radius:2px;flex-shrink:0"></div>
-        <div style="flex:1;min-width:0">
-          <div style="font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--amber);margin-bottom:4px">· INSIGHT</div>
-          <div id="insightbox" style="font-size:12px;color:var(--text2);line-height:1.55">Pas de parameters aan voor inzichten.</div>
+        <!-- End-use chart -->
+        <div class="card" style="padding:14px;flex-shrink:0">
+          <div style="font-family:var(--mono);font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px" data-nl="Energieverdeling (kWh/jaar)" data-en="Energy breakdown (kWh/yr)">Energieverdeling (kWh/jaar)</div>
+          <div style="position:relative;height:180px"><canvas id="bchart"></canvas></div>
         </div>
-      </div>
+
+        <!-- Detail rows -->
+        <div class="card" style="padding:12px;flex-shrink:0" id="detrows"></div>
+
+        <!-- Building overview -->
+        <div class="card" style="padding:14px;flex-shrink:0" id="bov-card"></div>
+
+        <!-- Insight strip -->
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;display:flex;gap:10px;align-items:flex-start;flex-shrink:0">
+          <div style="width:3px;align-self:stretch;background:var(--amber);border-radius:2px;flex-shrink:0"></div>
+          <div style="flex:1;min-width:0">
+            <div style="font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--amber);margin-bottom:4px">· INSIGHT</div>
+            <div id="insightbox" style="font-size:12px;color:var(--text2);line-height:1.5">Pas de parameters aan voor inzichten.</div>
+          </div>
+        </div>
+
+      </div><!-- /sub-col B -->
 
     </div><!-- /results -->
   </div><!-- /mgrid -->

@@ -356,13 +356,24 @@ function calcBuildingOverview(inputs) {
     };
   }
 
-  const hoekPerFloor = perFloor >= 6 ? 4 : Math.min(perFloor, 4);
-  const eenzPerFloor = Math.max(0, perFloor - hoekPerFloor);
+  // Eenzijdig must be even: 4 sides × N per side, so total = 4N (always even).
+  // Round down to nearest even so we never produce a physically impossible layout.
+  const hoekPerFloor = 4;
+  const eenzPerFloor = Math.floor(Math.max(0, perFloor - 4) / 2) * 2;
+  const perFloorActual = hoekPerFloor + eenzPerFloor;
+  const totalAptsActual = perFloorActual * totalFloors;
   const rHoek = calcAll({ ...inputs, aptType: 1 });
   const rEenz = calcAll({ ...inputs, aptType: 0 });
   return {
-    type: 'tower', perFloor, hoekPerFloor, eenzPerFloor, totalApts,
-    siteCoverage, far, gfa, residents, inAptRange, inResRange, rHoek, rEenz,
+    type: 'tower', perFloor: perFloorActual, hoekPerFloor, eenzPerFloor,
+    totalApts: totalAptsActual,
+    siteCoverage: Math.round(perFloorActual * size / 0.75 / SITE.area * 100),
+    far: +((perFloorActual * size / 0.75 * totalFloors) / SITE.area).toFixed(1),
+    gfa: Math.round(perFloorActual * size / 0.75 * totalFloors),
+    residents: Math.round(totalAptsActual * 2.82),
+    inAptRange: totalAptsActual >= SITE.aptMin && totalAptsActual <= SITE.aptMax,
+    inResRange: Math.round(totalAptsActual * 2.82) >= SITE.resMin && Math.round(totalAptsActual * 2.82) <= SITE.resMax,
+    rHoek, rEenz,
     buildingTotal: Math.round((rHoek.total * hoekPerFloor + rEenz.total * eenzPerFloor) * totalFloors),
   };
 }

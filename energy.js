@@ -324,55 +324,51 @@ function calcAll(inputs) {
 
 // ─── SITE BRIEF ──────────────────────────────────────────────────────────────
 // Fixed programme: 3 000 m² site, 100–120 apartments, 270–320 residents.
-// Apartments per floor is derived from a realistic floor-plate area:
-//   Gallery  ≈ 900 m² net apt area/floor (two parallel wings on the site)
-//   Tower    ≈ 700 m² net apt area/floor (compact core footprint)
-// perFloor = floor(floor_plate / apt_size)  →  no magic constant, just physics.
+// Students set building width & depth; perFloor is derived from real geometry.
+//   Gallery: aptDepth = depth − 1.8 m corridor → perFloor = floor(width × aptDepth / size)
+//   Tower:   netArea  = width × depth × 0.75   → perFloor = even-corrected floor(netArea / size)
 const SITE = { area: 3000, aptMin: 100, aptMax: 120, resMin: 270, resMax: 320 };
 
 function calcBuildingOverview(inputs) {
-  const { size, totalFloors, buildingType } = inputs;
+  const { size, totalFloors, buildingType, width = 45, depth = 12 } = inputs;
 
-  const perFloor = buildingType === 1
-    ? Math.max(2, Math.floor(900 / size))
-    : Math.max(4, Math.floor(700 / size));
-
-  const totalApts    = perFloor * totalFloors;
-  const netGross     = buildingType === 1 ? 0.82 : 0.75;
-  const footprint    = Math.round(perFloor * size / netGross);
-  const gfa          = footprint * totalFloors;
+  const footprint    = width * depth;
   const siteCoverage = Math.round(footprint / SITE.area * 100);
+  const gfa          = footprint * totalFloors;
   const far          = +(gfa / SITE.area).toFixed(1);
-  const residents    = Math.round(totalApts * 2.82);
-  const inAptRange   = totalApts >= SITE.aptMin && totalApts <= SITE.aptMax;
-  const inResRange   = residents >= SITE.resMin && residents <= SITE.resMax;
 
   if (buildingType === 1) {
+    // Gallery: single-loaded corridor 1.8 m along one long side.
+    const aptDepth = Math.max(5, depth - 1.8);
+    const perFloor = Math.max(1, Math.floor(width * aptDepth / size));
+    const totalApts = perFloor * totalFloors;
+    const residents = Math.round(totalApts * 2.82);
     const r = calcAll({ ...inputs, aptType: 2 });
     return {
-      type: 'gallery', perFloor, totalApts, siteCoverage, far, gfa,
-      residents, inAptRange, inResRange, r,
+      type: 'gallery', perFloor, totalApts, siteCoverage, far, gfa, footprint,
+      residents,
+      inAptRange: totalApts >= SITE.aptMin && totalApts <= SITE.aptMax,
+      inResRange: residents >= SITE.resMin && residents <= SITE.resMax,
+      r,
       buildingTotal: Math.round(r.total * totalApts),
     };
   }
 
-  // Eenzijdig must be even: 4 sides × N per side, so total = 4N (always even).
-  // Round down to nearest even so we never produce a physically impossible layout.
+  // Tower: net/gross 0.75; eenzijdig must be even (4 sides × N per side).
+  const rawPF        = Math.max(4, Math.floor(footprint * 0.75 / size));
   const hoekPerFloor = 4;
-  const eenzPerFloor = Math.floor(Math.max(0, perFloor - 4) / 2) * 2;
-  const perFloorActual = hoekPerFloor + eenzPerFloor;
-  const totalAptsActual = perFloorActual * totalFloors;
+  const eenzPerFloor = Math.floor(Math.max(0, rawPF - 4) / 2) * 2;
+  const perFloor     = hoekPerFloor + eenzPerFloor;
+  const totalApts    = perFloor * totalFloors;
+  const residents    = Math.round(totalApts * 2.82);
   const rHoek = calcAll({ ...inputs, aptType: 1 });
   const rEenz = calcAll({ ...inputs, aptType: 0 });
   return {
-    type: 'tower', perFloor: perFloorActual, hoekPerFloor, eenzPerFloor,
-    totalApts: totalAptsActual,
-    siteCoverage: Math.round(perFloorActual * size / 0.75 / SITE.area * 100),
-    far: +((perFloorActual * size / 0.75 * totalFloors) / SITE.area).toFixed(1),
-    gfa: Math.round(perFloorActual * size / 0.75 * totalFloors),
-    residents: Math.round(totalAptsActual * 2.82),
-    inAptRange: totalAptsActual >= SITE.aptMin && totalAptsActual <= SITE.aptMax,
-    inResRange: Math.round(totalAptsActual * 2.82) >= SITE.resMin && Math.round(totalAptsActual * 2.82) <= SITE.resMax,
+    type: 'tower', perFloor, hoekPerFloor, eenzPerFloor, totalApts,
+    siteCoverage, far, gfa, footprint,
+    residents,
+    inAptRange: totalApts >= SITE.aptMin && totalApts <= SITE.aptMax,
+    inResRange: residents >= SITE.resMin && residents <= SITE.resMax,
     rHoek, rEenz,
     buildingTotal: Math.round((rHoek.total * hoekPerFloor + rEenz.total * eenzPerFloor) * totalFloors),
   };

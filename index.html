@@ -408,6 +408,19 @@
             <div class="plabel" data-nl="Totaal verdiepingen" data-en="Total floors">Totaal verdiepingen</div>
             <input type="number" id="in-totalFloors" value="10" min="2" max="40" onchange="clampFloor();onInput()"/>
           </div>
+
+          <!-- Footprint: width × depth -->
+          <div>
+            <div class="plabel"><span data-nl="Breedte" data-en="Width">Breedte</span>: <span id="wv" class="rv">45 m</span></div>
+            <input type="range" id="in-width" min="5" max="60" value="45" step="1" oninput="document.getElementById('wv').textContent=this.value+' m';updateFootprintHint();onInput()"/>
+            <div class="range-labels"><span>5 m</span><span>60 m</span></div>
+          </div>
+          <div>
+            <div class="plabel"><span data-nl="Diepte" data-en="Depth">Diepte</span>: <span id="dv" class="rv">12 m</span></div>
+            <input type="range" id="in-depth" min="8" max="40" value="12" step="1" oninput="document.getElementById('dv').textContent=this.value+' m';updateFootprintHint();onInput()"/>
+            <div class="range-labels"><span>8 m</span><span>40 m</span></div>
+          </div>
+          <div style="grid-column:1/-1" id="footprint-hint"></div>
         </div>
         <div id="liftinfo" style="margin-top:8px;padding:6px 10px;background:var(--bg3);border-radius:6px;font-size:10px;font-family:var(--mono);color:var(--text3);letter-spacing:.5px"></div>
       </div>
@@ -776,6 +789,7 @@ function showMain() {
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
     initChart();
     setBuildingType(APP.buildingType);
+    updateFootprintHint();
     if(typeof INFO!=='undefined') initTooltipContent();
     onInput();
   }));
@@ -789,6 +803,8 @@ function getInputs() {
     aptType, buildingType,
     floor:         +document.getElementById('in-floor').value,
     totalFloors:   +document.getElementById('in-totalFloors').value,
+    width:         +document.getElementById('in-width').value,
+    depth:         +document.getElementById('in-depth').value,
     size:          +document.getElementById('in-size').value,
     orientation:   +document.getElementById('in-orientation').value,
     glassRatio:    +document.getElementById('in-glassRatio').value/100,
@@ -980,6 +996,19 @@ function updateDetail(r, inp) {
     </div>`;
 }
 
+// ── FOOTPRINT HINT ────────────────────────────────────────────────────────────
+function updateFootprintHint() {
+  const w  = +document.getElementById('in-width').value;
+  const d  = +document.getElementById('in-depth').value;
+  const fp = w * d;
+  const el = document.getElementById('footprint-hint');
+  if (!el) return;
+  const over = fp > SITE.area;
+  const L = APP.lang;
+  el.style.cssText = `padding:5px 8px;border-radius:5px;font-size:10px;font-family:var(--mono);letter-spacing:.5px;background:var(--bg3);color:${over?'var(--orange)':'var(--text3)'}`;
+  el.textContent = `${w} × ${d} = ${fp.toLocaleString()} m²  ·  ${Math.round(fp/SITE.area*100)}% ${L==='nl'?'kavel':'site'}${over?(L==='nl'?' — groter dan kavel!':' — exceeds site!'):''}`;
+}
+
 // ── BUILDING TYPE ─────────────────────────────────────────────────────────────
 function setBuildingType(type) {
   APP.buildingType = type;
@@ -988,6 +1017,15 @@ function setBuildingType(type) {
   const btnG = document.getElementById('btn-gallery');
   if (btnT) { btnT.style.background=!isGallery?'var(--accent)':'var(--bg3)'; btnT.style.color=!isGallery?'#ffffff':'var(--text2)'; btnT.style.borderColor=!isGallery?'var(--accent)':'var(--border)'; }
   if (btnG) { btnG.style.background=isGallery?'var(--accent)':'var(--bg3)';  btnG.style.color=isGallery?'#ffffff':'var(--text2)';  btnG.style.borderColor=isGallery?'var(--accent)':'var(--border)'; }
+  // Set sensible footprint defaults per type: gallery = long & thin, tower = square
+  const wEl = document.getElementById('in-width');
+  const dEl = document.getElementById('in-depth');
+  if (wEl && dEl) {
+    const [w, d] = isGallery ? [50, 12] : [25, 25];
+    wEl.value = w; document.getElementById('wv').textContent = w + ' m';
+    dEl.value = d; document.getElementById('dv').textContent = d + ' m';
+    updateFootprintHint();
+  }
   onInput();
 }
 

@@ -330,7 +330,7 @@ function calcAll(inputs) {
 const SITE = { area: 3000, aptMin: 100, aptMax: 120, resMin: 270, resMax: 320 };
 
 function calcBuildingOverview(inputs) {
-  const { size, totalFloors, buildingType, width = 45, depth = 12 } = inputs;
+  const { size, totalFloors, buildingType, occupants = 2.82, width = 45, depth = 12 } = inputs;
 
   const footprint    = width * depth;
   const siteCoverage = Math.round(footprint / SITE.area * 100);
@@ -342,7 +342,7 @@ function calcBuildingOverview(inputs) {
     const aptDepth = Math.max(5, depth - 1.8);
     const perFloor = Math.max(1, Math.floor(width * aptDepth / size));
     const totalApts = perFloor * totalFloors;
-    const residents = Math.round(totalApts * 2.82);
+    const residents = Math.round(totalApts * occupants);
     const r = calcAll({ ...inputs, aptType: 2 });
     return {
       type: 'gallery', perFloor, totalApts, siteCoverage, far, gfa, footprint,

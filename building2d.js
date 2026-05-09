@@ -88,10 +88,9 @@ function _render(canvas, inputs, isDark, s) {
   // ── Building world dimensions (metres) ───────────────────────────────────────
   const FH = 3.2;
   const bH = FH * totalFloors;
-  // Tower: footprint grows with apartment size (bigger apts = larger floor plate)
-  // Gallery: fixed slab length, depth grows with size (larger apts = deeper)
-  const bW = isGallery ? 20 : Math.round(Math.max(10, Math.sqrt(size * 3)));
-  const bD = isGallery ? Math.round(Math.max(6, size / 10)) : bW;
+  // Use the student's explicit footprint inputs; fall back to size-derived if absent.
+  const bW = (inputs.width  > 0) ? inputs.width  : (isGallery ? 20 : Math.round(Math.max(10, Math.sqrt(size * 3))));
+  const bD = (inputs.depth  > 0) ? inputs.depth  : (isGallery ? Math.round(Math.max(6, size / 10)) : bW);
   const hw = bW/2, hd = bD/2;
   const midY = bH/2;  // orbit target: vertical center of building
 

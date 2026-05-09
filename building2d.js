@@ -261,7 +261,15 @@ function _render(canvas, inputs, isDark, s) {
       || (face.id==='left'  && isCorner);
     if (!hasWin) continue;
 
-    const cols = face.main ? (isGallery?6:3) : isGalBack ? 4 : isTowerBack ? 3 : isGallery ? 2 : 3;
+    // Window columns driven by how many apartments fit across the facade.
+    // aptFW = facade width per apartment = floor area ÷ building depth.
+    const aptFW     = Math.max(3, size / bD);
+    const colsFront = Math.max(2, Math.min(12, Math.round(bW / aptFW)));
+    const colsSide  = Math.max(1, Math.min(5,  Math.round(bD / 5.0)));
+    const cols = face.main   ? colsFront
+               : isTowerBack  ? colsFront
+               : isGalBack    ? Math.max(2, Math.min(8, Math.round(colsFront * 0.6)))
+               : colsSide;
     const wWf  = Math.min(0.84, glassRatio*1.78) / cols;
     const wHf  = Math.min(0.75, glassRatio*1.55);
     const gapW = (1/cols - wWf) / 2;

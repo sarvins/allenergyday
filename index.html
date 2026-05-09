@@ -3,101 +3,277 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Energy Workshop</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>AllEnergyDay</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
   <style>
+    /* ── HUD DARK THEME ──────────────────────────────────────────────── */
     :root {
-      --bg:#0f172a; --bg2:#1e293b; --bg3:#0a1020;
-      --border:#334155; --border2:#475569;
-      --text:#e2e8f0; --text2:#94a3b8; --text3:#64748b;
-      --accent:#3b82f6; --accent2:#1d4ed8;
-      --green:#22c55e; --yellow:#eab308; --red:#ef4444;
+      --bg:        #0a1f1c;
+      --bg2:       #0f2a26;
+      --bg3:       #13332e;
+      --border:    rgba(255,255,255,0.07);
+      --border2:   rgba(255,255,255,0.13);
+      --border-hi: rgba(34,179,154,0.35);
+      --text:      #e8e2d4;
+      --text2:     rgba(232,226,212,0.55);
+      --text3:     rgba(232,226,212,0.32);
+      --accent:    #22b39a;
+      --accent2:   #0d4d44;
+      --amber:     #f5b544;
+      --orange:    #e8804a;
+      --green:     #7ec488;
+      --yellow:    #f5b544;
+      --red:       #e8804a;
+      --sans:      "Space Grotesk", -apple-system, sans-serif;
+      --mono:      "JetBrains Mono", ui-monospace, monospace;
     }
     html[data-theme="light"] {
-      --bg:#f1f5f9; --bg2:#ffffff; --bg3:#e2e8f0;
-      --border:#cbd5e1; --border2:#94a3b8;
-      --text:#0f172a; --text2:#475569; --text3:#94a3b8;
-      --accent:#2563eb; --accent2:#1d4ed8;
+      --bg:        #f0ede8;
+      --bg2:       #ffffff;
+      --bg3:       #e4e0da;
+      --border:    rgba(0,0,0,0.09);
+      --border2:   rgba(0,0,0,0.16);
+      --border-hi: rgba(22,113,98,0.35);
+      --text:      #1a1814;
+      --text2:     rgba(26,24,20,0.55);
+      --text3:     rgba(26,24,20,0.38);
+      --accent:    #167162;
+      --accent2:   #0d4d44;
+      --amber:     #c47a0c;
+      --orange:    #c05a28;
+      --green:     #3a7a48;
+      --yellow:    #c47a0c;
+      --red:       #c05a28;
     }
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;line-height:1.5;min-height:100vh}
-    .card{background:var(--bg2);border:1px solid var(--border);border-radius:12px}
-    select,input[type=number],input[type=text]{background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px 10px;width:100%;font-size:.85rem;transition:border-color .15s}
-    select:focus,input:focus{outline:none;border-color:var(--accent)}
-    input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer}
-    input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px;cursor:pointer;flex-shrink:0}
-    .plabel{display:flex;align-items:center;gap:5px;font-size:.72rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
-    .shdr{font-size:.68rem;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;padding-bottom:6px;border-bottom:1px solid var(--border);margin-bottom:10px}
-    .btn-p{background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 22px;font-weight:700;cursor:pointer;transition:background .15s;font-size:.9rem}
-    .btn-p:hover{background:var(--accent2)}
-    .btn-s{background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:7px 14px;font-weight:600;cursor:pointer;font-size:.83rem;transition:background .15s}
-    .btn-s:hover{background:var(--border)}
-    .iBtn{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:rgba(59,130,246,.18);border:1px solid rgba(59,130,246,.45);color:var(--accent);font-size:.65rem;font-weight:700;cursor:pointer;flex-shrink:0;transition:all .15s}
-    .iBtn:hover{background:var(--accent);color:#fff}
-    .score-g{background:rgba(34,197,94,.18);color:#4ade80;border:1px solid #16a34a}
-    .score-y{background:rgba(234,179,8,.18);color:#facc15;border:1px solid #ca8a04}
-    .score-r{background:rgba(239,68,68,.18);color:#f87171;border:1px solid #dc2626}
-    .badge{display:inline-block;padding:3px 12px;border-radius:20px;font-weight:700;font-size:1rem}
-    .gpill{display:inline-flex;align-items:center;padding:3px 11px;border-radius:20px;font-size:.8rem;font-weight:700;border:1px solid}
-    .insight{background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.35);border-radius:9px;padding:10px 14px;font-size:.82rem;color:rgba(147,197,253,1)}
-    html[data-theme="light"] .insight{color:#1d4ed8;background:rgba(37,99,235,.08);border-color:rgba(37,99,235,.25)}
-    .spin{width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
-    @keyframes spin{to{transform:rotate(360deg)}}
-    #compare-panel{display:none}
-    /* Floating tooltip */
-    #ftip{display:none;position:fixed;z-index:9999;background:#1e293b;color:#e2e8f0;border:1px solid #475569;border-radius:9px;padding:10px 13px;font-size:.79rem;line-height:1.5;max-width:270px;box-shadow:0 10px 30px rgba(0,0,0,.6);pointer-events:none}
-    html[data-theme="light"] #ftip{background:#fff;color:#0f172a;border-color:#cbd5e1;box-shadow:0 8px 24px rgba(0,0,0,.15)}
-    .apt-note{margin-top:7px;padding-top:7px;border-top:1px solid #334155;font-style:italic;color:#93c5fd;font-size:.75rem}
-    html[data-theme="light"] .apt-note{color:#1d4ed8;border-top-color:#cbd5e1}
-    /* Info drawer */
-    #drawer{position:fixed;top:0;right:-440px;width:420px;max-width:92vw;height:100vh;background:var(--bg2);border-left:1px solid var(--border);z-index:200;overflow-y:auto;transition:right .28s cubic-bezier(.4,0,.2,1);box-shadow:-6px 0 28px rgba(0,0,0,.4)}
-    #drawer.open{right:0}
-    #droverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:199}
-    #droverlay.open{display:block}
-    #drawer h3{font-size:1.05rem;font-weight:700;color:var(--text);margin-bottom:10px}
-    #drawer h4{font-size:.84rem;font-weight:700;color:var(--accent);margin:14px 0 5px}
-    #drawer p{color:var(--text2);font-size:.84rem;margin-bottom:8px}
-    #drawer ul,#drawer ol{color:var(--text2);font-size:.84rem;padding-left:18px;margin-bottom:8px}
-    #drawer li{margin-bottom:3px}
-    #drawer table{border-collapse:collapse;width:100%;font-size:.81rem}
-    #drawer th{color:var(--text3);padding:4px 8px;text-align:left;border-bottom:1px solid var(--border)}
-    #drawer td{padding:4px 8px;color:var(--text2);border-bottom:1px solid rgba(51,65,85,.5)}
-    #drawer strong{color:var(--text)}
-    /* Metric cards */
-    .mc{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:4px}
-    .mc-big{font-size:2rem;font-weight:900;line-height:1}
-    .mc-label{font-size:.7rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em}
-    .mc-sub{font-size:.75rem;color:var(--text3)}
-    /* 2-col grid */
-    #mgrid{display:grid;grid-template-columns:1fr;gap:12px;padding:12px;max-width:1600px;margin:0 auto}
-    @media(min-width:860px) {#mgrid{grid-template-columns:300px 1fr}}
-    @media(min-width:1100px){#mgrid{grid-template-columns:320px 1fr 300px}}
-    @media(min-width:1300px){#mgrid{grid-template-columns:340px 1fr 320px}}
-    /* Range value display */
-    .rv{font-weight:700;color:var(--text);margin-left:4px}
-    /* Mini bar (heating vs cooling) */
-    .mini-bar{height:8px;border-radius:4px;overflow:hidden;background:var(--bg3);margin-top:4px;display:flex}
-    .mini-heat{background:#ef4444;transition:width .4s}
-    .mini-cool{background:#3b82f6;transition:width .4s}
+    *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+    /* Grid dot background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.022) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.022) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+    html[data-theme="light"] body::before {
+      background-image:
+        linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
+    }
+    html { overflow-x: hidden; }
+    body { overflow-x: hidden; max-width: 100vw; }
+    #sscreen, #mscreen { position: relative; z-index: 1; }
+
+    /* ── CARD ────────────────────────────────────────────────────────── */
+    .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; }
+
+    /* ── INPUTS ─────────────────────────────────────────────────────── */
+    select, input[type=number], input[type=text] {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 6px;
+      padding: 8px 11px;
+      width: 100%;
+      font-family: var(--sans);
+      font-size: 13px;
+      font-weight: 500;
+      transition: border-color .15s;
+    }
+    select:focus, input:focus { outline: none; border-color: var(--accent); }
+    select { cursor: pointer; }
+    input[type=range] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 4px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 2px;
+      outline: none;
+      cursor: pointer;
+      margin: 4px 0;
+    }
+    html[data-theme="light"] input[type=range] { background: rgba(0,0,0,0.1); }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px; height: 16px;
+      border-radius: 4px;
+      background: var(--text);
+      box-shadow: 0 0 0 2px var(--accent), 0 0 10px rgba(34,179,154,0.3);
+      cursor: pointer;
+    }
+    input[type=range]::-moz-range-thumb {
+      width: 16px; height: 16px;
+      border-radius: 4px;
+      background: var(--text);
+      box-shadow: 0 0 0 2px var(--accent);
+      border: none;
+      cursor: pointer;
+    }
+    input[type=checkbox] { accent-color: var(--accent); width: 15px; height: 15px; cursor: pointer; flex-shrink: 0; }
+
+    /* ── LABELS ─────────────────────────────────────────────────────── */
+    .plabel {
+      display: flex; align-items: center; gap: 5px;
+      font-size: 10px; font-weight: 500; font-family: var(--mono);
+      color: var(--text2); text-transform: uppercase; letter-spacing: 0.6px;
+      margin-bottom: 6px;
+    }
+    .rv { font-weight: 600; color: var(--text); font-family: var(--mono); font-size: 12px; margin-left: 3px; }
+    .range-labels { display: flex; justify-content: space-between; font-size: 9px; font-family: var(--mono); color: var(--text3); margin-top: 3px; letter-spacing: 0.5px; }
+
+    /* ── SECTION HEADER ─────────────────────────────────────────────── */
+    .shdr {
+      font-size: 10px; font-weight: 500; font-family: var(--mono);
+      color: var(--accent); text-transform: uppercase; letter-spacing: 1.5px;
+      padding-bottom: 8px; border-bottom: 1px solid var(--border); margin-bottom: 12px;
+    }
+
+    /* ── INFO BUTTON ────────────────────────────────────────────────── */
+    .iBtn {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 14px; height: 14px; border-radius: 50%;
+      border: 1px solid var(--text3); color: var(--text3);
+      font-size: 9px; font-weight: 700; font-family: var(--mono);
+      cursor: pointer; flex-shrink: 0; transition: all .15s;
+      background: transparent; padding: 0; line-height: 1;
+    }
+    .iBtn:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── BUTTONS ────────────────────────────────────────────────────── */
+    .btn-p {
+      background: var(--accent); color: #0a1f1c;
+      border: none; border-radius: 6px; padding: 11px 22px;
+      font-family: var(--mono); font-weight: 600; font-size: 11px;
+      letter-spacing: 1.5px; text-transform: uppercase;
+      cursor: pointer; transition: opacity .15s;
+    }
+    .btn-p:hover { opacity: 0.88; }
+    .btn-s {
+      background: var(--bg3); color: var(--text2);
+      border: 1px solid var(--border); border-radius: 6px;
+      padding: 6px 11px; font-family: var(--mono); font-weight: 500;
+      font-size: 10px; letter-spacing: 1px; cursor: pointer;
+      transition: all .15s; text-transform: uppercase;
+    }
+    .btn-s:hover { border-color: var(--border2); color: var(--text); }
+
+    /* ── BADGES ─────────────────────────────────────────────────────── */
+    .badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-weight: 600; font-family: var(--mono); font-size: 11px; letter-spacing: 1px; }
+    .score-g { background: rgba(126,196,136,0.13); color: #7ec488; border: 1px solid rgba(126,196,136,0.3); }
+    .score-y { background: rgba(245,181,68,0.13);  color: #f5b544; border: 1px solid rgba(245,181,68,0.3); }
+    .score-r { background: rgba(232,128,74,0.13);  color: #e8804a; border: 1px solid rgba(232,128,74,0.3); }
+    .gpill { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 6px; font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: 1px; border: 1px solid; }
+
+    /* ── METRIC CARDS ───────────────────────────────────────────────── */
+    .mc { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 4px; }
+    .mc-big { font-size: 2rem; font-weight: 700; line-height: 1; letter-spacing: -1px; }
+    .mc-label { font-size: 9px; font-weight: 500; font-family: var(--mono); color: var(--text3); text-transform: uppercase; letter-spacing: 1.5px; }
+    .mc-sub { font-size: 11px; font-family: var(--mono); color: var(--text3); }
+
+    /* ── INSIGHT ────────────────────────────────────────────────────── */
+    .insight { background: rgba(34,179,154,0.07); border: 1px solid rgba(34,179,154,0.22); border-radius: 8px; padding: 10px 14px; font-size: 12px; color: var(--text2); line-height: 1.55; }
+    html[data-theme="light"] .insight { background: rgba(22,113,98,0.07); border-color: rgba(22,113,98,0.22); }
+
+    /* ── APT NOTE ───────────────────────────────────────────────────── */
+    .apt-note { margin-top:7px; padding-top:7px; border-top:1px solid var(--border); font-style:italic; color:var(--accent); font-size:12px; }
+
+    /* ── SPINNER ────────────────────────────────────────────────────── */
+    .spin { width:14px; height:14px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin .8s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    /* ── FLOATING TIP ───────────────────────────────────────────────── */
+    #ftip {
+      display:none; position:fixed; z-index:9999;
+      background:var(--bg2); color:var(--text); border:1px solid var(--border-hi);
+      border-radius:8px; padding:10px 13px; font-size:12px; line-height:1.5;
+      max-width:270px; box-shadow:0 10px 30px rgba(0,0,0,.6);
+      pointer-events:none; font-family:var(--sans);
+    }
+
+    /* ── INFO DRAWER (HUD) ──────────────────────────────────────────── */
+    #drawer {
+      position:fixed; top:0; right:-500px; width:480px; max-width:95vw; height:100vh;
+      background:var(--bg2); border-left:1px solid var(--border-hi);
+      z-index:200; overflow-y:auto; transition:right .3s cubic-bezier(.4,0,.2,1);
+      box-shadow:-30px 0 80px rgba(0,0,0,.5); display:flex; flex-direction:column;
+    }
+    #drawer.open { right:0; }
+    #droverlay {
+      display:none; position:fixed; inset:0;
+      background:radial-gradient(ellipse at right, rgba(10,31,28,0.4), rgba(10,31,28,0.82));
+      backdrop-filter:blur(2px); z-index:199;
+    }
+    #droverlay.open { display:block; }
+    #drawer h3 { font-size:1rem; font-weight:700; color:var(--text); margin-bottom:10px; }
+    #drawer h4 { font-size:.82rem; font-weight:700; color:var(--accent); margin:14px 0 5px; font-family:var(--mono); text-transform:uppercase; letter-spacing:.8px; }
+    #drawer p  { color:var(--text2); font-size:.84rem; margin-bottom:8px; }
+    #drawer ul,#drawer ol { color:var(--text2); font-size:.84rem; padding-left:18px; margin-bottom:8px; }
+    #drawer li { margin-bottom:3px; }
+    #drawer table { border-collapse:collapse; width:100%; font-size:.81rem; }
+    #drawer th { color:var(--text3); padding:4px 8px; text-align:left; border-bottom:1px solid var(--border); font-family:var(--mono); font-size:10px; text-transform:uppercase; letter-spacing:.8px; }
+    #drawer td { padding:4px 8px; color:var(--text2); border-bottom:1px solid rgba(255,255,255,0.05); }
+    #drawer strong { color:var(--text); }
+
+    /* ── COMPARE PANEL ──────────────────────────────────────────────── */
+    #compare-panel { display:none; }
+
+    /* ── MAIN GRID ──────────────────────────────────────────────────── */
+    #mgrid {
+      display:grid;
+      grid-template-columns: 380px 1fr 360px;
+      gap:10px; padding:10px;
+      width:100%;
+      min-width: 0;
+    }
+    #mgrid > * { min-width: 0; overflow: hidden; }
+
+    /* ── MINI BAR ───────────────────────────────────────────────────── */
+    .mini-bar { height:5px; border-radius:3px; overflow:hidden; background:rgba(255,255,255,0.06); margin-top:4px; display:flex; }
+    .mini-heat { background:#e8804a; transition:width .4s; }
+    .mini-cool { background:var(--accent); transition:width .4s; }
   </style>
 </head>
 <body>
 
 <!-- ══════════════════ SETUP SCREEN ══════════════════ -->
 <div id="sscreen" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px">
-  <div class="card" style="padding:32px;width:100%;max-width:420px">
+  <div class="card" style="padding:32px;width:100%;max-width:400px">
     <div style="text-align:center;margin-bottom:28px">
-      <div style="font-size:3rem;margin-bottom:8px">⚡</div>
-      <h1 style="font-size:1.5rem;font-weight:800">Energy Workshop</h1>
-      <p style="color:var(--text2);margin-top:6px;font-size:.88rem" data-nl="Ontwerp jullie appartement en minimaliseer het energieverbruik" data-en="Design your apartment and minimise energy use">Ontwerp jullie appartement en minimaliseer het energieverbruik</p>
+      <div style="display:inline-flex;align-items:center;justify-content:center;margin-bottom:10px">
+        <svg width="38" height="38" viewBox="0 0 28 28">
+          <rect x="2" y="2" width="24" height="24" rx="3" fill="#22b39a"/>
+          <path d="M9 19 L9 9 L19 9" stroke="#0a1f1c" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <path d="M9 14 L15 14" stroke="#0a1f1c" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="20" cy="9" r="2.5" fill="#f5b544"/>
+        </svg>
+      </div>
+      <h1 style="font-size:1.4rem;font-weight:700;letter-spacing:-.3px;color:var(--text)">AllEnergyDay</h1>
+      <p style="color:var(--text3);margin-top:4px;font-size:10px;font-family:var(--mono);letter-spacing:1.5px;text-transform:uppercase" data-nl="TU/e · Duurzame architectuur" data-en="TU/e · Sustainable architecture">TU/e · Duurzame architectuur</p>
     </div>
     <div style="display:flex;flex-direction:column;gap:14px">
       <div>
         <div class="plabel" data-nl="Workshop Code" data-en="Workshop Code">Workshop Code</div>
-        <input type="text" id="wcode" placeholder="bijv. energy2025" data-placeholder-nl="bijv. energy2025" data-placeholder-en="e.g. energy2025" style="text-transform:uppercase;letter-spacing:.1em"/>
+        <input type="text" id="wcode" placeholder="bijv. energy2025" data-placeholder-nl="bijv. energy2025" data-placeholder-en="e.g. energy2025" style="text-transform:uppercase;letter-spacing:.1em;font-family:var(--mono)"/>
       </div>
       <div>
         <div class="plabel" data-nl="Jullie Groep" data-en="Your Group">Jullie Groep</div>
@@ -105,14 +281,14 @@
       </div>
       <div>
         <div class="plabel" data-nl="Groepsnaam (optioneel)" data-en="Group name (optional)">Groepsnaam (optioneel)</div>
-        <input type="text" id="gname" placeholder="bijv. Team Rood" data-placeholder-nl="bijv. Team Rood" data-placeholder-en="e.g. Team Red"/>
+        <input type="text" id="gname" placeholder="bijv. Atelier Rood" data-placeholder-nl="bijv. Atelier Rood" data-placeholder-en="e.g. Atelier Red"/>
       </div>
-      <div id="sstatus" style="font-size:.82rem;color:var(--text2);text-align:center;min-height:1.2rem"></div>
-      <button class="btn-p" style="width:100%" onclick="startWS()" data-nl="Start →" data-en="Start →">Start →</button>
-      <div style="display:flex;justify-content:center;gap:14px;align-items:center;font-size:.8rem">
-        <a href="teacher.html" style="color:var(--text3)" data-nl="📊 Docent" data-en="📊 Teacher">📊 Docent</a>
-        <button class="btn-s" onclick="toggleLang()" id="lbtn">🌐 EN</button>
-        <button class="btn-s" onclick="toggleTheme()" id="tbtn">☀️</button>
+      <div id="sstatus" style="font-size:11px;font-family:var(--mono);color:var(--text2);text-align:center;min-height:1.2rem"></div>
+      <button class="btn-p" style="width:100%;padding:13px" onclick="startWS()" data-nl="Start →" data-en="Start →">Start →</button>
+      <div style="display:flex;justify-content:center;gap:14px;align-items:center">
+        <a href="teacher.html" style="color:var(--text3);font-family:var(--mono);font-size:10px;letter-spacing:1px;text-decoration:none;text-transform:uppercase" data-nl="📊 Docent" data-en="📊 Teacher">📊 Docent</a>
+        <button class="btn-s" onclick="toggleLang()" id="lbtn">EN</button>
+        <button class="btn-s" onclick="toggleTheme()" id="tbtn">☀</button>
       </div>
     </div>
   </div>
@@ -122,21 +298,49 @@
 <div id="mscreen" style="display:none">
 
   <!-- Header -->
-  <header style="background:var(--bg2);border-bottom:1px solid var(--border);padding:9px 14px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:50">
-    <span style="font-size:1.2rem">⚡</span>
-    <span style="font-weight:800;font-size:.95rem">Energy Workshop</span>
-    <span id="gbadge" class="gpill"></span>
+  <header style="background:var(--bg2);border-bottom:1px solid var(--border);padding:0 14px;height:54px;display:flex;align-items:center;gap:8px;position:sticky;top:0;z-index:50;overflow:hidden">
+    <div style="display:flex;align-items:center;gap:10px">
+      <svg width="26" height="26" viewBox="0 0 28 28" style="flex-shrink:0">
+        <rect x="2" y="2" width="24" height="24" rx="3" fill="#22b39a"/>
+        <path d="M9 19 L9 9 L19 9" stroke="#0a1f1c" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <path d="M9 14 L15 14" stroke="#0a1f1c" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="20" cy="9" r="2.5" fill="#f5b544"/>
+      </svg>
+      <span style="font-weight:700;font-size:15px;letter-spacing:-.3px;color:var(--text)">AllEnergyDay</span>
+      <span style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase">v2.6 · TU/e</span>
+    </div>
+
     <div style="flex:1"></div>
-    <span id="hscore" class="badge score-y" style="font-size:.9rem">— kWh/m²</span>
-    <button class="btn-s" onclick="toggleCompare()" data-nl="📊 Vergelijk" data-en="📊 Compare">📊 Vergelijk</button>
-    <button class="btn-s" onclick="toggleLang()" id="lbtn2">🌐 EN</button>
-    <button class="btn-s" onclick="toggleTheme()" id="tbtn2">☀️</button>
+
+    <!-- Workshop code chip -->
+    <div id="workshopCodeChip" style="display:flex;align-items:center;gap:7px;padding:5px 10px;border-radius:6px;background:var(--bg3);border:1px solid var(--border-hi);font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:1.5px;font-weight:600;text-transform:uppercase">
+      <span id="wcodeDot" style="width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 7px var(--accent);display:inline-block;flex-shrink:0"></span>
+      <span id="workshopCodeLabel">—</span>
+    </div>
+
+    <!-- Group badge -->
+    <span id="gbadge" class="gpill"></span>
+
+    <!-- Score -->
+    <span id="hscore" class="badge score-y">— kWh/m²</span>
+
+    <!-- Compare -->
+    <button class="btn-s" onclick="toggleCompare()" data-nl="VERGELIJK" data-en="COMPARE">VERGELIJK</button>
+
+    <!-- Lang segmented -->
+    <div style="display:flex;border-radius:6px;overflow:hidden;border:1px solid var(--border);font-family:var(--mono);font-size:10px;font-weight:600">
+      <span id="hdr-lang-en" onclick="setLang('en')" style="padding:5px 10px;cursor:pointer;background:var(--accent);color:#0a1f1c;letter-spacing:1px">EN</span>
+      <span id="hdr-lang-nl" onclick="setLang('nl')" style="padding:5px 10px;cursor:pointer;color:var(--text2);background:var(--bg3);letter-spacing:1px">NL</span>
+    </div>
+
+    <!-- Theme -->
+    <button onclick="toggleTheme()" id="tbtn2" style="width:32px;height:32px;border-radius:6px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--amber);cursor:pointer;font-size:14px;flex-shrink:0">☀</button>
   </header>
 
   <!-- Compare strip -->
-  <div id="compare-panel" style="background:var(--bg2);border-bottom:1px solid var(--border);padding:10px 16px">
+  <div id="compare-panel" style="background:var(--bg2);border-bottom:1px solid var(--border);padding:12px 20px">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-      <span style="font-weight:700;font-size:.88rem" data-nl="Alle groepen – live" data-en="All groups – live">Alle groepen – live</span>
+      <span style="font-family:var(--mono);font-size:10px;font-weight:500;color:var(--text2);letter-spacing:1.5px;text-transform:uppercase" data-nl="Alle groepen – live" data-en="All groups – live">Alle groepen – live</span>
       <div class="spin" id="cspin"></div>
     </div>
     <div style="position:relative;height:160px"><canvas id="cchart"></canvas></div>
@@ -145,42 +349,55 @@
   <!-- Floating tooltip -->
   <div id="ftip"></div>
 
-  <!-- Info drawer -->
+  <!-- Info drawer (HUD) -->
   <div id="droverlay" onclick="closeDr()"></div>
   <div id="drawer">
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg2);z-index:1">
-      <span id="drtitle" style="font-weight:700"></span>
-      <button class="btn-s" style="padding:5px 10px" onclick="closeDr()">✕</button>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 28px 14px;border-bottom:1px solid var(--border);flex-shrink:0">
+      <span style="font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--accent)">· LEARN MORE</span>
+      <button onclick="closeDr()" style="all:unset;cursor:pointer;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:6px;background:var(--bg3);color:var(--text2);font-size:16px;line-height:1">×</button>
     </div>
-    <div id="drcontent" style="padding:20px"></div>
+    <div style="padding:16px 28px 10px;flex-shrink:0">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--amber);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:5px">Parameter</div>
+      <div id="drtitle" style="font-size:1.2rem;font-weight:700;color:var(--text);line-height:1.2;letter-spacing:-.3px"></div>
+    </div>
+    <div style="height:1px;background:var(--border);margin:0 28px 0"></div>
+    <div id="drcontent" style="padding:18px 28px;flex:1;overflow-y:auto;font-size:13px;color:var(--text2);line-height:1.55"></div>
+    <div style="padding:18px 28px;border-top:1px solid var(--border);flex-shrink:0">
+      <button onclick="closeDr()" style="all:unset;width:100%;text-align:center;padding:11px 16px;border-radius:6px;background:var(--accent);color:#0a1f1c;font-family:var(--mono);font-weight:700;font-size:11px;letter-spacing:1.5px;cursor:pointer;display:block;text-transform:uppercase">GOT IT →</button>
+    </div>
   </div>
 
-  <!-- Main 2-col grid -->
+  <!-- Main 3-col grid -->
   <div id="mgrid">
 
-    <!-- ── LEFT: Inputs ── -->
+    <!-- ══ LEFT: Inputs ══ -->
     <div style="display:flex;flex-direction:column;gap:10px">
 
-      <!-- Type & hoogte -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:2px 0">
+        <span style="font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent)">· 01 Inputs</span>
+        <span style="font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:1px">8 / 8 SET</span>
+      </div>
+
+      <!-- Type & Height -->
       <div class="card" style="padding:14px">
-        <div class="shdr">🏢 <span data-nl="Type & Hoogte" data-en="Type & Height">Type & Hoogte</span></div>
+        <div class="shdr">· <span data-nl="Type & Hoogte" data-en="Type & Height">Type & Hoogte</span></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           <div style="grid-column:1/-1">
             <div class="plabel">
-              <span class="iBtn" onclick="openDr('aptType')">i</span>
+              <button class="iBtn" onclick="openDr('aptType')">i</button>
               <span data-nl="Gebouwtype" data-en="Building type">Gebouwtype</span>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-              <button id="btn-tower" onclick="setBuildingType(0)" style="padding:10px;font-size:.84rem;font-weight:700;border-radius:10px;border:2px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer;transition:all .15s">
+              <button id="btn-tower" onclick="setBuildingType(0)" style="padding:9px;font-size:10px;font-weight:600;font-family:var(--mono);letter-spacing:1px;border-radius:6px;border:2px solid var(--accent);background:var(--accent);color:#0a1f1c;cursor:pointer;transition:all .15s;text-transform:uppercase">
                 🏢 <span data-nl="Toren" data-en="Tower">Toren</span>
               </button>
-              <button id="btn-gallery" onclick="setBuildingType(1)" style="padding:10px;font-size:.84rem;font-weight:700;border-radius:10px;border:2px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;transition:all .15s">
+              <button id="btn-gallery" onclick="setBuildingType(1)" style="padding:9px;font-size:10px;font-weight:600;font-family:var(--mono);letter-spacing:1px;border-radius:6px;border:2px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer;transition:all .15s;text-transform:uppercase">
                 🌬️ <span data-nl="Gallerij" data-en="Gallery">Gallerij</span>
               </button>
             </div>
           </div>
           <div>
-            <div class="plabel"><span class="iBtn" onclick="openDr('floor')">i</span><span data-nl="Verdieping" data-en="Floor">Verdieping</span></div>
+            <div class="plabel"><button class="iBtn" onclick="openDr('floor')">i</button><span data-nl="Verdieping" data-en="Floor">Verdieping</span></div>
             <input type="number" id="in-floor" value="5" min="1" max="30" onchange="clampFloor();onInput()"/>
           </div>
           <div>
@@ -188,21 +405,21 @@
             <input type="number" id="in-totalFloors" value="10" min="2" max="40" onchange="clampFloor();onInput()"/>
           </div>
         </div>
-        <div id="liftinfo" style="margin-top:8px;padding:6px 10px;background:var(--bg3);border-radius:6px;font-size:.75rem;color:var(--text2)"></div>
+        <div id="liftinfo" style="margin-top:8px;padding:6px 10px;background:var(--bg3);border-radius:6px;font-size:10px;font-family:var(--mono);color:var(--text3);letter-spacing:.5px"></div>
       </div>
 
-      <!-- Vorm & oriëntatie -->
+      <!-- Form & Orientation -->
       <div class="card" style="padding:14px">
-        <div class="shdr">📐 <span data-nl="Vorm & Oriëntatie" data-en="Form & Orientation">Vorm & Oriëntatie</span></div>
+        <div class="shdr">· <span data-nl="Vorm & Oriëntatie" data-en="Form & Orientation">Vorm & Oriëntatie</span></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           <div style="grid-column:1/-1">
-            <div class="plabel"><span class="iBtn" onclick="openDr('size')">i</span><span data-nl="Grootte" data-en="Size">Grootte</span>: <span id="sv" class="rv">88 m²</span></div>
+            <div class="plabel"><button class="iBtn" onclick="openDr('size')">i</button><span data-nl="Grootte" data-en="Size">Grootte</span>: <span id="sv" class="rv">88 m²</span></div>
             <input type="range" id="in-size" min="40" max="150" value="88" step="2" oninput="onInput();document.getElementById('sv').textContent=this.value+' m²'"/>
-            <div style="display:flex;justify-content:space-between;font-size:.68rem;color:var(--text3);margin-top:2px"><span>40 m²</span><span>150 m²</span></div>
-            <div id="apt-count-legend" style="font-size:.72rem;color:var(--accent);margin-top:4px;text-align:center;font-weight:600"></div>
+            <div class="range-labels"><span>40 m²</span><span>150 m²</span></div>
+            <div id="apt-count-legend" style="font-size:10px;font-family:var(--mono);color:var(--accent);margin-top:4px;text-align:center;font-weight:500;letter-spacing:.5px"></div>
           </div>
           <div>
-            <div class="plabel"><span class="iBtn" onclick="openDr('orientation')">i</span><span data-nl="Oriëntatie" data-en="Orientation">Oriëntatie</span></div>
+            <div class="plabel"><button class="iBtn" onclick="openDr('orientation')">i</button><span data-nl="Oriëntatie" data-en="Orientation">Oriëntatie</span></div>
             <select id="in-orientation" onchange="onInput()">
               <option value="0" data-nl="N – Noord"      data-en="N – North">N – Noord</option>
               <option value="1" data-nl="NO – Noordoost" data-en="NE – Northeast">NO – Noordoost</option>
@@ -215,99 +432,99 @@
             </select>
           </div>
           <div>
-            <div class="plabel"><span class="iBtn" onclick="openDr('glassRatio')">i</span><span data-nl="Glas %" data-en="Glass %">Glas %</span>: <span id="gv" class="rv">40%</span></div>
+            <div class="plabel"><button class="iBtn" onclick="openDr('glassRatio')">i</button><span data-nl="Glas %" data-en="Glass %">Glas %</span>: <span id="gv" class="rv">40%</span></div>
             <input type="range" id="in-glassRatio" min="20" max="70" value="40" step="2" oninput="onInput();document.getElementById('gv').textContent=this.value+'%'"/>
-            <div style="display:flex;justify-content:space-between;font-size:.68rem;color:var(--text3);margin-top:2px"><span>20%</span><span>70%</span></div>
+            <div class="range-labels"><span>20%</span><span>70%</span></div>
           </div>
           <div>
-            <div class="plabel"><span class="iBtn" onclick="openDr('construction')">i</span><span data-nl="Constructie" data-en="Construction">Constructie</span></div>
+            <div class="plabel"><button class="iBtn" onclick="openDr('construction')">i</button><span data-nl="Constructie" data-en="Construction">Constructie</span></div>
             <select id="in-construction" onchange="onInput()">
-              <option value="0" data-nl="Volledig hout" data-en="Full timber">Volledig hout</option>
-              <option value="1" data-nl="Hybride hout-staal" data-en="Hybrid timber-steel">Hybride hout-staal</option>
-              <option value="2" data-nl="Hybride hout-beton" data-en="Hybrid timber-concrete">Hybride hout-beton</option>
+              <option value="0" data-nl="Volledig hout"        data-en="Full timber">Volledig hout</option>
+              <option value="1" data-nl="Hybride hout-staal"   data-en="Hybrid timber-steel">Hybride hout-staal</option>
+              <option value="2" data-nl="Hybride hout-beton"   data-en="Hybrid timber-concrete">Hybride hout-beton</option>
               <option value="3" selected data-nl="Beton + staal" data-en="Concrete + steel">Beton + staal</option>
-              <option value="4" data-nl="Volledig beton" data-en="Full concrete">Volledig beton</option>
+              <option value="4" data-nl="Volledig beton"       data-en="Full concrete">Volledig beton</option>
             </select>
           </div>
           <div style="grid-column:1/-1">
-            <div class="plabel"><span class="iBtn" onclick="openDr('roofType')">i</span><span data-nl="Dak (top verdieping)" data-en="Roof (top floor)">Dak</span></div>
+            <div class="plabel"><button class="iBtn" onclick="openDr('roofType')">i</button><span data-nl="Dak" data-en="Roof">Dak</span></div>
             <select id="in-roofType" onchange="onInput()">
               <option value="0" data-nl="Geen dak / niet top verdieping" data-en="No roof / not top floor">Geen dak / niet top verdieping</option>
-              <option value="1" data-nl="Zwart dak (bitumen)" data-en="Black roof (bitumen)">Zwart dak (bitumen)</option>
-              <option value="2" data-nl="Groen dak (vegetatie)" data-en="Green roof (vegetation)">Groen dak (vegetatie)</option>
+              <option value="1" data-nl="Zwart dak (bitumen)"            data-en="Black roof (bitumen)">Zwart dak (bitumen)</option>
+              <option value="2" data-nl="Groen dak (vegetatie)"          data-en="Green roof (vegetation)">Groen dak (vegetatie)</option>
             </select>
           </div>
         </div>
       </div>
 
-      <!-- Installaties -->
+      <!-- Systems -->
       <div class="card" style="padding:14px">
-        <div class="shdr">⚙️ <span data-nl="Installaties" data-en="Systems">Installaties</span></div>
+        <div class="shdr">· <span data-nl="Installaties" data-en="Systems">Installaties</span></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           <div>
-            <div class="plabel"><span class="iBtn" onclick="openDr('ventilation')">i</span><span data-nl="Ventilatie" data-en="Ventilation">Ventilatie</span></div>
+            <div class="plabel"><button class="iBtn" onclick="openDr('ventilation')">i</button><span data-nl="Ventilatie" data-en="Ventilation">Ventilatie</span></div>
             <select id="in-ventilation" onchange="onInput()">
               <option value="0" data-nl="Nat. + mech. afzuiging" data-en="Nat. + mech. extraction">Nat. + mech. afzuiging</option>
-              <option value="1" data-nl="Nat. + indirecte WTW" data-en="Nat. + indirect HRV">Indirecte WTW</option>
-              <option value="2" data-nl="Passive House" data-en="Passive House">Passive House</option>
+              <option value="1" data-nl="Nat. + indirecte WTW"   data-en="Nat. + indirect HRV">Indirecte WTW</option>
+              <option value="2" data-nl="Passive House"           data-en="Passive House">Passive House</option>
               <option value="3" selected data-nl="Balans met WTW" data-en="Balanced with HRV">Balans met WTW</option>
             </select>
-            <div id="ventnote" style="font-size:.71rem;color:var(--text3);margin-top:3px"></div>
+            <div id="ventnote" style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-top:3px;letter-spacing:.5px"></div>
           </div>
           <div>
-            <div class="plabel"><span class="iBtn" onclick="openDr('heatCool')">i</span><span data-nl="Verw./Koeling" data-en="Heat/Cool">Verw./Koeling</span></div>
+            <div class="plabel"><button class="iBtn" onclick="openDr('heatCool')">i</button><span data-nl="Verw./Koeling" data-en="Heat/Cool">Verw./Koeling</span></div>
             <select id="in-heatCool" onchange="onInput()">
-              <option value="0" data-nl="WP Lucht (COP 3.5)"    data-en="Air HP (COP 3.5)">WP Lucht (COP 3.5)</option>
-              <option value="1" data-nl="WP WKO (COP 6.0)"      data-en="Grd-src HP (COP 6.0)">WP WKO (COP 6.0)</option>
-              <option value="2" selected data-nl="SV + koelmachine"  data-en="District heat + chiller">SV + koelmachine</option>
-              <option value="3" data-nl="SV TW + WP"             data-en="District HW + HP">SV TW + WP</option>
-              <option value="4" data-nl="SV + WP (T-afh.)"       data-en="District + HP (T-dep.)">SV + WP (T-afh.)</option>
+              <option value="0" data-nl="WP Lucht (COP 3.5)"   data-en="Air HP (COP 3.5)">WP Lucht (COP 3.5)</option>
+              <option value="1" data-nl="WP WKO (COP 6.0)"     data-en="Grd-src HP (COP 6.0)">WP WKO (COP 6.0)</option>
+              <option value="2" selected data-nl="SV + koelmachine" data-en="District heat + chiller">SV + koelmachine</option>
+              <option value="3" data-nl="SV TW + WP"           data-en="District HW + HP">SV TW + WP</option>
+              <option value="4" data-nl="SV + WP (T-afh.)"     data-en="District + HP (T-dep.)">SV + WP (T-afh.)</option>
             </select>
           </div>
           <div>
-            <div class="plabel"><span class="iBtn" onclick="openDr('solarCollector')">i</span><span data-nl="Zonnecollector" data-en="Solar collector">Zonnecollector</span></div>
+            <div class="plabel"><button class="iBtn" onclick="openDr('solarCollector')">i</button><span data-nl="Zonnecollector" data-en="Solar collector">Zonnecollector</span></div>
             <select id="in-solarCollector" onchange="onInput()">
-              <option value="0" data-nl="Geen" data-en="None">Geen</option>
+              <option value="0" data-nl="Geen"            data-en="None">Geen</option>
               <option value="1">PVT (1.5 m²)</option>
               <option value="2" data-nl="Standaard (2 m²)" data-en="Standard (2 m²)">Standaard (2 m²)</option>
-              <option value="3" data-nl="Vacuum (2 m²)" data-en="Vacuum (2 m²)">Vacuum (2 m²)</option>
+              <option value="3" data-nl="Vacuum (2 m²)"   data-en="Vacuum (2 m²)">Vacuum (2 m²)</option>
             </select>
           </div>
           <div>
-            <div class="plabel"><span class="iBtn" onclick="openDr('showerWTW')">i</span><span data-nl="Douche WTW" data-en="Shower HRV">Douche WTW</span></div>
+            <div class="plabel"><button class="iBtn" onclick="openDr('showerWTW')">i</button><span data-nl="Douche WTW" data-en="Shower HRV">Douche WTW</span></div>
             <select id="in-showerWTW" onchange="onInput()">
-              <option value="0" data-nl="Geen" data-en="None">Geen</option>
+              <option value="0" data-nl="Geen"                  data-en="None">Geen</option>
               <option value="1" selected data-nl="Individueel (−30%)" data-en="Individual (−30%)">Individueel (−30%)</option>
-              <option value="2" data-nl="Collectief (−40%)" data-en="Collective (−40%)">Collectief (−40%)</option>
+              <option value="2" data-nl="Collectief (−40%)"     data-en="Collective (−40%)">Collectief (−40%)</option>
             </select>
           </div>
           <div style="grid-column:1/-1">
             <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer">
               <input type="checkbox" id="in-co2Control" checked onchange="onInput()" style="margin-top:2px"/>
               <div>
-                <span style="font-size:.84rem;font-weight:600" data-nl="CO₂-gestuurde ventilatie" data-en="CO₂-controlled ventilation">CO₂-gestuurde ventilatie</span>
-                <span style="font-size:.71rem;color:var(--text3);display:block" data-nl="~35% besparing door vraagregeling" data-en="~35% savings via demand control">~35% besparing door vraagregeling</span>
+                <span style="font-size:12px;font-weight:600" data-nl="CO₂-gestuurde ventilatie" data-en="CO₂-controlled ventilation">CO₂-gestuurde ventilatie</span>
+                <span style="font-size:10px;font-family:var(--mono);color:var(--text3);display:block;margin-top:2px" data-nl="~35% besparing door vraagregeling" data-en="~35% savings via demand control">~35% besparing door vraagregeling</span>
               </div>
             </label>
           </div>
         </div>
       </div>
 
-      <!-- Bewoners & Klimaat -->
+      <!-- Occupants & Climate -->
       <div class="card" style="padding:14px">
-        <div class="shdr">👥 <span data-nl="Bewoners & Klimaat" data-en="Occupants & Climate">Bewoners & Klimaat</span></div>
+        <div class="shdr">· <span data-nl="Bewoners & Klimaat" data-en="Occupants & Climate">Bewoners & Klimaat</span></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start">
           <div>
-            <div class="plabel"><span class="iBtn" onclick="openDr('occupants')">i</span><span data-nl="Bewoners" data-en="Occupants">Bewoners</span>: <span id="ov" class="rv">2</span></div>
+            <div class="plabel"><button class="iBtn" onclick="openDr('occupants')">i</button><span data-nl="Bewoners" data-en="Occupants">Bewoners</span>: <span id="ov" class="rv">2</span></div>
             <input type="range" id="in-occupants" min="1" max="5" value="2" step="1" oninput="onInput();document.getElementById('ov').textContent=this.value"/>
-            <div style="display:flex;justify-content:space-between;font-size:.68rem;color:var(--text3);margin-top:2px"><span>1</span><span>5</span></div>
+            <div class="range-labels"><span>1</span><span>5</span></div>
           </div>
           <div>
             <label id="climlabel" style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;padding:10px;border:1px solid var(--border);border-radius:8px;transition:border-color .2s">
               <input type="checkbox" id="in-climate2050" onchange="onInput()" style="margin-top:2px"/>
               <div>
-                <span style="font-size:.84rem;font-weight:700;color:#fb923c" data-nl="🌡️ Klimaat 2050" data-en="🌡️ Climate 2050">🌡️ Klimaat 2050</span>
-                <span style="font-size:.71rem;color:var(--text3);display:block" data-nl="+40% koeling · −18% verwarming" data-en="+40% cooling · −18% heating">+40% koeling · −18% verwarming</span>
+                <span style="font-size:12px;font-weight:700;color:var(--amber)" data-nl="🌡️ Klimaat 2050" data-en="🌡️ Climate 2050">🌡️ Klimaat 2050</span>
+                <span style="font-size:10px;font-family:var(--mono);color:var(--text3);display:block;margin-top:2px" data-nl="+40% koeling · −18% verwarming" data-en="+40% cooling · −18% heating">+40% koeling · −18% verwarming</span>
               </div>
             </label>
           </div>
@@ -316,73 +533,80 @@
 
       <!-- Save -->
       <button class="btn-p" style="width:100%;padding:13px;display:flex;align-items:center;justify-content:center;gap:8px" onclick="doSave()">
-        <span data-nl="💾 Opslaan & Delen" data-en="💾 Save & Share">💾 Opslaan & Delen</span>
+        <span data-nl="💾 OPSLAAN & DELEN" data-en="💾 SAVE & SHARE">💾 OPSLAAN & DELEN</span>
         <span id="sspin" class="spin" style="display:none"></span>
       </button>
-      <div id="savest" style="text-align:center;font-size:.8rem;color:var(--text2);min-height:1.2rem"></div>
+      <div id="savest" style="text-align:center;font-size:11px;font-family:var(--mono);color:var(--text2);min-height:1.2rem"></div>
     </div><!-- /inputs -->
 
-    <!-- ── CENTER: 3D Building ── -->
-    <div class="card" style="overflow:hidden;display:flex;flex-direction:column">
-      <div style="padding:9px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
-        <span style="font-size:.72rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em" data-nl="Gebouw visualisatie" data-en="Building visualization">Gebouw visualisatie</span>
-        <div style="display:flex;gap:10px;font-size:.7rem;color:var(--text3)">
-          <span style="display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;border-radius:2px;background:#3b82f6;display:inline-block"></span><span data-nl="Jouw appartement" data-en="Your apartment">Jouw appartement</span></span>
-          <span style="display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;border-radius:2px;background:#ef4444;display:inline-block"></span>N</span>
-          <span style="display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;border-radius:2px;background:#3b82f6;display:inline-block"></span><span data-nl="Gevel" data-en="Façade">Gevel</span></span>
-        </div>
+    <!-- ══ CENTER: Building canvas ══ -->
+    <div class="card" style="overflow:hidden;display:flex;flex-direction:column;position:relative;min-height:680px;min-width:0">
+      <!-- Telemetry overlays -->
+      <div style="position:absolute;top:14px;left:16px;font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;display:flex;flex-direction:column;gap:3px;z-index:2;pointer-events:none">
+        <span style="color:var(--accent)">· 02 <span data-nl="Massing" data-en="Massing">Massing</span></span>
+        <span id="canvasHint" style="color:var(--text3)"></span>
       </div>
-      <canvas id="bcanvas" style="display:block;width:100%;height:680px"></canvas>
+      <div style="position:absolute;top:14px;right:16px;display:flex;gap:6px;z-index:2;pointer-events:none">
+        <span style="padding:3px 8px;border-radius:4px;background:rgba(0,0,0,0.28);border:1px solid var(--border);font-family:var(--mono);font-size:9px;letter-spacing:1px;color:var(--text3);text-transform:uppercase" data-nl="Sleep roteren" data-en="Drag rotate">Sleep roteren</span>
+        <span style="padding:3px 8px;border-radius:4px;background:rgba(0,0,0,0.28);border:1px solid var(--border);font-family:var(--mono);font-size:9px;letter-spacing:1px;color:var(--text3);text-transform:uppercase" data-nl="Scroll zoom" data-en="Scroll zoom">Scroll zoom</span>
+      </div>
+      <canvas id="bcanvas" style="display:block;width:100%;flex:1"></canvas>
+      <div style="position:absolute;bottom:14px;right:16px;display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:4px;background:rgba(0,0,0,0.28);border:1px solid var(--border-hi);font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:1.5px;text-transform:uppercase;z-index:2">
+        <span style="width:5px;height:5px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px var(--accent)"></span>
+        LIVE
+      </div>
     </div>
 
-    <!-- ── RIGHT: Results ── -->
+    <!-- ══ RIGHT: Results ══ -->
     <div style="display:flex;flex-direction:column;gap:10px">
 
+      <div style="font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);padding:2px 0">· 03 Results</div>
+
       <!-- Score card -->
-      <div class="mc" style="border-radius:12px">
+      <div class="mc">
         <div class="mc-label" data-nl="Totaal verbruik" data-en="Total use">Totaal verbruik</div>
         <div class="mc-big" id="mc-score">—</div>
         <div class="mc-sub" data-nl="kWh / m² / jaar" data-en="kWh / m² / yr">kWh / m² / jaar</div>
-        <div id="mc-total-kwh" style="font-size:.72rem;color:var(--text3);margin-top:1px">— kWh/jaar</div>
-        <div style="height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-top:6px">
-          <div id="mc-bar" style="height:100%;border-radius:3px;transition:width .4s,background .4s;width:0%"></div>
+        <div id="mc-total-kwh" style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-top:2px">— kWh/jaar</div>
+        <div style="height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;margin-top:8px">
+          <div id="mc-bar" style="height:100%;border-radius:2px;transition:width .4s,background .4s;width:0%"></div>
         </div>
-        <div id="mc-rating" style="font-size:.7rem;color:var(--text3);margin-top:3px"></div>
+        <div id="mc-rating" style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-top:3px;letter-spacing:.5px"></div>
       </div>
 
-      <!-- WEii thresholds -->
+      <!-- WEii -->
       <div class="card" style="padding:14px" id="weii-card"></div>
 
-      <!-- CO2 + user row -->
+      <!-- CO2 + user -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div class="mc">
           <div class="mc-label">CO₂</div>
-          <div class="mc-big" id="mc-co2" style="color:#fb923c;font-size:1.5rem">—</div>
+          <div class="mc-big" id="mc-co2" style="color:var(--amber);font-size:1.5rem">—</div>
           <div class="mc-sub" data-nl="kg / jaar" data-en="kg / yr">kg / jaar</div>
-          <div id="mc-co2sub" style="font-size:.7rem;color:var(--text3);margin-top:3px"></div>
+          <div id="mc-co2sub" style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-top:3px"></div>
         </div>
         <div class="mc">
           <div class="mc-label" data-nl="Gebruikers %" data-en="User energy %">Gebruikers %</div>
-          <div class="mc-big" id="mc-user-pct" style="color:#a855f7;font-size:1.5rem">—</div>
+          <div class="mc-big" id="mc-user-pct" style="color:var(--accent);font-size:1.5rem">—</div>
           <div class="mc-sub" data-nl="van totaal" data-en="of total">van totaal</div>
-          <div id="mc-usersub" style="font-size:.7rem;color:var(--text3);margin-top:3px"></div>
+          <div id="mc-usersub" style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-top:3px"></div>
         </div>
       </div>
 
       <!-- Heating vs Cooling -->
-      <div class="mc" style="border-radius:12px">
+      <div class="mc">
         <div class="mc-label" data-nl="Verwarming vs Koeling" data-en="Heating vs Cooling">Verwarming vs Koeling</div>
-        <div style="display:flex;justify-content:space-between;font-size:.85rem;font-weight:700;margin-top:4px">
-          <span style="color:#ef4444" id="mc-heat-val">—</span>
-          <span style="color:#3b82f6" id="mc-cool-val">—</span>
+        <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-top:4px;font-family:var(--mono)">
+          <span style="color:var(--orange)" id="mc-heat-val">—</span>
+          <span style="color:var(--accent)" id="mc-cool-val">—</span>
         </div>
         <div class="mini-bar" style="margin-top:6px"><div class="mini-heat" id="mc-hbar" style="width:50%"></div><div class="mini-cool" id="mc-cbar" style="width:50%"></div></div>
-        <div id="mc-hcsub" style="font-size:.7rem;color:var(--text3);margin-top:4px"></div>
+        <div id="mc-hcsub" style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-top:4px;letter-spacing:.5px"></div>
       </div>
 
-      <!-- Energy breakdown chart -->
+      <!-- End-use chart -->
       <div class="card" style="padding:14px">
-        <div style="font-size:.72rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px" data-nl="Energieverdeling (kWh/jaar)" data-en="Energy breakdown (kWh/yr)">Energieverdeling (kWh/jaar)</div>
+        <div style="font-family:var(--mono);font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px" data-nl="Energieverdeling (kWh/jaar)" data-en="Energy breakdown (kWh/yr)">Energieverdeling (kWh/jaar)</div>
         <div style="position:relative;height:220px"><canvas id="bchart"></canvas></div>
       </div>
 
@@ -392,8 +616,14 @@
       <!-- Building overview -->
       <div class="card" style="padding:14px" id="bov-card"></div>
 
-      <!-- Insight -->
-      <div class="insight" id="insightbox">Pas de parameters aan voor inzichten.</div>
+      <!-- Insight strip -->
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;display:flex;gap:12px;align-items:flex-start">
+        <div style="width:3px;align-self:stretch;background:var(--amber);border-radius:2px;flex-shrink:0"></div>
+        <div style="flex:1;min-width:0">
+          <div style="font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--amber);margin-bottom:4px">· INSIGHT</div>
+          <div id="insightbox" style="font-size:12px;color:var(--text2);line-height:1.55">Pas de parameters aan voor inzichten.</div>
+        </div>
+      </div>
 
     </div><!-- /results -->
   </div><!-- /mgrid -->
@@ -415,12 +645,14 @@ const FIREBASE_CONFIG = {
 const APP = {
   lang:'nl', isDark:true, workshopCode:'', groupLetter:'', groupName:'',
   db:null, fbReady:false, brkChart:null, cmpChart:null,
-  compareOpen:false, lastResults:null, saveTimer:null, buildingType:0
+  compareOpen:false, lastResults:null, saveTimer:null, buildingType:0,
+  hud: { drawerOpen: false, activeKey: null },
 };
 const GC = { A:'#ef4444',B:'#f97316',C:'#eab308',D:'#22c55e',E:'#3b82f6',F:'#a855f7' };
 
 // ── LANG ─────────────────────────────────────────────────────────────────────
-function toggleLang() { APP.lang = APP.lang==='nl'?'en':'nl'; applyLang(); }
+function setLang(lang) { APP.lang = lang; applyLang(); }
+function toggleLang()  { APP.lang = APP.lang==='nl'?'en':'nl'; applyLang(); }
 function applyLang() {
   const L = APP.lang;
   document.documentElement.lang = L;
@@ -433,7 +665,14 @@ function applyLang() {
   document.querySelectorAll('[data-placeholder-nl]').forEach(el => {
     const v = el.getAttribute('data-placeholder-'+L); if(v) el.placeholder = v;
   });
-  ['lbtn','lbtn2'].forEach(id => { const e=document.getElementById(id); if(e) e.textContent='🌐 '+(L==='nl'?'EN':'NL'); });
+  // Setup screen lang button
+  const lbtn = document.getElementById('lbtn');
+  if (lbtn) lbtn.textContent = L==='nl'?'EN':'NL';
+  // Header segmented lang control
+  const enBtn = document.getElementById('hdr-lang-en');
+  const nlBtn = document.getElementById('hdr-lang-nl');
+  if (enBtn) { enBtn.style.background = L==='en'?'var(--accent)':'var(--bg3)'; enBtn.style.color = L==='en'?'#0a1f1c':'var(--text2)'; }
+  if (nlBtn) { nlBtn.style.background = L==='nl'?'var(--accent)':'var(--bg3)'; nlBtn.style.color = L==='nl'?'#0a1f1c':'var(--text2)'; }
   if(APP.lastResults) { updateAptNote(getInputs()); }
 }
 
@@ -441,7 +680,7 @@ function applyLang() {
 function toggleTheme() {
   APP.isDark = !APP.isDark;
   document.documentElement.setAttribute('data-theme', APP.isDark?'dark':'light');
-  ['tbtn','tbtn2'].forEach(id => { const e=document.getElementById(id); if(e) e.textContent=APP.isDark?'☀️':'🌙'; });
+  ['tbtn','tbtn2'].forEach(id => { const e=document.getElementById(id); if(e) e.textContent=APP.isDark?'☀':'🌙'; });
   localStorage.setItem('ew_theme', APP.isDark?'dark':'light');
   initChart();
   if(APP.lastResults) { updateChart(APP.lastResults); drawBuilding2D(document.getElementById('bcanvas'), getInputs(), APP.isDark); }
@@ -454,7 +693,7 @@ function initSetup() {
   ['A','B','C','D','E','F'].forEach(g => {
     const b = document.createElement('button');
     b.textContent=g; b.id='gb-'+g;
-    b.style.cssText='padding:10px 0;border-radius:8px;font-weight:700;font-size:1rem;border:2px solid transparent;background:var(--bg3);color:var(--text2);cursor:pointer;transition:all .15s;width:100%';
+    b.style.cssText='padding:9px 0;border-radius:6px;font-weight:700;font-size:13px;font-family:var(--mono);border:2px solid transparent;background:var(--bg3);color:var(--text3);cursor:pointer;transition:all .15s;width:100%';
     b.onclick=()=>pickGroup(g);
     document.getElementById('gsel').appendChild(b);
   });
@@ -466,7 +705,7 @@ function initSetup() {
   } catch(_){}
 }
 function pickGroup(g) {
-  document.querySelectorAll('#gsel button').forEach(b=>{b.style.borderColor='transparent';b.style.background='var(--bg3)';b.style.color='var(--text2)';});
+  document.querySelectorAll('#gsel button').forEach(b=>{b.style.borderColor='transparent';b.style.background='var(--bg3)';b.style.color='var(--text3)';});
   const b=document.getElementById('gb-'+g);
   if(b){b.style.borderColor=GC[g];b.style.background=GC[g]+'22';b.style.color=GC[g];}
   APP.groupLetter=g;
@@ -475,8 +714,8 @@ function startWS() {
   const L=APP.lang;
   const code=document.getElementById('wcode').value.trim().toLowerCase().replace(/\s+/g,'-');
   const name=document.getElementById('gname').value.trim();
-  if(!code){setMsg('sstatus',L==='nl'?'⚠️ Voer een workshop code in':'⚠️ Enter a workshop code','color:var(--yellow)');return;}
-  if(!APP.groupLetter){setMsg('sstatus',L==='nl'?'⚠️ Kies een groep':'⚠️ Choose a group','color:var(--yellow)');return;}
+  if(!code){setMsg('sstatus',L==='nl'?'⚠️ Voer een workshop code in':'⚠️ Enter a workshop code','color:var(--amber)');return;}
+  if(!APP.groupLetter){setMsg('sstatus',L==='nl'?'⚠️ Kies een groep':'⚠️ Choose a group','color:var(--amber)');return;}
   APP.workshopCode=code; APP.groupName=name||(L==='nl'?'Groep ':'Group ')+APP.groupLetter;
   localStorage.setItem('ew_setup',JSON.stringify({code,letter:APP.groupLetter,name}));
   initFB(); showMain();
@@ -513,12 +752,13 @@ function showMain() {
   document.getElementById('mscreen').style.display='block';
   const badge=document.getElementById('gbadge');
   badge.textContent=APP.groupName;
-  badge.style.cssText+=`;background:${GC[APP.groupLetter]||'#3b82f6'}22;color:${GC[APP.groupLetter]||'#3b82f6'};border-color:${GC[APP.groupLetter]||'#3b82f6'}`;
+  badge.style.cssText+=`;background:${GC[APP.groupLetter]||'#22b39a'}22;color:${GC[APP.groupLetter]||'#22b39a'};border-color:${GC[APP.groupLetter]||'#22b39a'}`;
+  const chip = document.getElementById('workshopCodeLabel');
+  if (chip) chip.textContent = 'ROOM · ' + APP.workshopCode.toUpperCase();
   setupTooltips();
-  // Wait for layout then init canvas-based elements
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
     initChart();
-    setBuildingType(APP.buildingType); // style toggle buttons correctly
+    setBuildingType(APP.buildingType);
     if(typeof INFO!=='undefined') initTooltipContent();
     onInput();
   }));
@@ -527,10 +767,9 @@ function showMain() {
 // ── INPUTS ───────────────────────────────────────────────────────────────────
 function getInputs() {
   const buildingType = APP.buildingType !== undefined ? APP.buildingType : 0;
-  const aptType = buildingType === 1 ? 2 : 0; // gallery=2, tower shows eenzijdig in 3D
+  const aptType = buildingType === 1 ? 2 : 0;
   return {
-    aptType,
-    buildingType,
+    aptType, buildingType,
     floor:         +document.getElementById('in-floor').value,
     totalFloors:   +document.getElementById('in-totalFloors').value,
     size:          +document.getElementById('in-size').value,
@@ -555,125 +794,93 @@ function onInput() {
   catch(e) { console.error(e); document.getElementById('insightbox').textContent='⚠️ '+e.message; return; }
   APP.lastResults=results;
 
-  // Building canvas
   const canvas=document.getElementById('bcanvas');
-  if(canvas) { try { drawBuilding2D(canvas, inputs, APP.isDark); } catch(e) { console.error('3D render:', e); } }
+  if(canvas) { try { drawBuilding2D(canvas, inputs, APP.isDark); } catch(e) { console.error('canvas:', e); } }
 
-  // Metric cards
   updateMetricCards(results, inputs);
   updateWeii(results);
-
-  // Chart
   updateChart(results);
-
-  // Building overview + apt count legend
   updateBuildingOverview(overview, inputs);
   updateAptCountLegend(overview);
-
-  // Detail rows
   updateDetail(results, inputs);
-
-  // Notes
   updateAptNote(inputs);
   updateVentNote(inputs);
   updateLiftInfo(results, inputs);
   updateInsight(results, inputs);
 
-  // Climate label pulse
-  document.getElementById('climlabel').style.borderColor = inputs.climate2050?'#fb923c':'var(--border)';
+  document.getElementById('climlabel').style.borderColor = inputs.climate2050?'var(--amber)':'var(--border)';
 
-  // Header score
   const v=results.totalPerM2;
   const hs=document.getElementById('hscore');
   hs.textContent=v+' kWh/m²';
   hs.className='badge '+(v<40?'score-g':v<80?'score-y':'score-r');
 
-  // Auto-save
   clearTimeout(APP.saveTimer);
   APP.saveTimer=setTimeout(()=>{
     if(APP.fbReady&&APP.db) APP.db.ref(dbPath()).set({groupName:APP.groupName,letter:APP.groupLetter,inputs,results,savedAt:Date.now()}).catch(()=>{});
   },1800);
 }
 
-// ── WEII THRESHOLDS (Woonfunctie – Appartement) ──────────────────────────────
+// ── WEII ─────────────────────────────────────────────────────────────────────
 const WEII = [
-  { max:  45, nl: 'Paris Proof', en: 'Paris Proof', color: '#16a34a' },
-  { max:  65, nl: 'Zeer zuinig', en: 'Very efficient', color: '#84cc16' },
-  { max: 100, nl: 'Zuinig',      en: 'Efficient',      color: '#eab308' },
-  { max: 150, nl: 'Gemiddeld',   en: 'Average',         color: '#f97316' },
-  { max: 180, nl: 'Onzuinig',    en: 'Inefficient',     color: '#ef4444' },
-  { max: Infinity, nl: 'Zeer onzuinig', en: 'Very inefficient', color: '#dc2626' },
+  { max:  45, nl:'Paris Proof',     en:'Paris Proof',       color:'#16a34a' },
+  { max:  65, nl:'Zeer zuinig',     en:'Very efficient',    color:'#84cc16' },
+  { max: 100, nl:'Zuinig',          en:'Efficient',         color:'#eab308' },
+  { max: 150, nl:'Gemiddeld',       en:'Average',           color:'#f97316' },
+  { max: 180, nl:'Onzuinig',        en:'Inefficient',       color:'#ef4444' },
+  { max:Infinity,nl:'Zeer onzuinig',en:'Very inefficient',  color:'#dc2626' },
 ];
-const WEII_SCALE = 200; // display cap
+const WEII_SCALE = 200;
 
 function updateWeii(r) {
   const el = document.getElementById('weii-card');
   if (!el) return;
   const score = r.totalPerM2, L = APP.lang;
   const cat = WEII.find(t => score <= t.max) || WEII[WEII.length-1];
-
-  // Colored bar segments
   let segs = '';
   WEII.forEach((t, i) => {
-    const from = i === 0 ? 0 : WEII[i-1].max;
-    const to   = Math.min(isFinite(t.max) ? t.max : WEII_SCALE, WEII_SCALE);
-    const w    = ((to - from) / WEII_SCALE * 100).toFixed(1);
+    const from = i===0?0:WEII[i-1].max;
+    const to   = Math.min(isFinite(t.max)?t.max:WEII_SCALE, WEII_SCALE);
+    const w    = ((to-from)/WEII_SCALE*100).toFixed(1);
     segs += `<div style="width:${w}%;height:100%;background:${t.color}"></div>`;
   });
-
-  // Marker position (clamped 1–99%)
-  const pos = Math.min(99, Math.max(1, score / WEII_SCALE * 100)).toFixed(1);
-
-  // Tick labels — positions as % of scale
-  const ticks = [45, 65, 100, 150, 180];
-  const tickHtml = ticks.map(v =>
-    `<span style="position:absolute;left:${(v/WEII_SCALE*100).toFixed(1)}%;transform:translateX(-50%)">${v}</span>`
-  ).join('');
-
+  const pos = Math.min(99,Math.max(1,score/WEII_SCALE*100)).toFixed(1);
+  const ticks = [45,65,100,150,180];
+  const tickHtml = ticks.map(v => `<span style="position:absolute;left:${(v/WEII_SCALE*100).toFixed(1)}%;transform:translateX(-50%)">${v}</span>`).join('');
   el.innerHTML = `
-    <div style="font-size:.72rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">WEii – ${L==='nl'?'Appartement':'Apartment'}</div>
+    <div style="font-family:var(--mono);font-size:9px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">WEii – ${L==='nl'?'Appartement':'Apartment'}</div>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-      <div style="font-size:2rem;font-weight:900;line-height:1;color:${cat.color}">${score}</div>
+      <div style="font-size:2rem;font-weight:700;line-height:1;color:${cat.color};font-family:var(--sans);letter-spacing:-1px">${score}</div>
       <div>
-        <div style="font-weight:700;color:${cat.color};font-size:.9rem">${cat[L]||cat.nl}</div>
-        <div style="font-size:.7rem;color:var(--text3)">kWh/m²/jaar</div>
+        <div style="font-weight:700;color:${cat.color};font-size:.88rem">${cat[L]||cat.nl}</div>
+        <div style="font-size:10px;font-family:var(--mono);color:var(--text3)">kWh/m²/jaar</div>
       </div>
     </div>
     <div style="position:relative;margin-bottom:20px">
-      <div style="display:flex;height:12px;border-radius:6px;overflow:hidden">${segs}</div>
-      <div style="position:absolute;top:-3px;left:${pos}%;transform:translateX(-50%);transition:left .4s;pointer-events:none">
+      <div style="display:flex;height:10px;border-radius:5px;overflow:hidden">${segs}</div>
+      <div style="position:absolute;top:-4px;left:${pos}%;transform:translateX(-50%);transition:left .4s;pointer-events:none">
         <div style="width:3px;height:18px;background:var(--text);border-radius:2px;margin:0 auto;box-shadow:0 0 4px rgba(0,0,0,.5)"></div>
       </div>
     </div>
-    <div style="position:relative;height:14px;font-size:.62rem;color:var(--text3)">${tickHtml}</div>
+    <div style="position:relative;height:14px;font-size:9px;font-family:var(--mono);color:var(--text3)">${tickHtml}</div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:10px">
-      ${WEII.map(t => {
-        const active = t === cat;
-        return `<div style="padding:5px 6px;border-radius:6px;background:${active?t.color:t.color+'22'};border:1px solid ${t.color}${active?'':'55'}">
-          <div style="font-size:.63rem;font-weight:700;color:${active?'#fff':t.color};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t[L]||t.nl}</div>
-          <div style="font-size:.6rem;color:${active?'rgba(255,255,255,.75)':'var(--text3)'}">≤ ${isFinite(t.max)?t.max:'∞'}</div>
-        </div>`;
-      }).join('')}
+      ${WEII.map(t=>{const active=t===cat;return `<div style="padding:5px 6px;border-radius:5px;background:${active?t.color:t.color+'22'};border:1px solid ${t.color}${active?'':'55'}"><div style="font-size:9px;font-weight:700;font-family:var(--mono);color:${active?'#fff':t.color};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t[L]||t.nl}</div><div style="font-size:9px;font-family:var(--mono);color:${active?'rgba(255,255,255,.7)':'var(--text3)'}">≤ ${isFinite(t.max)?t.max:'∞'}</div></div>`;}).join('')}
     </div>`;
 }
 
 // ── METRIC CARDS ─────────────────────────────────────────────────────────────
 function updateMetricCards(r, inp) {
-  const L=APP.lang;
-  const v=r.totalPerM2;
-  // Score
+  const L=APP.lang, v=r.totalPerM2;
   document.getElementById('mc-score').textContent=v;
-  document.getElementById('mc-total-kwh').textContent=r.total.toLocaleString(APP.lang==='nl'?'nl':'en-US')+(APP.lang==='nl'?' kWh/jaar':' kWh/yr');
+  document.getElementById('mc-total-kwh').textContent=r.total.toLocaleString(L==='nl'?'nl':'en-US')+(L==='nl'?' kWh/jaar':' kWh/yr');
   const bar=document.getElementById('mc-bar');
   bar.style.width=Math.min(100,(v/120)*100)+'%';
   bar.style.background=v<40?'var(--green)':v<80?'var(--yellow)':'var(--red)';
-  document.getElementById('mc-rating').textContent=v<40?(L==='nl'?'🟢 Bijna energieneutraal':'🟢 Near zero energy'):v<80?(L==='nl'?'🟡 Gemiddeld goed':'🟡 Average good'):(L==='nl'?'🔴 Verbeteringen mogelijk':'🔴 Room to improve');
+  document.getElementById('mc-rating').textContent=v<40?(L==='nl'?'· Bijna energieneutraal':'· Near zero energy'):v<80?(L==='nl'?'· Gemiddeld goed':'· Average good'):(L==='nl'?'· Verbeteringen mogelijk':'· Room to improve');
 
-  // CO2
   document.getElementById('mc-co2').textContent=r.co2.toLocaleString(L==='nl'?'nl':'en-US');
   document.getElementById('mc-co2sub').textContent=L==='nl'?`≈ ${Math.round(r.co2/1000*2.5)} kg vliegtuig-equiv.`:`≈ ${Math.round(r.co2/1000*2.5)} kg flight-equiv.`;
 
-  // Heating vs cooling
   const hv=r.heating, cv=r.cooling, hc=hv+cv||1;
   document.getElementById('mc-heat-val').textContent=hv+' kWh';
   document.getElementById('mc-cool-val').textContent=cv+' kWh';
@@ -682,7 +889,6 @@ function updateMetricCards(r, inp) {
   const dom=hv>cv*2?(L==='nl'?'Verwarming domineert':'Heating dominates'):cv>hv*2?(L==='nl'?'Koeling domineert':'Cooling dominates'):(L==='nl'?'Gebalanceerd':'Balanced');
   document.getElementById('mc-hcsub').textContent=dom;
 
-  // User energy %
   const userTotal=r.appliances+r.media;
   const userPct=Math.round(userTotal/r.total*100);
   document.getElementById('mc-user-pct').textContent=userPct+'%';
@@ -693,10 +899,10 @@ function updateMetricCards(r, inp) {
 const CATS=[
   {key:'heating',    nl:'Verwarming',  en:'Heating',     c:'#ef4444'},
   {key:'hotWater',   nl:'Warm water',  en:'Hot water',   c:'#f97316'},
-  {key:'cooling',    nl:'Koeling',     en:'Cooling',     c:'#3b82f6'},
+  {key:'cooling',    nl:'Koeling',     en:'Cooling',     c:'#22b39a'},
   {key:'ventilation',nl:'Ventilatie',  en:'Ventilation', c:'#06b6d4'},
-  {key:'lighting',   nl:'Verlichting', en:'Lighting',    c:'#eab308'},
-  {key:'appliances', nl:'Apparaten',   en:'Appliances',  c:'#22c55e'},
+  {key:'lighting',   nl:'Verlichting', en:'Lighting',    c:'#f5b544'},
+  {key:'appliances', nl:'Apparaten',   en:'Appliances',  c:'#7ec488'},
   {key:'media',      nl:'Media',       en:'Media',       c:'#a855f7'},
   {key:'lift',       nl:'Lift',        en:'Lift',        c:'#64748b'},
 ];
@@ -708,15 +914,15 @@ function initChart() {
   const ctx=el.getContext('2d');
   APP.brkChart=new Chart(ctx,{
     type:'bar',
-    data:{labels:[''],datasets:CATS.map(c=>({label:c[APP.lang]||c.nl,data:[0],backgroundColor:c.c,borderRadius:4}))},
+    data:{labels:[''],datasets:CATS.map(c=>({label:c[APP.lang]||c.nl,data:[0],backgroundColor:c.c,borderRadius:3}))},
     options:{
       indexAxis:'y',responsive:true,maintainAspectRatio:false,
       plugins:{
-        legend:{position:'bottom',labels:{color:_cv('--text2'),boxWidth:10,font:{size:10}}},
+        legend:{position:'bottom',labels:{color:_cv('--text2'),boxWidth:9,font:{size:9,family:_cv('--mono')}}},
         tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${Math.round(ctx.raw).toLocaleString(APP.lang==='nl'?'nl':'en-US')} kWh`}},
       },
       scales:{
-        x:{stacked:true,ticks:{color:_cv('--text3')},grid:{color:_cv('--border')}},
+        x:{stacked:true,ticks:{color:_cv('--text3'),font:{size:9,family:_cv('--mono')}},grid:{color:'rgba(255,255,255,0.05)'}},
         y:{stacked:true,ticks:{display:false},grid:{display:false}},
       }
     }
@@ -730,7 +936,8 @@ function updateChart(r) {
 
 // ── DETAIL ROWS ──────────────────────────────────────────────────────────────
 function updateDetail(r, inp) {
-  const hc=ENERGY_CONFIG.heatCoolSystems[inp.heatCool], L=APP.lang;
+  const L=APP.lang;
+  const hc=ENERGY_CONFIG.heatCoolSystems[inp.heatCool];
   const rows=[
     ['🔴',L==='nl'?'Verwarming':'Heating',    r.heating,   `${r.heatingThermal} kWh th · COP ${hc.copHeat}`],
     ['🟠',L==='nl'?'Warm water':'Hot water',  r.hotWater,  `${r.hotWaterThermal} kWh th · COP ${hc.copHW}`],
@@ -742,27 +949,27 @@ function updateDetail(r, inp) {
     ['⚫','Lift',                             r.lift,      `${L==='nl'?'verd.':'floor'} ${inp.floor}/${inp.totalFloors}`],
   ];
   document.getElementById('detrows').innerHTML=rows.map(([d,n,v,s])=>`
-    <div style="display:flex;align-items:start;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(51,65,85,.4);font-size:.82rem">
+    <div style="display:flex;align-items:start;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:12px">
       <span style="color:var(--text2)">${d} ${n}</span>
       <div style="text-align:right">
-        <span style="font-weight:700;color:var(--text)">${v} kWh</span>
-        ${s?`<div style="font-size:.69rem;color:var(--text3)">${s}</div>`:''}
+        <span style="font-weight:700;font-family:var(--mono);font-size:12px;color:var(--text)">${v} kWh</span>
+        ${s?`<div style="font-size:10px;font-family:var(--mono);color:var(--text3)">${s}</div>`:''}
       </div>
     </div>`).join('')
-  + `<div style="display:flex;justify-content:space-between;padding:7px 0 2px;font-size:.85rem;font-weight:700">
+  + `<div style="display:flex;justify-content:space-between;padding:8px 0 2px;font-size:12px;font-weight:700">
       <span style="color:var(--text2)">${L==='nl'?'Totaal':'Total'}</span>
-      <span style="color:var(--text)">${r.total.toLocaleString(L==='nl'?'nl':'en-US')} ${L==='nl'?'kWh/jaar':'kWh/yr'}</span>
+      <span style="font-family:var(--mono);color:var(--text)">${r.total.toLocaleString(L==='nl'?'nl':'en-US')} ${L==='nl'?'kWh/jaar':'kWh/yr'}</span>
     </div>`;
 }
 
-// ── BUILDING TYPE TOGGLE ─────────────────────────────────────────────────────
+// ── BUILDING TYPE ─────────────────────────────────────────────────────────────
 function setBuildingType(type) {
   APP.buildingType = type;
   const isGallery = type === 1;
   const btnT = document.getElementById('btn-tower');
   const btnG = document.getElementById('btn-gallery');
-  if (btnT) { btnT.style.background=!isGallery?'var(--accent)':'var(--bg3)'; btnT.style.color=!isGallery?'#fff':'var(--text)'; btnT.style.borderColor=!isGallery?'var(--accent)':'var(--border)'; }
-  if (btnG) { btnG.style.background=isGallery?'var(--accent)':'var(--bg3)'; btnG.style.color=isGallery?'#fff':'var(--text)'; btnG.style.borderColor=isGallery?'var(--accent)':'var(--border)'; }
+  if (btnT) { btnT.style.background=!isGallery?'var(--accent)':'var(--bg3)'; btnT.style.color=!isGallery?'#0a1f1c':'var(--text2)'; btnT.style.borderColor=!isGallery?'var(--accent)':'var(--border)'; }
+  if (btnG) { btnG.style.background=isGallery?'var(--accent)':'var(--bg3)';  btnG.style.color=isGallery?'#0a1f1c':'var(--text2)';  btnG.style.borderColor=isGallery?'var(--accent)':'var(--border)'; }
   onInput();
 }
 
@@ -773,42 +980,42 @@ function updateBuildingOverview(ov, inp) {
   const L = APP.lang;
   if (ov.type === 'gallery') {
     el.innerHTML = `
-      <div style="font-size:.72rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">${L==='nl'?'🏗️ Gebouwoverzicht – gallerij':'🏗️ Building overview – gallery'}</div>
+      <div style="font-family:var(--mono);font-size:9px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">${L==='nl'?'🏗️ Gebouwoverzicht – gallerij':'🏗️ Building overview – gallery'}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <div style="background:var(--bg3);border-radius:8px;padding:10px;text-align:center">
-          <div style="font-size:1.4rem;font-weight:900;color:var(--accent)">${ov.perFloor}</div>
-          <div style="color:var(--text2);font-size:.7rem">${L==='nl'?'app. per verdieping':'apts per floor'}</div>
-          <div style="font-size:.69rem;color:var(--text3);margin-top:2px">${ov.r.total.toLocaleString(L==='nl'?'nl':'en-US')} kWh / app</div>
+        <div style="background:var(--bg3);border-radius:6px;padding:10px;text-align:center">
+          <div style="font-size:1.4rem;font-weight:700;color:var(--accent);font-family:var(--sans);letter-spacing:-1px">${ov.perFloor}</div>
+          <div style="color:var(--text2);font-size:10px;font-family:var(--mono);margin-top:2px">${L==='nl'?'app. per verdieping':'apts per floor'}</div>
+          <div style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-top:2px">${ov.r.total.toLocaleString(L==='nl'?'nl':'en-US')} kWh / app</div>
         </div>
-        <div style="background:var(--bg3);border-radius:8px;padding:10px;text-align:center">
-          <div style="font-size:1.4rem;font-weight:900;color:#22c55e">${(ov.buildingTotal/1000).toFixed(0)}</div>
-          <div style="color:var(--text2);font-size:.7rem">MWh / ${L==='nl'?'jaar':'year'}</div>
-          <div style="font-size:.69rem;color:var(--text3);margin-top:2px">${inp.totalFloors} ${L==='nl'?'verd. ×':'floors ×'} ${ov.perFloor} app</div>
+        <div style="background:var(--bg3);border-radius:6px;padding:10px;text-align:center">
+          <div style="font-size:1.4rem;font-weight:700;color:var(--green);font-family:var(--sans);letter-spacing:-1px">${(ov.buildingTotal/1000).toFixed(0)}</div>
+          <div style="color:var(--text2);font-size:10px;font-family:var(--mono);margin-top:2px">MWh / ${L==='nl'?'jaar':'year'}</div>
+          <div style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-top:2px">${inp.totalFloors} ${L==='nl'?'verd. ×':'floors ×'} ${ov.perFloor} app</div>
         </div>
       </div>`;
   } else {
     el.innerHTML = `
-      <div style="font-size:.72rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">${L==='nl'?'🏗️ Gebouwoverzicht – toren':'🏗️ Building overview – tower'}</div>
+      <div style="font-family:var(--mono);font-size:9px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">${L==='nl'?'🏗️ Gebouwoverzicht – toren':'🏗️ Building overview – tower'}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-        <div style="background:var(--bg3);border-radius:8px;padding:10px;text-align:center">
-          <div style="font-size:1.1rem;font-weight:900;color:var(--accent)">${ov.hoekPerFloor} + ${ov.eenzPerFloor}</div>
-          <div style="color:var(--text2);font-size:.7rem">${L==='nl'?'hoek + 1-zijdig / verd.':'corner + 1-sided / floor'}</div>
+        <div style="background:var(--bg3);border-radius:6px;padding:10px;text-align:center">
+          <div style="font-size:1.1rem;font-weight:700;color:var(--accent);font-family:var(--mono)">${ov.hoekPerFloor} + ${ov.eenzPerFloor}</div>
+          <div style="color:var(--text2);font-size:10px;font-family:var(--mono);margin-top:2px">${L==='nl'?'hoek + 1-zijdig / verd.':'corner + 1-sided / floor'}</div>
         </div>
-        <div style="background:var(--bg3);border-radius:8px;padding:10px;text-align:center">
-          <div style="font-size:1.1rem;font-weight:900;color:#22c55e">${(ov.buildingTotal/1000).toFixed(0)}</div>
-          <div style="color:var(--text2);font-size:.7rem">MWh / ${L==='nl'?'jaar':'year'}</div>
+        <div style="background:var(--bg3);border-radius:6px;padding:10px;text-align:center">
+          <div style="font-size:1.1rem;font-weight:700;color:var(--green);font-family:var(--mono)">${(ov.buildingTotal/1000).toFixed(0)}</div>
+          <div style="color:var(--text2);font-size:10px;font-family:var(--mono);margin-top:2px">MWh / ${L==='nl'?'jaar':'year'}</div>
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:.79rem">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px">
         <div style="padding:8px;background:var(--bg3);border-radius:6px">
-          <div style="color:var(--text2);font-size:.69rem;margin-bottom:2px">1-${L==='nl'?'zijdig':'sided'} (${ov.eenzPerFloor}×)</div>
-          <div style="font-weight:700">${ov.rEenz.total.toLocaleString(L==='nl'?'nl':'en-US')} kWh</div>
-          <div style="font-size:.68rem;color:var(--text3)">${ov.rEenz.totalPerM2} kWh/m²</div>
+          <div style="color:var(--text2);font-size:10px;font-family:var(--mono);margin-bottom:2px">1-${L==='nl'?'zijdig':'sided'} (${ov.eenzPerFloor}×)</div>
+          <div style="font-weight:700;font-family:var(--mono)">${ov.rEenz.total.toLocaleString(L==='nl'?'nl':'en-US')} kWh</div>
+          <div style="font-size:10px;font-family:var(--mono);color:var(--text3)">${ov.rEenz.totalPerM2} kWh/m²</div>
         </div>
         <div style="padding:8px;background:var(--bg3);border-radius:6px">
-          <div style="color:var(--text2);font-size:.69rem;margin-bottom:2px">${L==='nl'?'Hoek':'Corner'} (${ov.hoekPerFloor}×)</div>
-          <div style="font-weight:700">${ov.rHoek.total.toLocaleString(L==='nl'?'nl':'en-US')} kWh</div>
-          <div style="font-size:.68rem;color:var(--text3)">${ov.rHoek.totalPerM2} kWh/m²</div>
+          <div style="color:var(--text2);font-size:10px;font-family:var(--mono);margin-bottom:2px">${L==='nl'?'Hoek':'Corner'} (${ov.hoekPerFloor}×)</div>
+          <div style="font-weight:700;font-family:var(--mono)">${ov.rHoek.total.toLocaleString(L==='nl'?'nl':'en-US')} kWh</div>
+          <div style="font-size:10px;font-family:var(--mono);color:var(--text3)">${ov.rHoek.totalPerM2} kWh/m²</div>
         </div>
       </div>`;
   }
@@ -833,16 +1040,17 @@ function updateAptNote(inp) {
   if(el) el.textContent=(notes&&notes[key]!=null)?notes[key]:'';
 }
 function updateVentNote(inp) {
+  const L=APP.lang;
   const sys=ENERGY_CONFIG.ventilation[inp.ventilation];
   document.getElementById('ventnote').textContent=`${L==='nl'?'U-gevel':'U-wall'} ${sys.uWall} · ${L==='nl'?'U-glas':'U-glass'} ${sys.uGlass} W/m²K · ${L==='nl'?'WTW':'HRV'} ${Math.round(sys.wtw*100)}%`;
 }
 function updateLiftInfo(r, inp) {
-  const L = APP.lang, el = document.getElementById('liftinfo');
+  const L=APP.lang, el=document.getElementById('liftinfo');
   if (inp.buildingType === 1) {
-    const pct = Math.round((1 - ENERGY_CONFIG.aptTypes[2].liftFactor) * 100);
-    el.innerHTML = `🛗 ${L==='nl'?'Gallerij':'Gallery'}: ${pct}% ${L==='nl'?'minder liftgebruik':'less lift use'} — <strong>${r.lift} ${L==='nl'?'kWh/jaar':'kWh/yr'}</strong>`;
+    const pct = Math.round((1-ENERGY_CONFIG.aptTypes[2].liftFactor)*100);
+    el.innerHTML = `🛗 ${L==='nl'?'Gallerij':'Gallery'}: ${pct}% ${L==='nl'?'minder liftgebruik':'less lift use'} — ${r.lift} ${L==='nl'?'kWh/jaar':'kWh/yr'}`;
   } else {
-    el.innerHTML = `🛗 ${L==='nl'?'Verdieping':'Floor'} ${inp.floor}/${inp.totalFloors} — <strong>${r.lift} ${L==='nl'?'kWh/jaar':'kWh/yr'}</strong>`;
+    el.innerHTML = `🛗 ${L==='nl'?'Verdieping':'Floor'} ${inp.floor}/${inp.totalFloors} — ${r.lift} ${L==='nl'?'kWh/jaar':'kWh/yr'}`;
   }
 }
 function updateInsight(r, inp) {
@@ -850,7 +1058,7 @@ function updateInsight(r, inp) {
   if(r.heating>r.cooling*3) tips.push(L==='nl'?'🔴 Verwarming domineert — WTW of betere isolatie heeft groot effect.':'🔴 Heating dominates — HRV or better insulation has large impact.');
   if(r.cooling>r.heating*2) tips.push(L==='nl'?'🔵 Koeling domineert — minder glas of zwaarder constructie helpt.':'🔵 Cooling dominates — less glass or heavier construction helps.');
   if(inp.orientation>=4&&inp.orientation<=6&&inp.glassRatio>0.55) tips.push(L==='nl'?'☀️ Veel glas op zonnige gevel → grote koelbelasting, zeker in 2050.':'☀️ Much glazing on sunny façade → high cooling load, especially in 2050.');
-  if(inp.aptType===2) tips.push(L==='nl'?'🌬️ Gallerij = tweezijdig: voor- én achtergevel open → kruisventilatie actief. ~55% minder fan-energie, ~65% minder liftenergie. Twee gevels = iets meer transmissieverlies winter.':'🌬️ Gallery = two-sided: front façade + open gallery corridor → cross-ventilation active. ~55% less fan energy, ~65% less lift. Two façades = slightly more winter transmission loss.');
+  if(inp.aptType===2) tips.push(L==='nl'?'🌬️ Gallerij: kruisventilatie actief — ~55% minder fan-energie, ~65% minder lift.':'🌬️ Gallery: cross-ventilation active — ~55% less fan energy, ~65% less lift.');
   if(inp.floor>=8&&inp.buildingType!==1) tips.push(L==='nl'?`🛗 Verdieping ${inp.floor}: liftenergie (${r.lift} kWh/j) wordt significant.`:`🛗 Floor ${inp.floor}: lift energy (${r.lift} kWh/yr) becomes significant.`);
   if(inp.climate2050&&r.cooling>500) tips.push(L==='nl'?'🌡️ In 2050 stijgt koeling sterk. Gallerij + Passive House meest weerbaar.':'🌡️ In 2050 cooling rises sharply. Gallery + Passive House most resilient.');
   if(r.appliances+r.media>r.heating+r.cooling) tips.push(L==='nl'?'💡 Gebruikersapparaten > klimaatinstallaties — gedrag telt!':'💡 User appliances > climate systems — behaviour matters!');
@@ -867,18 +1075,25 @@ function openDr(key) {
   document.getElementById('drtitle').textContent=info.icon+' '+(document.querySelector(`[onclick="openDr('${key}')"]`)?.closest('.plabel')?.querySelector('[data-nl]')?.getAttribute('data-'+L)||key);
   let html=c.full||(L==='nl'?'<p>Geen extra info beschikbaar.</p>':'<p>No additional info available.</p>');
   const notes=c.aptNote;
-  if(notes&&notes[inp.aptType]!=null) html+=`<div style="margin-top:14px;padding:12px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);border-radius:8px;font-size:.82rem"><strong style="color:var(--accent)">${L==='nl'?'Voor dit type':'For this type'}:</strong><br>${notes[inp.aptType]}</div>`;
+  if(notes&&notes[inp.aptType]!=null) html+=`<div style="margin-top:14px;padding:12px;background:rgba(34,179,154,0.08);border:1px solid rgba(34,179,154,0.25);border-radius:8px;font-size:12px"><strong style="color:var(--accent)">${L==='nl'?'Voor dit type':'For this type'}:</strong><br>${notes[inp.aptType]}</div>`;
   document.getElementById('drcontent').innerHTML=html;
   document.getElementById('drawer').classList.add('open');
   document.getElementById('droverlay').classList.add('open');
+  APP.hud.drawerOpen = true;
+  APP.hud.activeKey = key;
 }
-function closeDr(){document.getElementById('drawer').classList.remove('open');document.getElementById('droverlay').classList.remove('open');}
+function closeDr() {
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('droverlay').classList.remove('open');
+  APP.hud.drawerOpen = false;
+  APP.hud.activeKey = null;
+}
 
 // ── TOOLTIPS ─────────────────────────────────────────────────────────────────
 function initTooltipContent() {
   if(typeof INFO==='undefined') return;
-  const bType = APP.buildingType !== undefined ? APP.buildingType : 0;
-  const aptType = bType === 1 ? 2 : 0;
+  const bType=APP.buildingType!==undefined?APP.buildingType:0;
+  const aptType=bType===1?2:0;
   INFO._cache={};
   Object.keys(INFO).forEach(key=>{
     const info=INFO[key], L=APP.lang;
@@ -931,16 +1146,14 @@ function renderCmp(data) {
   APP.cmpChart=new Chart(ctx,{
     type:'bar',
     data:{labels,datasets:CATS.map(c=>({label:c[APP.lang]||c.nl,data:letters.map(l=>(data[l].results||{})[c.key]||0),backgroundColor:c.c,borderRadius:3}))},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'var(--text2)',boxWidth:9,font:{size:9}}},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${Math.round(c.raw).toLocaleString(APP.lang==='nl'?'nl':'en-US')} kWh`}}},scales:{x:{stacked:true,ticks:{color:'var(--text2)',font:{size:10}},grid:{color:'var(--border)'}},y:{stacked:true,ticks:{color:'var(--text3)'},grid:{color:'var(--border)'}}}}
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'var(--text2)',boxWidth:9,font:{size:9}}},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${Math.round(c.raw).toLocaleString(APP.lang==='nl'?'nl':'en-US')} kWh`}}},scales:{x:{stacked:true,ticks:{color:'var(--text2)',font:{size:10}},grid:{color:'rgba(255,255,255,0.05)'}},y:{stacked:true,ticks:{color:'var(--text3)'},grid:{color:'rgba(255,255,255,0.05)'}}}}
   });
 }
 
 // ── UTIL ─────────────────────────────────────────────────────────────────────
 function clampFloor(){
   const f=document.getElementById('in-floor'), t=document.getElementById('in-totalFloors');
-  const max=+t.value||40;
-  f.max=max;
-  if(+f.value>max) f.value=max;
+  const max=+t.value||40; f.max=max; if(+f.value>max) f.value=max;
 }
 function setMsg(id,msg,sty){const e=document.getElementById(id);e.textContent=msg;e.style.cssText=(sty||'');setTimeout(()=>e.textContent='',5000);}
 

@@ -3,123 +3,219 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Docent Dashboard – Energy Workshop</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>AllEnergyDay — Scoreboard</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
   <style>
-    body { background: #0f172a; color: #e2e8f0; font-family: 'Segoe UI', system-ui, sans-serif; }
-    .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; }
-    select, input { background: #0f172a; border: 1px solid #334155; color: #e2e8f0; border-radius: 8px; padding: 8px 12px; font-size: 0.9rem; }
-    .btn { background: #3b82f6; color: white; border: none; border-radius: 8px; padding: 8px 18px; font-weight: 600; cursor: pointer; }
-    .btn:hover { background: #2563eb; }
-    .score-pill { display: inline-block; padding: 3px 10px; border-radius: 12px; font-weight: 700; font-size: 0.85rem; }
-    .score-green  { background: rgba(34,197,94,0.2);  color: #4ade80; }
-    .score-yellow { background: rgba(234,179,8,0.2);  color: #facc15; }
-    .score-red    { background: rgba(239,68,68,0.2);  color: #f87171; }
-    .tbl th { text-align: left; padding: 10px 14px; font-size: 0.7rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #1e293b; }
-    .tbl td { padding: 10px 14px; border-bottom: 1px solid #1e293b; font-size: 0.85rem; }
-    .tbl tr:last-child td { border-bottom: none; }
-    .tbl tr:hover td { background: rgba(255,255,255,0.02); }
+    :root {
+      --bg:        #0a1f1c;
+      --bg2:       #0f2a26;
+      --bg3:       #13332e;
+      --border:    rgba(255,255,255,0.07);
+      --border-hi: rgba(34,179,154,0.35);
+      --text:      #e8e2d4;
+      --text2:     rgba(232,226,212,0.55);
+      --text3:     rgba(232,226,212,0.32);
+      --accent:    #22b39a;
+      --amber:     #f5b544;
+      --orange:    #e8804a;
+      --green:     #7ec488;
+      --sans:      "Space Grotesk", -apple-system, sans-serif;
+      --mono:      "JetBrains Mono", ui-monospace, monospace;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.022) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.022) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .wrap { position: relative; z-index: 1; max-width: 1440px; margin: 0 auto; padding: 24px; }
+    .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; }
+    input, select {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      outline: none;
+    }
+    input:focus, select:focus { border-color: var(--accent); }
+    .btn {
+      background: var(--accent);
+      color: #0a1f1c;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 18px;
+      font-family: var(--mono);
+      font-weight: 700;
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: opacity .15s;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn-s {
+      background: var(--bg3);
+      color: var(--text2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 7px 14px;
+      font-family: var(--mono);
+      font-weight: 500;
+      font-size: 10px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+    .btn-s:hover { color: var(--text); }
   </style>
 </head>
-<body class="min-h-screen p-4 md:p-6">
+<body>
+<div class="wrap">
 
-<div class="max-w-6xl mx-auto space-y-6">
-
-  <!-- Header -->
-  <div class="flex flex-wrap items-center gap-4 justify-between">
+  <!-- ── Header ── -->
+  <header style="display:grid;grid-template-columns:1fr auto;gap:20px;align-items:flex-end;margin-bottom:24px;position:relative">
     <div>
-      <h1 class="text-2xl font-bold text-white">📊 Docent Dashboard</h1>
-      <p class="text-slate-400 text-sm mt-1">Live overzicht van alle groepen · Energy Workshop</p>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+        <svg width="28" height="28" viewBox="0 0 28 28" style="flex-shrink:0">
+          <rect x="2" y="2" width="24" height="24" rx="3" fill="#22b39a"/>
+          <path d="M9 19 L9 9 L19 9" stroke="#0a1f1c" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <path d="M9 14 L15 14" stroke="#0a1f1c" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="20" cy="9" r="2.5" fill="#f5b544"/>
+        </svg>
+        <div style="display:inline-flex;align-items:center;gap:8px;padding:5px 12px;border-radius:999px;background:rgba(34,179,154,0.12);border:1px solid var(--border-hi);font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:2px;color:var(--accent);text-transform:uppercase">
+          <span id="liveDot" style="width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);display:inline-block"></span>
+          LIVE · SCOREBOARD
+        </div>
+      </div>
+      <h1 style="font-size:2.6rem;font-weight:700;color:var(--text);letter-spacing:-1px;line-height:1;margin-bottom:4px">
+        Atelier Energy <span style="color:var(--accent)">·</span> <span id="roundLabel">Round 01</span>
+      </h1>
+      <div id="metaLine" style="font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase">
+        — Verbind met een workshop om live data te laden
+      </div>
     </div>
-    <div class="flex items-center gap-3">
-      <input id="workshop-code" placeholder="Workshop code" class="w-44"/>
-      <button class="btn" onclick="connect()">Verbinden</button>
-      <a href="index.html" class="text-slate-400 text-sm hover:text-slate-200">← Terug</a>
+
+    <!-- Stat chips -->
+    <div style="display:flex;gap:10px;align-items:flex-end">
+      <div class="card" style="padding:14px 18px;min-width:130px;text-align:right">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:3px">Gem. score</div>
+        <div style="display:flex;align-items:baseline;gap:4px;justify-content:flex-end">
+          <span id="stat-avg" style="font-size:2rem;font-weight:700;color:var(--text);letter-spacing:-1px;line-height:1">—</span>
+          <span style="font-family:var(--mono);font-size:10px;color:var(--text3)">kWh</span>
+        </div>
+      </div>
+      <div class="card" style="padding:14px 18px;min-width:130px;text-align:right">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:3px">Beste</div>
+        <div style="display:flex;align-items:baseline;gap:4px;justify-content:flex-end">
+          <span id="stat-best" style="font-size:2rem;font-weight:700;color:var(--accent);letter-spacing:-1px;line-height:1">—</span>
+          <span style="font-family:var(--mono);font-size:10px;color:var(--text3)">kWh</span>
+        </div>
+      </div>
+      <div class="card" style="padding:14px 18px;min-width:130px;text-align:right">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:3px">Groepen</div>
+        <div style="display:flex;align-items:baseline;gap:4px;justify-content:flex-end">
+          <span id="stat-groups" style="font-size:2rem;font-weight:700;color:var(--amber);letter-spacing:-1px;line-height:1">0</span>
+          <span style="font-family:var(--mono);font-size:10px;color:var(--text3)">actief</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Connect bar ── -->
+  <div class="card" style="padding:12px 16px;margin-bottom:18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+    <span id="status-dot" style="width:8px;height:8px;border-radius:50%;background:var(--text3);flex-shrink:0"></span>
+    <span id="status-text" style="font-family:var(--mono);font-size:11px;color:var(--text2);letter-spacing:.5px;flex:1">Voer een workshop code in en klik Verbinden</span>
+    <span id="last-update" style="font-family:var(--mono);font-size:10px;color:var(--text3)"></span>
+    <input id="workshop-code" placeholder="WORKSHOP CODE" style="width:180px"/>
+    <button class="btn" onclick="connect()">Verbinden</button>
+    <button class="btn-s" onclick="exportCSV()">⬇ CSV</button>
+    <a href="index.html" style="color:var(--text3);font-family:var(--mono);font-size:10px;letter-spacing:1px;text-decoration:none;text-transform:uppercase">← Terug</a>
+  </div>
+
+  <!-- ── Body: distribution chart + rank table ── -->
+  <div style="display:grid;grid-template-columns:1fr 1.6fr;gap:18px;margin-bottom:18px">
+
+    <!-- Distribution chart -->
+    <div class="card" style="padding:20px;display:flex;flex-direction:column">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <span style="font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--text3)">· DISTRIBUTIE · kWh/m²</span>
+        <span id="distGroupCount" style="font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:1px">0 GROEPEN</span>
+      </div>
+      <div style="flex:1;position:relative;min-height:340px">
+        <canvas id="distChart"></canvas>
+      </div>
+      <!-- Energy band legend -->
+      <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;width:100%;margin-bottom:2px">Energielabel</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap" id="bandLegend"></div>
+      </div>
+    </div>
+
+    <!-- Rank table -->
+    <div class="card" style="overflow:hidden;display:flex;flex-direction:column">
+      <!-- Table header -->
+      <div style="display:grid;grid-template-columns:56px 1fr 70px 80px 80px 64px;padding:10px 16px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:9px;letter-spacing:1.5px;color:var(--text3);text-transform:uppercase;flex-shrink:0">
+        <span>Rank</span>
+        <span>Groep</span>
+        <span style="text-align:right">kWh/m²</span>
+        <span style="text-align:right">Δ gem.</span>
+        <span style="text-align:center">Label</span>
+        <span style="text-align:right">Move</span>
+      </div>
+      <div id="rankTable" style="flex:1;overflow-y:auto">
+        <div style="padding:40px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--text3);letter-spacing:1px">
+          — Nog geen data —
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- Status -->
-  <div id="status-bar" class="card p-3 text-sm text-slate-400 flex items-center gap-2">
-    <span class="w-2 h-2 rounded-full bg-slate-600 inline-block" id="status-dot"></span>
-    <span id="status-text">Voer een workshop code in en klik Verbinden</span>
-    <span class="ml-auto text-slate-600 text-xs" id="last-update"></span>
-  </div>
-
-  <!-- Summary cards row -->
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="summary-cards">
-    <!-- Filled dynamically -->
-  </div>
-
-  <!-- Main stacked bar chart (all groups) -->
-  <div class="card p-5">
-    <div class="flex items-center justify-between mb-4">
-      <h2 class="font-bold text-white">Energieverdeling per groep (kWh/jaar)</h2>
-      <button class="btn text-sm py-1.5" onclick="exportCSV()">⬇ CSV</button>
+  <!-- ── Stacked bar (full detail) ── -->
+  <div class="card" style="padding:20px;margin-bottom:18px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <span style="font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--text3)">· ENERGIEVERDELING PER GROEP · kWh/jaar</span>
     </div>
-    <div style="position:relative; height:320px;">
-      <canvas id="mainChart"></canvas>
-    </div>
+    <div style="position:relative;height:260px"><canvas id="mainChart"></canvas></div>
   </div>
 
-  <!-- Per-m² comparison -->
-  <div class="card p-5">
-    <h2 class="font-bold text-white mb-4">Totaalverbruik (kWh/m²/jaar) – klassement</h2>
-    <div style="position:relative; height:200px;">
-      <canvas id="rankChart"></canvas>
-    </div>
+  <!-- ── Insights ── -->
+  <div class="card" style="padding:20px" id="insights-panel">
+    <div style="font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:14px">· AUTOMATISCHE INZICHTEN</div>
+    <div id="insights-content" style="font-size:13px;color:var(--text3);font-family:var(--mono);letter-spacing:.5px">Verbind om inzichten te zien.</div>
   </div>
 
-  <!-- Detailed table -->
-  <div class="card overflow-hidden">
-    <div class="p-4 border-b border-slate-700">
-      <h2 class="font-bold text-white">Gedetailleerd overzicht</h2>
-    </div>
-    <div class="overflow-x-auto">
-      <table class="w-full tbl" id="detail-table">
-        <thead>
-          <tr>
-            <th>Groep</th>
-            <th>kWh/m²</th>
-            <th>CO₂ (kg)</th>
-            <th>Verw.</th>
-            <th>Warm water</th>
-            <th>Koeling</th>
-            <th>Ventil.</th>
-            <th>Verlich.</th>
-            <th>Apparat.</th>
-            <th>Media</th>
-            <th>Lift</th>
-            <th>Systeem</th>
-            <th>Type apt.</th>
-            <th>Oriënt.</th>
-            <th>Glas%</th>
-            <th>Klimaat</th>
-            <th>Laatste update</th>
-          </tr>
-        </thead>
-        <tbody id="detail-tbody">
-          <tr><td colspan="17" class="text-center text-slate-600 py-8">Nog geen data — verbind met een workshop</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- Insights panel -->
-  <div class="card p-5" id="insights-panel">
-    <h2 class="font-bold text-white mb-3">🔍 Automatische inzichten</h2>
-    <div id="insights-content" class="text-slate-400 text-sm">Verbind om inzichten te zien.</div>
-  </div>
-
-</div>
+</div><!-- /wrap -->
 
 <script src="energy.js"></script>
 <script>
-// ══════════════════════════════════════════════════════════════════════════════
-// FIREBASE CONFIG — must match index.html
-// ══════════════════════════════════════════════════════════════════════════════
+// ── FIREBASE CONFIG ──────────────────────────────────────────────────────────
 const FIREBASE_CONFIG = {
   apiKey:            "YOUR_API_KEY",
   authDomain:        "YOUR_PROJECT.firebaseapp.com",
@@ -130,44 +226,60 @@ const FIREBASE_CONFIG = {
   appId:             "YOUR_APP_ID"
 };
 
+// ── CONSTANTS ────────────────────────────────────────────────────────────────
 const CHART_CATEGORIES = [
-  { key: 'heating',     label: 'Verwarming',  color: '#ef4444' },
-  { key: 'hotWater',    label: 'Warm water',  color: '#f97316' },
-  { key: 'cooling',     label: 'Koeling',     color: '#3b82f6' },
-  { key: 'ventilation', label: 'Ventilatie',  color: '#06b6d4' },
-  { key: 'lighting',    label: 'Verlichting', color: '#eab308' },
-  { key: 'appliances',  label: 'Apparaten',   color: '#22c55e' },
-  { key: 'media',       label: 'Media',       color: '#a855f7' },
-  { key: 'lift',        label: 'Lift',        color: '#64748b' },
+  { key:'heating',     label:'Verwarming',  color:'#ef4444' },
+  { key:'hotWater',    label:'Warm water',  color:'#f97316' },
+  { key:'cooling',     label:'Koeling',     color:'#22b39a' },
+  { key:'ventilation', label:'Ventilatie',  color:'#06b6d4' },
+  { key:'lighting',    label:'Verlichting', color:'#f5b544' },
+  { key:'appliances',  label:'Apparaten',   color:'#7ec488' },
+  { key:'media',       label:'Media',       color:'#a855f7' },
+  { key:'lift',        label:'Lift',        color:'#64748b' },
 ];
 
-const GROUP_COLORS = { A:'#ef4444', B:'#f97316', C:'#eab308', D:'#22c55e', E:'#3b82f6', F:'#a855f7' };
+// EU energy label bands (A–G)
+const ENERGY_BANDS = [
+  { band:'A', color:'#1f9d4f', max:50  },
+  { band:'B', color:'#5fb84a', max:75  },
+  { band:'C', color:'#b6d342', max:105 },
+  { band:'D', color:'#fed835', max:135 },
+  { band:'E', color:'#f5a623', max:175 },
+  { band:'F', color:'#ec6e2c', max:250 },
+  { band:'G', color:'#d63a2f', max:Infinity },
+];
+
+function bandForKwh(kwh) {
+  return ENERGY_BANDS.find(b => kwh <= b.max) || ENERGY_BANDS[ENERGY_BANDS.length-1];
+}
+
+const GROUP_COLORS = { A:'#ef4444',B:'#f97316',C:'#eab308',D:'#22c55e',E:'#3b82f6',F:'#a855f7' };
 const ORIENT_NAMES = ['N','NO','O','ZO','Z','ZW','W','NW'];
 const VENT_NAMES   = ['Nat+Mech','Ind.WTW','PassHouse','Balans'];
 const HC_NAMES     = ['WP Lucht','WP WKO','SV+Koel','SV+WP','SV+WP-T'];
 const APT_NAMES    = ['Eenzijdig','2-zijdig','Gallerij','Hoek','Hoek+2z'];
 
-let db = null, mainChart = null, rankChart = null, groupData = {};
+let db = null, mainChart = null, distChart = null;
+let groupData = {};
 
+// ── CONNECT ──────────────────────────────────────────────────────────────────
 function connect() {
   const code = document.getElementById('workshop-code').value.trim().toLowerCase().replace(/\s+/g,'_');
   if (!code) return;
-
   if (FIREBASE_CONFIG.apiKey === 'YOUR_API_KEY') {
     setStatus('⚠️ Firebase niet geconfigureerd — bewerk FIREBASE_CONFIG in teacher.html', false);
     return;
   }
-
   try {
     const app = firebase.apps.length ? firebase.apps[0] : firebase.initializeApp(FIREBASE_CONFIG);
     db = firebase.database(app);
-    setStatus('🔄 Verbinden…', null);
-
+    setStatus('Verbinden…', null);
     db.ref(`workshops/${code}/groups`).on('value', snap => {
       groupData = snap.val() || {};
       renderAll(groupData);
-      setStatus(`✅ Verbonden met "${code}" · ${Object.keys(groupData).length} groep(en)`, true);
+      setStatus(`✅ Verbonden met "${code.toUpperCase()}" · ${Object.keys(groupData).length} groep(en) actief`, true);
       document.getElementById('last-update').textContent = 'Update: ' + new Date().toLocaleTimeString('nl');
+      document.getElementById('metaLine').textContent = `ROOM ${code.toUpperCase()} · ${Object.keys(groupData).length} GROEPEN · UPDATED ${new Date().toLocaleTimeString('nl', {hour:'2-digit',minute:'2-digit'})}`;
     }, err => {
       setStatus('❌ Fout: ' + err.message, false);
     });
@@ -179,59 +291,152 @@ function connect() {
 function setStatus(msg, ok) {
   document.getElementById('status-text').textContent = msg;
   const dot = document.getElementById('status-dot');
-  dot.className = 'w-2 h-2 rounded-full inline-block ' + (ok === true ? 'bg-green-500' : ok === false ? 'bg-red-500' : 'bg-yellow-500');
+  dot.style.background = ok === true ? 'var(--accent)' : ok === false ? 'var(--orange)' : 'var(--amber)';
+  dot.style.boxShadow  = ok === true ? '0 0 8px var(--accent)' : 'none';
 }
 
+// ── RENDER ALL ───────────────────────────────────────────────────────────────
 function renderAll(data) {
   const letters = Object.keys(data).sort();
   if (!letters.length) return;
-
-  renderSummaryCards(data, letters);
+  renderStatChips(data, letters);
+  renderBandLegend();
+  renderDistChart(data, letters);
+  renderRankTable(data, letters);
   renderMainChart(data, letters);
-  renderRankChart(data, letters);
-  renderDetailTable(data, letters);
   renderInsights(data, letters);
+  document.getElementById('distGroupCount').textContent = letters.length + ' GROEPEN';
+  document.getElementById('stat-groups').textContent = letters.length;
 }
 
-// ─── SUMMARY CARDS ───────────────────────────────────────────────────────────
-function renderSummaryCards(data, letters) {
-  const totals = letters.map(l => (data[l].results || {}).totalPerM2 || 0);
-  const best   = Math.min(...totals);
-  const worst  = Math.max(...totals);
-  const avg    = Math.round(totals.reduce((a,b)=>a+b,0) / totals.length);
-  const bestGroup = letters[totals.indexOf(best)];
-
-  document.getElementById('summary-cards').innerHTML = `
-    <div class="card p-4 text-center">
-      <div class="text-2xl font-black text-green-400">${best}</div>
-      <div class="text-slate-400 text-xs">kWh/m² – beste groep</div>
-      <div class="text-slate-500 text-xs mt-1">Groep ${bestGroup}</div>
-    </div>
-    <div class="card p-4 text-center">
-      <div class="text-2xl font-black text-yellow-400">${avg}</div>
-      <div class="text-slate-400 text-xs">kWh/m² – gemiddeld</div>
-    </div>
-    <div class="card p-4 text-center">
-      <div class="text-2xl font-black text-red-400">${worst}</div>
-      <div class="text-slate-400 text-xs">kWh/m² – hoogste</div>
-    </div>
-    <div class="card p-4 text-center">
-      <div class="text-2xl font-black text-blue-400">${letters.length}</div>
-      <div class="text-slate-400 text-xs">actieve groepen</div>
-    </div>
-  `;
+// ── STAT CHIPS ───────────────────────────────────────────────────────────────
+function renderStatChips(data, letters) {
+  const totals = letters.map(l => (data[l].results||{}).totalPerM2||0);
+  const best  = Math.min(...totals);
+  const avg   = Math.round(totals.reduce((a,b)=>a+b,0)/totals.length);
+  document.getElementById('stat-avg').textContent  = avg;
+  document.getElementById('stat-best').textContent = best;
 }
 
-// ─── MAIN STACKED BAR ────────────────────────────────────────────────────────
+// ── BAND LEGEND ──────────────────────────────────────────────────────────────
+function renderBandLegend() {
+  const el = document.getElementById('bandLegend');
+  if (el.innerHTML) return;
+  el.innerHTML = ENERGY_BANDS.map(b =>
+    `<span style="display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:9px;color:var(--text3)">
+      <span style="width:10px;height:10px;background:${b.color};border-radius:2px;display:inline-block"></span>
+      ${b.band} · ${isFinite(b.max)?'< '+b.max:'> 250'}
+    </span>`
+  ).join('');
+}
+
+// ── DISTRIBUTION CHART (vertical bars, colored by energy label) ───────────────
+function renderDistChart(data, letters) {
+  const sorted = [...letters].sort((a,b) =>
+    ((data[a].results||{}).totalPerM2||999) - ((data[b].results||{}).totalPerM2||999)
+  );
+  const labels = sorted.map(l => data[l].groupName || `Groep ${l}`);
+  const values = sorted.map(l => (data[l].results||{}).totalPerM2||0);
+  const colors = values.map(v => bandForKwh(v).color);
+
+  const ctx = document.getElementById('distChart').getContext('2d');
+  if (distChart) distChart.destroy();
+  distChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'kWh/m²/jaar',
+        data: values,
+        backgroundColor: colors,
+        borderRadius: 4,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: c => {
+              const band = bandForKwh(c.raw);
+              return ` ${c.raw} kWh/m²  ·  Label ${band.band}`;
+            }
+          }
+        },
+      },
+      scales: {
+        x: {
+          ticks: { color: 'rgba(232,226,212,0.55)', font: { size: 10, family: '"JetBrains Mono"' }, maxRotation: 30 },
+          grid: { display: false },
+        },
+        y: {
+          ticks: { color: 'rgba(232,226,212,0.32)', font: { size: 9, family: '"JetBrains Mono"' } },
+          grid: { color: 'rgba(255,255,255,0.05)' },
+          title: { display: true, text: 'kWh/m²/jaar', color: 'rgba(232,226,212,0.32)', font: { size: 9, family: '"JetBrains Mono"' } },
+        },
+      }
+    }
+  });
+}
+
+// ── RANK TABLE ───────────────────────────────────────────────────────────────
+function renderRankTable(data, letters) {
+  const sorted = [...letters].sort((a,b) =>
+    ((data[a].results||{}).totalPerM2||999) - ((data[b].results||{}).totalPerM2||999)
+  );
+  const avg = sorted.reduce((s,l) => s + ((data[l].results||{}).totalPerM2||0), 0) / sorted.length;
+
+  const rows = sorted.map((l, idx) => {
+    const g  = data[l];
+    const r  = g.results || {};
+    const v  = r.totalPerM2 || 0;
+    const dv = Math.round(v - avg);
+    const band = bandForKwh(v);
+    const gc = GROUP_COLORS[l] || 'var(--accent)';
+    const top3 = idx < 3;
+    return `
+      <div style="display:grid;grid-template-columns:56px 1fr 70px 80px 80px 64px;padding:11px 16px;align-items:center;border-bottom:1px solid var(--border);${top3?'background:rgba(34,179,154,0.04)':''}position:relative">
+        ${idx===0?'<div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent);border-radius:0 2px 2px 0"></div>':''}
+        <!-- Rank -->
+        <div style="font-size:${top3?'1.2rem':'1rem'};font-weight:700;font-family:var(--sans);color:${top3?band.color:'var(--text3)'};letter-spacing:-0.5px;line-height:1">${String(idx+1).padStart(2,'0')}</div>
+        <!-- Name -->
+        <div style="display:flex;align-items:center;gap:9px;min-width:0">
+          <div style="width:26px;height:26px;border-radius:6px;background:${gc}22;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;font-weight:700;color:${gc};flex-shrink:0">${l}</div>
+          <div style="min-width:0">
+            <div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${g.groupName||`Groep ${l}`}</div>
+            <div style="font-size:9px;font-family:var(--mono);color:var(--text3);letter-spacing:.5px">${(g.inputs?.aptType!=null?APT_NAMES[g.inputs.aptType]:'—')} · ${g.inputs?.orientation!=null?ORIENT_NAMES[g.inputs.orientation]:'—'}</div>
+          </div>
+        </div>
+        <!-- kWh -->
+        <div style="text-align:right;font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text)">${v}</div>
+        <!-- Delta -->
+        <div style="text-align:right;font-family:var(--mono);font-size:11px;font-weight:600;color:${dv<0?'var(--accent)':dv===0?'var(--text3)':'var(--orange)'}">
+          ${dv>0?'+':''}${dv===0?'—':dv}
+        </div>
+        <!-- Band chip -->
+        <div style="text-align:center">
+          <span style="display:inline-block;min-width:26px;padding:3px 7px;border-radius:4px;background:${band.color};color:#0a1f1c;font-family:var(--mono);font-size:11px;font-weight:700">${band.band}</span>
+        </div>
+        <!-- Move placeholder -->
+        <div style="text-align:right;font-family:var(--mono);font-size:11px;color:var(--text3)">—</div>
+      </div>`;
+  });
+  document.getElementById('rankTable').innerHTML = rows.join('') ||
+    '<div style="padding:40px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--text3)">— Nog geen data —</div>';
+}
+
+// ── MAIN STACKED BAR ─────────────────────────────────────────────────────────
 function renderMainChart(data, letters) {
   const labels   = letters.map(l => data[l].groupName || `Groep ${l}`);
   const datasets = CHART_CATEGORIES.map(cat => ({
     label: cat.label,
-    data: letters.map(l => (data[l].results || {})[cat.key] || 0),
+    data: letters.map(l => (data[l].results||{})[cat.key]||0),
     backgroundColor: cat.color,
-    borderRadius: 4,
+    borderRadius: 3,
   }));
-
   const ctx = document.getElementById('mainChart').getContext('2d');
   if (mainChart) mainChart.destroy();
   mainChart = new Chart(ctx, {
@@ -240,157 +445,76 @@ function renderMainChart(data, letters) {
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: {
-        legend: { position: 'bottom', labels: { color: '#94a3b8', boxWidth: 12, font:{size:11} } },
-        tooltip: { callbacks: { label: c => ` ${c.dataset.label}: ${Math.round(c.raw).toLocaleString('nl')} kWh` } }
+        legend: { position:'bottom', labels:{ color:'rgba(232,226,212,0.55)', boxWidth:10, font:{size:10,family:'"JetBrains Mono"'} } },
+        tooltip: { callbacks:{ label:c=>` ${c.dataset.label}: ${Math.round(c.raw).toLocaleString('nl')} kWh` } },
       },
       scales: {
-        x: { stacked: true, ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } },
-        y: { stacked: true, ticks: { color: '#64748b' }, grid: { color: '#1e293b' },
-             title: { display: true, text: 'kWh/jaar', color: '#64748b' } },
+        x: { stacked:true, ticks:{color:'rgba(232,226,212,0.55)',font:{size:10}}, grid:{color:'rgba(255,255,255,0.05)'} },
+        y: { stacked:true, ticks:{color:'rgba(232,226,212,0.32)',font:{size:9}},  grid:{color:'rgba(255,255,255,0.05)'},
+             title:{display:true,text:'kWh/jaar',color:'rgba(232,226,212,0.32)',font:{size:9,family:'"JetBrains Mono"'}} },
       }
     }
   });
 }
 
-// ─── RANK CHART ──────────────────────────────────────────────────────────────
-function renderRankChart(data, letters) {
-  const sorted = [...letters].sort((a,b) =>
-    ((data[a].results||{}).totalPerM2||999) - ((data[b].results||{}).totalPerM2||999)
-  );
-  const labels = sorted.map(l => data[l].groupName || `Groep ${l}`);
-  const values = sorted.map(l => (data[l].results||{}).totalPerM2||0);
-  const colors = values.map(v => v < 40 ? '#22c55e' : v < 80 ? '#eab308' : '#ef4444');
-
-  const ctx = document.getElementById('rankChart').getContext('2d');
-  if (rankChart) rankChart.destroy();
-  rankChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        label: 'kWh/m²/jaar',
-        data: values,
-        backgroundColor: colors,
-        borderRadius: 6,
-      }]
-    },
-    options: {
-      indexAxis: 'y',
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: { callbacks: { label: c => ` ${c.raw} kWh/m²/jaar` } },
-        annotation: {},
-      },
-      scales: {
-        x: {
-          ticks: { color: '#64748b' }, grid: { color: '#1e293b' },
-          title: { display: true, text: 'kWh/m²/jaar  (groen < 40 · geel 40-80 · rood > 80)', color: '#64748b' }
-        },
-        y: { ticks: { color: '#94a3b8' }, grid: { display: false } },
-      }
-    }
-  });
-}
-
-// ─── DETAIL TABLE ─────────────────────────────────────────────────────────────
-function renderDetailTable(data, letters) {
-  const rows = letters.map(l => {
-    const g = data[l];
-    const r = g.results || {};
-    const inp = g.inputs || {};
-    const v = r.totalPerM2 || 0;
-    const cls = v < 40 ? 'score-green' : v < 80 ? 'score-yellow' : 'score-red';
-    const ts = g.savedAt ? new Date(g.savedAt).toLocaleTimeString('nl') : '—';
-    return `<tr>
-      <td class="font-bold" style="color:${GROUP_COLORS[l]||'#94a3b8'}">${g.groupName||`Groep ${l}`}</td>
-      <td><span class="score-pill ${cls}">${v}</span></td>
-      <td>${(r.co2||0).toLocaleString('nl')}</td>
-      <td>${r.heating||0}</td>
-      <td>${r.hotWater||0}</td>
-      <td>${r.cooling||0}</td>
-      <td>${r.ventilation||0}</td>
-      <td>${r.lighting||0}</td>
-      <td>${r.appliances||0}</td>
-      <td>${r.media||0}</td>
-      <td>${r.lift||0}</td>
-      <td class="text-slate-400 text-xs">${HC_NAMES[inp.heatCool]||'—'}</td>
-      <td class="text-slate-400 text-xs">${APT_NAMES[inp.aptType]||'—'}</td>
-      <td class="text-slate-400 text-xs">${ORIENT_NAMES[inp.orientation]||'—'}</td>
-      <td class="text-slate-400 text-xs">${inp.glassRatio ? Math.round(inp.glassRatio*100)+'%' : '—'}</td>
-      <td class="text-slate-400 text-xs">${inp.climate2050 ? '🌡️ 2050' : '2025'}</td>
-      <td class="text-slate-500 text-xs">${ts}</td>
-    </tr>`;
-  });
-  document.getElementById('detail-tbody').innerHTML = rows.join('');
-}
-
-// ─── INSIGHTS ─────────────────────────────────────────────────────────────────
+// ── INSIGHTS ─────────────────────────────────────────────────────────────────
 function renderInsights(data, letters) {
   const insights = [];
-  const totals = letters.map(l => ({ l, v: (data[l].results||{}).totalPerM2||0, inp: data[l].inputs||{}, r: data[l].results||{} }));
+  const totals = letters.map(l => ({ l, v:(data[l].results||{}).totalPerM2||0, inp:data[l].inputs||{}, r:data[l].results||{} }));
   totals.sort((a,b) => a.v - b.v);
 
-  const best  = totals[0];
-  const worst = totals[totals.length-1];
+  const best = totals[0], worst = totals[totals.length-1];
   if (best && worst && best.l !== worst.l) {
-    insights.push(`🏆 <strong>Groep ${best.l}</strong> (${data[best.l].groupName||'—'}) scoort het beste met <strong>${best.v} kWh/m²/jaar</strong> — ${worst.v - best.v} kWh/m² verschil met de hoogste score.`);
+    insights.push(`🏆 <strong style="color:var(--accent)">${data[best.l].groupName||`Groep ${best.l}`}</strong> scoort het beste met <strong>${best.v} kWh/m²/jaar</strong> — ${worst.v-best.v} kWh/m² verschil met de hoogste score.`);
   }
 
-  // Orientation insight
   const southFacing = totals.filter(t => [3,4,5].includes(t.inp.orientation));
   const northFacing = totals.filter(t => [0,7].includes(t.inp.orientation));
   if (southFacing.length && northFacing.length) {
     const avgS = Math.round(southFacing.reduce((a,t)=>a+t.r.cooling,0)/southFacing.length);
     const avgN = Math.round(northFacing.reduce((a,t)=>a+t.r.cooling,0)/northFacing.length);
-    insights.push(`☀️ Zuid-gerichte appartementen gebruiken gemiddeld <strong>${avgS} kWh/jaar voor koeling</strong> vs ${avgN} kWh voor noord — factor ${(avgS/Math.max(1,avgN)).toFixed(1)}× verschil.`);
+    insights.push(`☀️ Zuid-gerichte appartementen gebruiken gem. <strong>${avgS} kWh/jaar voor koeling</strong> vs ${avgN} kWh voor noord — factor ${(avgS/Math.max(1,avgN)).toFixed(1)}×.`);
   }
 
-  // Gallery vs tower
   const galleryGroups = totals.filter(t => t.inp.aptType === 2);
   const towerGroups   = totals.filter(t => t.inp.aptType !== 2);
   if (galleryGroups.length && towerGroups.length) {
     const avgGV = Math.round(galleryGroups.reduce((a,t)=>a+t.r.ventilation,0)/galleryGroups.length);
     const avgTV = Math.round(towerGroups.reduce((a,t)=>a+t.r.ventilation,0)/towerGroups.length);
-    if (avgTV > avgGV) insights.push(`🌬️ Gallerij-appartementen gebruiken gemiddeld <strong>${avgTV - avgGV} kWh/jaar minder ventilatie-elektriciteit</strong> dan torenflats — kruisventilatie effect.`);
+    if (avgTV > avgGV) insights.push(`🌬️ Gallerij-appartementen gebruiken gem. <strong>${avgTV-avgGV} kWh/jaar minder ventilatie-elektriciteit</strong> — kruisventilatie effect.`);
   }
 
-  // High floor lift
   const highFloor = totals.filter(t => (t.inp.floor||0) >= 8);
   if (highFloor.length) {
     const avgLift = Math.round(highFloor.reduce((a,t)=>a+t.r.lift,0)/highFloor.length);
-    insights.push(`🛗 Groepen op hoge verdiepingen (≥8) gebruiken gemiddeld <strong>${avgLift} kWh/jaar voor de lift</strong> — stijgt lineair met verdieping.`);
+    insights.push(`🛗 Groepen op hoge verdiepingen (≥ 8) gebruiken gem. <strong>${avgLift} kWh/jaar voor de lift</strong>.`);
   }
 
-  // Climate change
   const climate50 = totals.filter(t => t.inp.climate2050);
   const climate25 = totals.filter(t => !t.inp.climate2050);
   if (climate50.length && climate25.length) {
     const avgC50 = Math.round(climate50.reduce((a,t)=>a+t.r.cooling,0)/climate50.length);
     const avgC25 = Math.round(climate25.reduce((a,t)=>a+t.r.cooling,0)/climate25.length);
-    insights.push(`🌡️ Scenario 2050: gemiddeld <strong>${avgC50} vs ${avgC25} kWh koeling</strong> — +${Math.round((avgC50/Math.max(1,avgC25)-1)*100)}% meer koeling in 2050.`);
+    insights.push(`🌡️ Scenario 2050: gem. <strong>${avgC50} vs ${avgC25} kWh koeling</strong> — +${Math.round((avgC50/Math.max(1,avgC25)-1)*100)}% meer koeling in 2050.`);
   }
 
-  // User energy dominance
   const highUser = totals.filter(t => (t.r.appliances||0)+(t.r.media||0) > (t.r.heating||0)+(t.r.cooling||0));
-  if (highUser.length > 0) {
-    insights.push(`💡 Bij ${highUser.length} groep(en) zijn gebruikersapparaten + media groter dan verwarmings- en koelingsenergie — gedragsverandering heeft grote impact!`);
-  }
+  if (highUser.length > 0) insights.push(`💡 Bij <strong>${highUser.length} groep(en)</strong> zijn gebruikersapparaten + media groter dan verwarmings- en koelingsenergie.`);
 
   document.getElementById('insights-content').innerHTML =
     insights.length > 0
-      ? insights.map(i => `<p class="mb-2 text-slate-300">${i}</p>`).join('')
-      : '<p class="text-slate-600">Wacht op data van meerdere groepen…</p>';
+      ? insights.map(i => `<p style="margin-bottom:10px;color:var(--text2);line-height:1.6">${i}</p>`).join('')
+      : '<p style="color:var(--text3)">Wacht op data van meerdere groepen…</p>';
 }
 
-// ─── CSV EXPORT ────────────────────────────────────────────────────────────────
+// ── CSV EXPORT ────────────────────────────────────────────────────────────────
 function exportCSV() {
   const letters = Object.keys(groupData).sort();
   if (!letters.length) return;
   const header = ['Groep','kWh/m2','CO2_kg','Verwarming','WarmWater','Koeling','Ventilatie','Verlichting','Apparaten','Media','Lift','Type','Oriëntatie','Glas%','Systeem','Klimaat'].join(',');
   const rows = letters.map(l => {
-    const r = groupData[l].results || {};
-    const inp = groupData[l].inputs || {};
+    const r   = groupData[l].results || {};
+    const inp = groupData[l].inputs  || {};
     return [
       groupData[l].groupName || l,
       r.totalPerM2||0, r.co2||0,
@@ -409,7 +533,7 @@ function exportCSV() {
   a.click();
 }
 
-// Auto-load code from URL param
+// Auto-connect from URL param
 const urlCode = new URLSearchParams(location.search).get('code');
 if (urlCode) {
   document.getElementById('workshop-code').value = urlCode;

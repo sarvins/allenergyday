@@ -360,7 +360,7 @@ function calcBuildingOverview(inputs) {
   const eenzPerFloor = Math.floor(Math.max(0, rawPF - 4) / 2) * 2;
   const perFloor     = hoekPerFloor + eenzPerFloor;
   const totalApts    = perFloor * totalFloors;
-  const residents    = Math.round(totalApts * 2.82);
+  const residents    = Math.round(totalApts * occupants);
   const rHoek = calcAll({ ...inputs, aptType: 1 });
   const rEenz = calcAll({ ...inputs, aptType: 0 });
   return {

@@ -1130,11 +1130,11 @@ function updateAptCountLegend(ov) {
   const el = document.getElementById('apt-count-legend');
   if (!el) return;
   const L = APP.lang;
-  if (ov.type === 'gallery') {
-    el.textContent = `${ov.perFloor} ${L==='nl'?'app. per verdieping':'apts per floor'}`;
-  } else {
-    el.textContent = `${ov.hoekPerFloor} ${L==='nl'?'hoek':'corner'} + ${ov.eenzPerFloor} ${L==='nl'?'eenzijdig':'1-sided'} = ${ov.hoekPerFloor+ov.eenzPerFloor} ${L==='nl'?'per verdieping':'per floor'}`;
-  }
+  const totalColor = ov.inAptRange ? 'var(--green)' : 'var(--amber)';
+  const perFloorText = ov.type === 'gallery'
+    ? `${ov.perFloor} ${L==='nl'?'per verd.':'per floor'}`
+    : `${ov.hoekPerFloor}+${ov.eenzPerFloor}=${ov.hoekPerFloor+ov.eenzPerFloor} ${L==='nl'?'per verd.':'per floor'}`;
+  el.innerHTML = `${perFloorText} <span style="color:${totalColor};font-weight:700">· ${ov.totalApts} ${L==='nl'?'totaal':'total'}</span>`;
 }
 
 // ── CONTEXT NOTES ────────────────────────────────────────────────────────────

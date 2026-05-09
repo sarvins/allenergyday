@@ -417,9 +417,9 @@
         <div class="shdr">· <span data-nl="Vorm & Oriëntatie" data-en="Form & Orientation">Vorm & Oriëntatie</span></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           <div style="grid-column:1/-1">
-            <div class="plabel"><button class="iBtn" onclick="openDr('size')">i</button><span data-nl="Grootte" data-en="Size">Grootte</span>: <span id="sv" class="rv">88 m²</span></div>
-            <input type="range" id="in-size" min="40" max="150" value="88" step="2" oninput="onInput();document.getElementById('sv').textContent=this.value+' m²'"/>
-            <div class="range-labels"><span>40 m²</span><span>150 m²</span></div>
+            <div class="plabel"><button class="iBtn" onclick="openDr('size')">i</button><span data-nl="Grootte" data-en="Size">Grootte</span>: <span id="sv" class="rv">80 m²</span></div>
+            <input type="range" id="in-size" min="55" max="130" value="80" step="1" oninput="onInput();document.getElementById('sv').textContent=this.value+' m²'"/>
+            <div class="range-labels"><span>55 m²</span><span>130 m²</span></div>
             <div id="apt-count-legend" style="font-size:10px;font-family:var(--mono);color:var(--accent);margin-top:4px;text-align:center;font-weight:500;letter-spacing:.5px"></div>
           </div>
           <div>
@@ -567,7 +567,8 @@
       <!-- ── Sub-col A: scores & metrics ── -->
       <div style="display:flex;flex-direction:column;gap:10px;overflow-y:auto;height:100%;padding-right:2px">
 
-        <div style="font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);padding:2px 0;flex-shrink:0">· 03 Results</div>
+        <!-- Site brief card -->
+        <div id="brief-card" class="card" style="padding:12px;flex-shrink:0"></div>
 
         <!-- Score card -->
         <div class="mc" style="flex-shrink:0">
@@ -816,6 +817,7 @@ function onInput() {
   updateMetricCards(results, inputs);
   updateWeii(results);
   updateChart(results);
+  updateBriefCard(overview, inputs);
   updateBuildingOverview(overview, inputs);
   updateAptCountLegend(overview);
   updateDetail(results, inputs);
@@ -987,6 +989,56 @@ function setBuildingType(type) {
   if (btnT) { btnT.style.background=!isGallery?'var(--accent)':'var(--bg3)'; btnT.style.color=!isGallery?'#ffffff':'var(--text2)'; btnT.style.borderColor=!isGallery?'var(--accent)':'var(--border)'; }
   if (btnG) { btnG.style.background=isGallery?'var(--accent)':'var(--bg3)';  btnG.style.color=isGallery?'#ffffff':'var(--text2)';  btnG.style.borderColor=isGallery?'var(--accent)':'var(--border)'; }
   onInput();
+}
+
+// ── SITE BRIEF CARD ───────────────────────────────────────────────────────────
+function updateBriefCard(ov, inp) {
+  const el = document.getElementById('brief-card');
+  if (!el) return;
+  const L = APP.lang;
+  const aptOk  = ov.inAptRange;
+  const resOk  = ov.inResRange;
+  const allOk  = aptOk && resOk;
+  const aptOver  = ov.totalApts > 120;
+  const aptUnder = ov.totalApts < 100;
+  const statusColor = allOk ? 'var(--green)' : 'var(--amber)';
+  const statusLabel = allOk
+    ? (L === 'nl' ? '✓ In programma' : '✓ In brief')
+    : aptOver  ? (L === 'nl' ? '↑ Te veel appartementen' : '↑ Over brief')
+    : aptUnder ? (L === 'nl' ? '↓ Te weinig appartementen' : '↓ Under brief')
+    : (L === 'nl' ? '⚠ Buiten bereik' : '⚠ Out of range');
+
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <span style="font-family:var(--mono);font-size:9px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3)">${L==='nl'?'· PROGRAMMA':'· BRIEF'}</span>
+      <span style="font-family:var(--mono);font-size:9px;font-weight:700;color:${statusColor};letter-spacing:.5px">${statusLabel}</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px">
+      <div style="background:var(--bg3);border-radius:5px;padding:7px 8px;text-align:center">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.5px;margin-bottom:2px">${L==='nl'?'Kavel':'Site'}</div>
+        <div style="font-weight:700;font-size:13px;color:var(--text)">3 000</div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--text3)">m²</div>
+      </div>
+      <div style="background:var(--bg3);border-radius:5px;padding:7px 8px;text-align:center;border:1px solid ${aptOk?'rgba(94,196,122,0.3)':'rgba(232,128,74,0.25)'}">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.5px;margin-bottom:2px">${L==='nl'?'Appartementen':'Apartments'}</div>
+        <div style="font-weight:700;font-size:13px;color:${aptOk?'var(--green)':'var(--amber)'}">${ov.totalApts}</div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--text3)">doel 100–120</div>
+      </div>
+      <div style="background:var(--bg3);border-radius:5px;padding:7px 8px;text-align:center;border:1px solid ${resOk?'rgba(94,196,122,0.3)':'rgba(232,128,74,0.25)'}">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.5px;margin-bottom:2px">${L==='nl'?'Bewoners':'Residents'}</div>
+        <div style="font-weight:700;font-size:13px;color:${resOk?'var(--green)':'var(--amber)'}">${ov.residents}</div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--text3)">doel 270–320</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:12px;font-family:var(--mono);font-size:10px;color:var(--text3);flex-wrap:wrap">
+      <span>${ov.perFloor} ${L==='nl'?'app/verd.':'apts/floor'}</span>
+      <span style="color:var(--border2)">·</span>
+      <span>${L==='nl'?'Bebouwing':'Coverage'} ${ov.siteCoverage}%</span>
+      <span style="color:var(--border2)">·</span>
+      <span>FAR ${ov.far}</span>
+      <span style="color:var(--border2)">·</span>
+      <span>GFA ${(ov.gfa/1000).toFixed(1)}k m²</span>
+    </div>`;
 }
 
 // ── BUILDING OVERVIEW ─────────────────────────────────────────────────────────

@@ -322,37 +322,47 @@ function calcAll(inputs) {
   };
 }
 
-// ─── BUILDING OVERVIEW ───────────────────────────────────────────────────────
-// Derives apartment count per floor from size (no extra input needed).
-// Tower: always 4 corner (hoek) + remaining single-sided (eenzijdig) per floor.
-// Gallery: through-apartments spanning the full block width.
+// ─── SITE BRIEF ──────────────────────────────────────────────────────────────
+// Fixed programme: 3 000 m² site, 100–120 apartments, 270–320 residents.
+// Apartments per floor is derived from a realistic floor-plate area:
+//   Gallery  ≈ 900 m² net apt area/floor (two parallel wings on the site)
+//   Tower    ≈ 700 m² net apt area/floor (compact core footprint)
+// perFloor = floor(floor_plate / apt_size)  →  no magic constant, just physics.
+const SITE = { area: 3000, aptMin: 100, aptMax: 120, resMin: 270, resMax: 320 };
+
 function calcBuildingOverview(inputs) {
   const { size, totalFloors, buildingType } = inputs;
 
+  const perFloor = buildingType === 1
+    ? Math.max(2, Math.floor(900 / size))
+    : Math.max(4, Math.floor(700 / size));
+
+  const totalApts    = perFloor * totalFloors;
+  const netGross     = buildingType === 1 ? 0.82 : 0.75;
+  const footprint    = Math.round(perFloor * size / netGross);
+  const gfa          = footprint * totalFloors;
+  const siteCoverage = Math.round(footprint / SITE.area * 100);
+  const far          = +(gfa / SITE.area).toFixed(1);
+  const residents    = Math.round(totalApts * 2.82);
+  const inAptRange   = totalApts >= SITE.aptMin && totalApts <= SITE.aptMax;
+  const inResRange   = residents >= SITE.resMin && residents <= SITE.resMax;
+
   if (buildingType === 1) {
-    // Gallery: 60m block length, each apartment ~size m² → floor width ≈ size/8m depth
-    const perFloor = Math.max(2, Math.floor(480 / size));
     const r = calcAll({ ...inputs, aptType: 2 });
     return {
-      type: 'gallery',
-      perFloor,
-      r,
-      buildingTotal: Math.round(r.total * perFloor * totalFloors),
+      type: 'gallery', perFloor, totalApts, siteCoverage, far, gfa,
+      residents, inAptRange, inResRange, r,
+      buildingTotal: Math.round(r.total * totalApts),
     };
   }
 
-  // Tower: 4 hoek (corner) + remaining eenzijdig (single-sided) per floor
-  const totalPerFloor = Math.max(6, Math.round(500 / size));
-  const hoekPerFloor  = 4;
-  const eenzPerFloor  = Math.max(2, totalPerFloor - 4);
+  const hoekPerFloor = perFloor >= 6 ? 4 : Math.min(perFloor, 4);
+  const eenzPerFloor = Math.max(0, perFloor - hoekPerFloor);
   const rHoek = calcAll({ ...inputs, aptType: 1 });
   const rEenz = calcAll({ ...inputs, aptType: 0 });
   return {
-    type: 'tower',
-    hoekPerFloor,
-    eenzPerFloor,
-    rHoek,
-    rEenz,
+    type: 'tower', perFloor, hoekPerFloor, eenzPerFloor, totalApts,
+    siteCoverage, far, gfa, residents, inAptRange, inResRange, rHoek, rEenz,
     buildingTotal: Math.round((rHoek.total * hoekPerFloor + rEenz.total * eenzPerFloor) * totalFloors),
   };
 }

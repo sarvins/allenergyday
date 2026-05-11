@@ -1,135 +1,110 @@
-# Energy Workshop – Appartement Simulator
+# AllEnergyDay — Apartment Energy Simulator
 
-Interactive web workshop for 20-25 students divided into groups, simulating the energy use of apartments.
-Based on the Schiehaven Noord energy model (Excel reference).
+An interactive workshop tool for architecture students to explore the energy performance of apartment buildings. Groups design a building by adjusting parameters (apartment type, orientation, insulation, ventilation, heating system) and see the effect on energy use in real time.
+
+**Live:** https://sarvins.github.io/allenergyday/
+**Teacher dashboard:** https://sarvins.github.io/allenergyday/teacher.html
+
+Developed for the TU Delft All Energy Day workshop. Based on the Schiehaven Noord energy reference model.
+
+---
+
+## How it works
+
+- Students open `index.html` on their laptops, enter a shared workshop code and group letter (A–F)
+- Each group adjusts sliders and sees live energy breakdowns (heating, cooling, ventilation, hot water, etc.)
+- The teacher opens `teacher.html` on a projector, enters the same workshop code, and sees a live leaderboard of all groups
+- All data syncs automatically via Firebase Realtime Database
+
+---
 
 ## Files
 
 | File | Purpose |
 |---|---|
-| `index.html` | Student workshop page |
-| `teacher.html` | Teacher/presenter leaderboard |
-| `energy.js` | Energy calculation engine (shared) |
-
-## Quick Start (without Firebase)
-
-Open `index.html` in a browser — it works locally without Firebase.
-Groups can work independently; results won't sync across laptops automatically.
-Use the teacher view to collect results manually.
+| `index.html` | Student page |
+| `teacher.html` | Teacher leaderboard / projector view |
+| `energy.js` | Energy calculation engine |
+| `building2d.js` | 2D building renderer |
+| `building3d.js` | 3D building renderer |
+| `info-content.js` | Tooltip and info panel content |
 
 ---
 
-## Full Setup: Firebase Realtime Database (enables live cross-device sync)
+## Setup
 
-This is the recommended setup for the actual workshop.
+### Without Firebase (local only)
 
-### Step 1 — Create a Firebase project (free, 5 minutes)
+Open `index.html` in a browser — it works without any setup. Groups work independently and results won't sync across devices.
 
-1. Go to [console.firebase.google.com](https://console.firebase.google.com)
-2. Click **Add project** → give it a name (e.g. `energy-workshop`)
-3. Disable Google Analytics (not needed) → **Create project**
+### With Firebase (recommended for workshops)
 
-### Step 2 — Enable Realtime Database
+Firebase Realtime Database enables live cross-device sync. The free Spark plan is sufficient (100 simultaneous connections, 1 GB storage).
 
-1. In the Firebase console, click **Build → Realtime Database**
-2. Click **Create Database** → choose a region (Europe-West for Netherlands)
-3. Start in **test mode** (allows read/write for 30 days — perfect for a workshop)
+**Step 1 — Create a Firebase project**
+1. Go to https://console.firebase.google.com
+2. Click **Add project**, give it a name, disable Google Analytics
+3. Click **Create project**
 
-### Step 3 — Get your config
+**Step 2 — Enable Realtime Database**
+1. In the left menu, find **Realtime Database** (under Build or All products)
+2. Click **Create database** → region: **Europe (europe-west1)** → **Start in test mode**
+3. Click **Enable**
 
+**Step 3 — Register your web app and get the config**
 1. Click the gear icon ⚙️ → **Project settings**
 2. Scroll to **Your apps** → click **</>** (Web)
-3. Register the app (any name) → copy the `firebaseConfig` object
+3. Give it a nickname, click **Register app**
+4. Copy the config values shown (apiKey, authDomain, databaseURL, etc.)
 
-It looks like:
-```js
-const firebaseConfig = {
-  apiKey: "AIzaSy...",
-  authDomain: "energy-workshop-abc.firebaseapp.com",
-  databaseURL: "https://energy-workshop-abc-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "energy-workshop-abc",
-  storageBucket: "energy-workshop-abc.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abcdef"
-};
-```
+**Step 4 — Add config to the HTML files**
 
-### Step 4 — Paste config into both HTML files
-
-In **both** `index.html` and `teacher.html`, find `FIREBASE_CONFIG` near the top of the `<script>` section and replace the placeholder values:
+In both `index.html` and `teacher.html`, find `FIREBASE_CONFIG` and replace the placeholder values with your real ones:
 
 ```js
 const FIREBASE_CONFIG = {
-  apiKey:            "AIzaSy...",         // ← your values here
-  authDomain:        "...",
-  databaseURL:       "https://...",
-  ...
+  apiKey:            "AIzaSy...",
+  authDomain:        "your-project.firebaseapp.com",
+  databaseURL:       "https://your-project-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:         "your-project",
+  storageBucket:     "your-project.appspot.com",
+  messagingSenderId: "123456789",
+  appId:             "1:123456789:web:abcdef"
 };
 ```
 
-### Step 5 — Deploy to GitHub Pages
-
-1. Create a GitHub repository (public)
-2. Push all files: `index.html`, `teacher.html`, `energy.js`
-3. In the repo → **Settings → Pages → Source: main branch / root**
-4. Your URL will be: `https://YOUR-USERNAME.github.io/REPO-NAME/`
-
-Share `index.html` URL with students, `teacher.html` URL for the teacher/projector.
+**Step 5 — Deploy to GitHub Pages**
+1. Push all files to a public GitHub repository
+2. Go to **Settings → Pages → Source: main branch / root**
+3. Your app will be live at `https://YOUR-USERNAME.github.io/REPO-NAME/`
 
 ---
 
-## Workshop Flow
+## Workshop flow
 
-### Before the workshop
-- Deploy to GitHub Pages (or run locally)
-- Set a **workshop code** (e.g. `energy2025`) — tell students this code
-- Open `teacher.html?code=energy2025` on the presenter laptop/projector
-- Students open `index.html` on their laptops
+**Before the session**
+- Decide on a workshop code (e.g. `energy2025`) and share it with students
+- Open `teacher.html` on the projector, enter the code and click Connect
+- Students open `index.html`, enter the same code and their group letter
 
-### During the workshop
-
-**Round 1 – Apartment Type & Height (20 min)**
-- Focus on apartment type (gallery vs tower) and floor number
-- Key insight: gallery flats have 55% less mechanical ventilation energy
-- Key insight: lift energy grows linearly with floor number
-
-**Round 2 – Systems (20 min)**
-- Focus on ventilation system, heating/cooling, solar collectors, shower WTW
-- Key insight: WKO heat pump (COP 6.0) vs air heat pump (COP 3.5) = 40% less electricity
-- Key insight: shower WTW = -30 to -40% hot water energy
-
-**Round 3 – Climate Stress Test (15 min)**
-- Enable "Klimaatscenario 2050" toggle
-- Key insight: cooling demand +40%, heating -18%
-- Which designs survive? Passive House + gallery does well
-
-**Round 4 – Compare (20 min)**
-- Teacher shows `teacher.html` on projector
-- Click "Vergelijk" on student page to see live leaderboard
-- Discuss: what had the biggest impact?
+**During the session**
+- Groups explore different design choices across multiple rounds
+- The teacher dashboard updates live as groups save their designs
+- Use the leaderboard to trigger discussion: what had the biggest impact?
 
 ---
 
-## Energy Model Summary
+## Energy model
 
-Simplified from the Excel reference model. Key relationships preserved:
+All calculations run client-side in JavaScript. Key relationships from the reference model:
 
 | Parameter | Effect |
 |---|---|
-| Gallerij apt. type | ~55% less fan energy (cross-ventilation) |
-| Orientation S→N | Cooling demand ×5 difference |
-| WKO vs AP heat pump | 40% less electricity for heating |
-| Shower WTW (coll.) | -40% hot water energy |
-| Passive House vent. | ~90% heating recovery + near-zero mech. cooling |
-| Floor number +10 | Lift energy roughly doubles |
-| Climate 2050 | +40% cooling, -18% heating |
-| Glass 70% vs 30% | ~2× cooling demand |
-
----
-
-## Technical Notes
-
-- All calculations run client-side in JavaScript (no server needed)
-- Firebase Realtime Database handles cross-device sync (free Spark plan: 1 GB storage, 10 GB/month transfer)
-- Works offline in local-only mode if Firebase is not configured
-- Teacher URL with code: `teacher.html?code=YOUR_WORKSHOP_CODE`
+| Gallery vs tower | ~55% less fan energy (cross-ventilation) |
+| Orientation S → N | Cooling demand up to ×5 difference |
+| WKO vs air heat pump | ~40% less electricity for heating |
+| Shower heat recovery | −30 to −40% hot water energy |
+| Passive House ventilation | ~90% heat recovery, near-zero cooling |
+| Floor +10 levels | Lift energy roughly doubles |
+| Climate scenario 2050 | +40% cooling, −18% heating |
+| Glass ratio 70% vs 30% | ~2× cooling demand |

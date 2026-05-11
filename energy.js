@@ -354,8 +354,10 @@ function calcBuildingOverview(inputs) {
     };
   }
 
-  // Tower: net/gross 0.75; eenzijdig must be even (4 sides × N per side).
-  const rawPF        = Math.max(4, Math.floor(footprint * 0.75 / size));
+  // Tower: subtract core (lift + stairwell + lobby ≈ 70 m²), divide remainder by apt size.
+  // Eenzijdig must be even (4 sides × N per side).
+  const coreArea     = 70;
+  const rawPF        = Math.max(4, Math.floor((footprint - coreArea) / size));
   const hoekPerFloor = 4;
   const eenzPerFloor = Math.floor(Math.max(0, rawPF - 4) / 2) * 2;
   const perFloor     = hoekPerFloor + eenzPerFloor;

@@ -15,18 +15,18 @@
 
   <style>
     :root {
-      --bg:        #0a1f1c;
-      --bg2:       #0f2a26;
-      --bg3:       #13332e;
-      --border:    rgba(255,255,255,0.07);
-      --border-hi: rgba(34,179,154,0.35);
-      --text:      #e8e2d4;
-      --text2:     rgba(232,226,212,0.55);
-      --text3:     rgba(232,226,212,0.32);
-      --accent:    #22b39a;
-      --amber:     #f5b544;
+      --bg:        #1c1c1c;
+      --bg2:       #272727;
+      --bg3:       #343434;
+      --border:    rgba(255,255,255,0.08);
+      --border-hi: rgba(0,126,214,0.45);
+      --text:      #edede8;
+      --text2:     rgba(237,237,232,0.55);
+      --text3:     rgba(237,237,232,0.32);
+      --accent:    #007ed6;
+      --amber:     #49d7e7;
       --orange:    #e8804a;
-      --green:     #7ec488;
+      --green:     #5ec47a;
       --sans:      "Space Grotesk", -apple-system, sans-serif;
       --mono:      "JetBrains Mono", ui-monospace, monospace;
     }
@@ -99,21 +99,22 @@
 <body>
 <div class="wrap">
 
+  <!-- ── Sticky top bar ── -->
+  <div style="background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;height:54px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:50;margin:-24px -24px 24px -24px">
+    <img src="files/logos/partner-logo-abt.6116c19c.webp" height="26" style="object-fit:contain;flex-shrink:0"/>
+    <img src="files/logos/qwfXjgswzEvu9iBam4zDl8IsRzo.webp" height="26" style="object-fit:contain;flex-shrink:0"/>
+    <span style="font-weight:700;font-size:15px;letter-spacing:-.3px;color:var(--text)">AllEnergyDay</span>
+    <span style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase">Docent</span>
+    <div style="flex:1"></div>
+    <div style="display:inline-flex;align-items:center;gap:8px;padding:5px 12px;border-radius:999px;background:rgba(0,126,214,0.12);border:1px solid var(--border-hi);font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:2px;color:var(--accent);text-transform:uppercase">
+      <span id="liveDot" style="width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);display:inline-block"></span>
+      LIVE · SCOREBOARD
+    </div>
+  </div>
+
   <!-- ── Header ── -->
   <header style="display:grid;grid-template-columns:1fr auto;gap:20px;align-items:flex-end;margin-bottom:24px;position:relative">
     <div>
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
-        <svg width="28" height="28" viewBox="0 0 28 28" style="flex-shrink:0">
-          <rect x="2" y="2" width="24" height="24" rx="3" fill="#22b39a"/>
-          <path d="M9 19 L9 9 L19 9" stroke="#0a1f1c" stroke-width="2" fill="none" stroke-linecap="round"/>
-          <path d="M9 14 L15 14" stroke="#0a1f1c" stroke-width="2" stroke-linecap="round"/>
-          <circle cx="20" cy="9" r="2.5" fill="#f5b544"/>
-        </svg>
-        <div style="display:inline-flex;align-items:center;gap:8px;padding:5px 12px;border-radius:999px;background:rgba(34,179,154,0.12);border:1px solid var(--border-hi);font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:2px;color:var(--accent);text-transform:uppercase">
-          <span id="liveDot" style="width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);display:inline-block"></span>
-          LIVE · SCOREBOARD
-        </div>
-      </div>
       <h1 style="font-size:2.6rem;font-weight:700;color:var(--text);letter-spacing:-1px;line-height:1;margin-bottom:4px">
         Atelier Energy <span style="color:var(--accent)">·</span> <span id="roundLabel">Round 01</span>
       </h1>

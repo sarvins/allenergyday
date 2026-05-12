@@ -557,9 +557,11 @@
       </div>
       <div style="position:absolute;top:14px;right:16px;display:flex;gap:6px;z-index:2;pointer-events:none">
         <span style="padding:3px 8px;border-radius:4px;background:rgba(0,0,0,0.28);border:1px solid var(--border);font-family:var(--mono);font-size:9px;letter-spacing:1px;color:var(--text3);text-transform:uppercase" data-nl="Sleep roteren" data-en="Drag rotate">Sleep roteren</span>
+        <span style="padding:3px 8px;border-radius:4px;background:rgba(0,0,0,0.28);border:1px solid var(--border);font-family:var(--mono);font-size:9px;letter-spacing:1px;color:var(--text3);text-transform:uppercase" data-nl="Shift+sleep = pan" data-en="Shift+drag = pan">Shift+sleep = pan</span>
         <span style="padding:3px 8px;border-radius:4px;background:rgba(0,0,0,0.28);border:1px solid var(--border);font-family:var(--mono);font-size:9px;letter-spacing:1px;color:var(--text3);text-transform:uppercase" data-nl="Scroll zoom" data-en="Scroll zoom">Scroll zoom</span>
       </div>
       <canvas id="bcanvas" style="display:block;width:100%;flex:1"></canvas>
+      <button onclick="resetBuilding2D(document.getElementById('bcanvas'))" style="position:absolute;bottom:14px;left:16px;display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:4px;background:rgba(0,0,0,0.28);border:1px solid var(--border);font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;z-index:2;cursor:pointer;outline:none;transition:border-color .15s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text3)'" data-nl="↺ Reset weergave" data-en="↺ Reset view">↺ Reset weergave</button>
       <div style="position:absolute;bottom:14px;right:16px;display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:4px;background:rgba(0,0,0,0.28);border:1px solid var(--border-hi);font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:1.5px;text-transform:uppercase;z-index:2">
         <span style="width:5px;height:5px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px var(--accent)"></span>
         LIVE

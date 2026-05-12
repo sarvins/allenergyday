@@ -19,7 +19,10 @@ function _initOrbit(canvas) {
     az:   -0.55,  // azimuth  (rad): camera horizontal angle around building
     el:    0.32,  // elevation (rad): 0 = horizon, PI/2 = straight down
     zoom:  1.0,   // distance multiplier
+    panX:  0,     // screen-space pan offset (px)
+    panY:  0,
     drag:  false,
+    panning: false,
     lx: 0, ly: 0,
     inp: null, dark: true
   };
@@ -30,24 +33,34 @@ function _initOrbit(canvas) {
     ? [e.touches[0].clientX, e.touches[0].clientY]
     : [e.clientX, e.clientY];
 
-  canvas.addEventListener('mousedown',  e => {
-    s.drag = true; [s.lx, s.ly] = getXY(e); canvas.style.cursor = 'grabbing';
+  canvas.addEventListener('mousedown', e => {
+    if (e.button === 1) e.preventDefault(); // suppress middle-click autoscroll
+    s.drag    = true;
+    s.panning = e.shiftKey || e.button === 1;
+    [s.lx, s.ly] = getXY(e);
+    canvas.style.cursor = s.panning ? 'move' : 'grabbing';
   });
   canvas.addEventListener('touchstart', e => {
-    e.preventDefault(); s.drag = true; [s.lx, s.ly] = getXY(e);
+    e.preventDefault(); s.drag = true; s.panning = false; [s.lx, s.ly] = getXY(e);
   }, {passive:false});
 
-  const onMove = (nx, ny) => {
+  const onMove = (nx, ny, shiftKey) => {
     if (!s.drag || !s.inp) return;
-    s.az -= (nx - s.lx) * 0.008;           // horizontal drag → azimuth
-    s.el -= (ny - s.ly) * 0.006;           // vertical drag   → elevation
-    s.el  = Math.max(0.05, Math.min(Math.PI/2 - 0.03, s.el));
+    const dx = nx - s.lx, dy = ny - s.ly;
+    if (s.panning || shiftKey) {
+      s.panX += dx;
+      s.panY += dy;
+    } else {
+      s.az -= dx * 0.008;
+      s.el -= dy * 0.006;
+      s.el  = Math.max(0.05, Math.min(Math.PI/2 - 0.03, s.el));
+    }
     s.lx = nx; s.ly = ny;
     _render(canvas, s.inp, s.dark, s);
   };
-  window.addEventListener('mousemove', e => onMove(e.clientX, e.clientY));
+  window.addEventListener('mousemove', e => onMove(e.clientX, e.clientY, e.shiftKey));
   window.addEventListener('touchmove', e => {
-    if (s.drag) { e.preventDefault(); const [x,y]=getXY(e); onMove(x,y); }
+    if (s.drag) { e.preventDefault(); const [x,y]=getXY(e); onMove(x,y,false); }
   }, {passive:false});
 
   window.addEventListener('mouseup',  () => { s.drag=false; canvas.style.cursor='grab'; });
@@ -55,10 +68,22 @@ function _initOrbit(canvas) {
 
   canvas.addEventListener('wheel', e => {
     e.preventDefault();
+    if (e.ctrlKey || e.metaKey) return; // browser zoom, not canvas zoom
     s.zoom *= (1 + e.deltaY * 0.001);
     s.zoom = Math.max(0.25, Math.min(5.0, s.zoom));
     if (s.inp) _render(canvas, s.inp, s.dark, s);
   }, {passive:false});
+}
+
+function resetBuilding2D(canvas) {
+  if (!_bs.has(canvas)) return;
+  const s = _bs.get(canvas);
+  s.az   = -0.55;
+  s.el   =  0.32;
+  s.zoom =  1.0;
+  s.panX =  0;
+  s.panY =  0;
+  if (s.inp) _render(canvas, s.inp, s.dark, s);
 }
 
 // ── Public API ─────────────────────────────────────────────────────────────────
@@ -117,7 +142,7 @@ function _render(canvas, inputs, isDark, s) {
     const py = _dot(d, upV);
     const pz = _dot(d, fwd);
     if (pz < 0.01) return null;
-    return [ W/2 + (px/pz)*focal,  H/2 - (py/pz)*focal,  pz ];
+    return [ W/2 + s.panX + (px/pz)*focal,  H/2 + s.panY - (py/pz)*focal,  pz ];
   };
 
   // ── Sky + Ground background (always visible) ──────────────────────────────────
@@ -340,7 +365,7 @@ function _render(canvas, inputs, isDark, s) {
 
   // ── Hint ──────────────────────────────────────────────────────────────────────
   ctx.fillStyle=isDark?'#334155':'#94a3b8'; ctx.font='10px sans-serif'; ctx.textAlign='right';
-  ctx.fillText('↕↔ sleep  ·  scroll = zoom', W-8, H-8);
+  ctx.fillText('↕↔ sleep = roteren  ·  shift+sleep = pan  ·  scroll = zoom', W-8, H-8);
   ctx.textAlign='left';
 }
 

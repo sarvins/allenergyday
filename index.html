@@ -239,17 +239,60 @@
 
     /* ── MAIN GRID ──────────────────────────────────────────────────── */
     #mgrid {
-      display:grid;
-      grid-template-columns: 340px 1fr 560px;
+      display: grid;
+      grid-template-columns: var(--col-left, 340px) 14px 1fr 14px var(--col-right, 560px);
       grid-template-rows: 1fr;
-      gap:10px; padding:10px;
-      width:100%;
+      gap: 0; padding: 10px;
+      width: 100%;
       height: calc(100vh - 54px);
       min-width: 0;
     }
-    #mgrid > * { min-width: 0; overflow: hidden; height: 100%; }
-    /* Left inputs panel scrolls internally */
-    #mgrid > *:first-child { overflow-y: auto; }
+    #mgrid > *:not(.col-div) { min-width: 0; overflow: hidden; height: 100%; }
+    #col-inputs { overflow-y: auto; overflow-x: hidden; padding-right: 5px; }
+    #col-results { padding-left: 5px; }
+
+    /* ── COLUMN DIVIDERS ──────────────────────────────────────────── */
+    .col-div {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      cursor: col-resize;
+      z-index: 20;
+      overflow: visible;
+      height: 100%;
+    }
+    .col-div::before {
+      content: '';
+      position: absolute;
+      top: 0; bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 1px;
+      background: var(--border2);
+      pointer-events: none;
+      transition: background .15s;
+    }
+    .col-div:hover::before { background: var(--accent); }
+    .col-toggle {
+      width: 14px;
+      height: 28px;
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: var(--text2);
+      cursor: pointer;
+      position: relative;
+      z-index: 1;
+      user-select: none;
+      transition: background .15s, color .15s, border-color .15s;
+      flex-shrink: 0;
+    }
+    .col-toggle:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
 
     /* ── MINI BAR ───────────────────────────────────────────────────── */
     .mini-bar { height:5px; border-radius:3px; overflow:hidden; background:rgba(255,255,255,0.06); margin-top:4px; display:flex; }
@@ -367,7 +410,7 @@
   <div id="mgrid">
 
     <!-- ══ LEFT: Inputs ══ -->
-    <div style="display:flex;flex-direction:column;gap:10px;height:100%">
+    <div id="col-inputs" style="display:flex;flex-direction:column;gap:10px;height:100%">
 
       <div style="display:flex;align-items:center;justify-content:space-between;padding:2px 0">
         <span style="font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent)">· 01 Inputs</span>
@@ -548,8 +591,10 @@
       <div id="savest" style="text-align:center;font-size:11px;font-family:var(--mono);color:var(--text2);min-height:1.2rem"></div>
     </div><!-- /inputs -->
 
+    <div class="col-div" id="ldiv"><div class="col-toggle" id="ltog" title="Verberg/toon" onclick="colToggle('left')">‹</div></div>
+
     <!-- ══ CENTER: Building canvas ══ -->
-    <div class="card" style="overflow:hidden;display:flex;flex-direction:column;position:relative;min-width:0">
+    <div id="col-canvas" class="card" style="overflow:hidden;display:flex;flex-direction:column;position:relative;min-width:0">
       <!-- Telemetry overlays -->
       <div style="position:absolute;top:14px;left:16px;font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;display:flex;flex-direction:column;gap:3px;z-index:2;pointer-events:none">
         <span style="color:var(--accent)">· 02 <span data-nl="Massing" data-en="Massing">Massing</span></span>
@@ -566,10 +611,12 @@
         <span style="width:5px;height:5px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px var(--accent)"></span>
         LIVE
       </div>
-    </div>
+    </div><!-- /col-canvas -->
+
+    <div class="col-div" id="rdiv"><div class="col-toggle" id="rtog" title="Verberg/toon" onclick="colToggle('right')">›</div></div>
 
     <!-- ══ RIGHT: Results — 2 sub-columns ══ -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;overflow:hidden;height:100%">
+    <div id="col-results" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;overflow:hidden;height:100%">
 
       <!-- ── Sub-col A: scores & metrics ── -->
       <div style="display:flex;flex-direction:column;gap:10px;overflow-y:auto;height:100%;padding-right:2px">
@@ -1259,6 +1306,63 @@ function clampFloor(){
   const max=+t.value||40; f.max=max; if(+f.value>max) f.value=max;
 }
 function setMsg(id,msg,sty){const e=document.getElementById(id);e.textContent=msg;e.style.cssText=(sty||'');setTimeout(()=>e.textContent='',5000);}
+
+// ── COLUMN RESIZE / COLLAPSE ─────────────────────────────────────────────────
+const COL = { leftW: 340, rightW: 560, leftOn: true, rightOn: true };
+function _setCols() {
+  const lw = COL.leftOn  ? COL.leftW  : 0;
+  const rw = COL.rightOn ? COL.rightW : 0;
+  document.getElementById('mgrid').style.gridTemplateColumns =
+    `${lw}px 14px 1fr 14px ${rw}px`;
+  requestAnimationFrame(() => {
+    const c = document.getElementById('bcanvas');
+    if (c && APP.lastResults) drawBuilding2D(c, getInputs(), APP.isDark);
+  });
+}
+function colToggle(side) {
+  if (side === 'left') {
+    COL.leftOn = !COL.leftOn;
+    document.getElementById('ltog').textContent = COL.leftOn ? '‹' : '›';
+  } else {
+    COL.rightOn = !COL.rightOn;
+    document.getElementById('rtog').textContent = COL.rightOn ? '›' : '‹';
+  }
+  _setCols();
+}
+(function() {
+  function _initColDrag(divId, side) {
+    const el = document.getElementById(divId);
+    el.addEventListener('mousedown', e => {
+      if (e.target.classList.contains('col-toggle')) return;
+      e.preventDefault();
+      const startX = e.clientX;
+      const startW = side === 'left' ? COL.leftW : COL.rightW;
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+      const onMove = ev => {
+        const dx = ev.clientX - startX;
+        if (side === 'left') {
+          COL.leftW = Math.max(160, Math.min(600, startW + dx));
+          if (!COL.leftOn) { COL.leftOn = true; document.getElementById('ltog').textContent = '‹'; }
+        } else {
+          COL.rightW = Math.max(200, Math.min(800, startW - dx));
+          if (!COL.rightOn) { COL.rightOn = true; document.getElementById('rtog').textContent = '›'; }
+        }
+        _setCols();
+      };
+      const onUp = () => {
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+        window.removeEventListener('mousemove', onMove);
+        window.removeEventListener('mouseup', onUp);
+      };
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onUp);
+    });
+  }
+  _initColDrag('ldiv', 'left');
+  _initColDrag('rdiv', 'right');
+})();
 
 // ── BOOT ─────────────────────────────────────────────────────────────────────
 initSetup();

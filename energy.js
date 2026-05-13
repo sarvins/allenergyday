@@ -432,8 +432,10 @@ function calcCooling(size, aptType, orientation, glassRatio, construction, ventT
   // Thermal mass: heavy construction buffers heat, reduces active cooling need
   cooling *= cType.massCoolingFactor;
 
-  // Roof: top-floor solar gain through slab
-  cooling *= ENERGY_CONFIG.roofTypes[roofType].coolingFactor;
+  // Roof: only applies when this apartment is on the top floor.
+  // On any other floor the slab above is another heated apartment → no roof effect.
+  const isTopFloor = floorNumber >= totalFloors && totalFloors > 0;
+  cooling *= isTopFloor ? ENERGY_CONFIG.roofTypes[roofType].coolingFactor : 1.0;
 
   // Ventilation free cooling: passive night purge capacity of the system
   cooling *= vSys.freeCoolingFactor;
@@ -485,8 +487,9 @@ function calcHeating(size, aptType, glassRatio, ventType, construction, floorNum
   // Transmission losses through walls and glazing [kWh/yr]
   let transmission = (cType.uWall * wallArea + cType.uGlass * glassArea) * dT * Hhours / 1000;
 
-  // Extra roof transmission on top floor — use construction type roof U-value
-  if (roofType > 0) {
+  // Extra roof transmission — only when this apartment is on the top floor.
+  const isTopFloor = floorNumber >= totalFloors && totalFloors > 0;
+  if (isTopFloor && roofType > 0) {
     transmission += cType.uRoof * size * dT * Hhours / 1000;
   }
 

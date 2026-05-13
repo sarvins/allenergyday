@@ -114,10 +114,13 @@ const ENERGY_CONFIG = {
   // WKO (ground source) has the highest COPs → lowest purchased energy per kWh of heat.
   // SV systems make sense when a district network is available (e.g. Schiehaven).
   heatCoolSystems: [
-    // Air-source heat pump. COP degrades in very cold weather; moderate performance.
-    { name: 'Warmtepomp lucht (AP)',         short: 'WP Lucht', copHeat: 3.5,  copCool: 3.5,  copHW: 2.75, svFraction: 0.00 },
+    // Air-source heat pump. copHeat=4.5: new Excel Benodigde energie row 41 (updated
+    // from 3.5 in old model — reflects modern SCOP for NL climate).
+    { name: 'Warmtepomp lucht (AP)',         short: 'WP Lucht', copHeat: 4.5,  copCool: 3.5,  copHW: 2.75, svFraction: 0.00 },
     // Ground-source (aquifer/borehole). Stable ground temp → high, stable COP.
-    { name: 'Warmtepomp WKO (bodem)',        short: 'WP WKO',   copHeat: 6.0,  copCool: 6.0,  copHW: 4.00, svFraction: 0.00 },
+    // copCool=20: WKO uses ground water for passive free cooling (no compressor) —
+    // source: Benodigde energie row 43 + rows 22–23 system table, new Excel.
+    { name: 'Warmtepomp WKO (bodem)',        short: 'WP WKO',   copHeat: 6.0,  copCool: 20.0, copHW: 4.00, svFraction: 0.00 },
     // District heating for all heat; separate chiller for cooling.
     { name: 'Stadsverwarming + koelmachine', short: 'SV+Koel',  copHeat: 2.38, copCool: 3.5,  copHW: 2.38, svFraction: 1.00 },
     // District HW only; heat pump for space heating and cooling.

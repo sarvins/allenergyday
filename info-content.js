@@ -202,27 +202,49 @@ const INFO = {
     icon: '🧱',
     affects3D: true,
     nl: {
-      tooltip: `Zware constructie (beton) slaat overdag warmte op en geeft die 's nachts af — dit dempt piektemperaturen en vermindert koelvraag. Hout is lichter maar ook minder thermische buffer.`,
+      tooltip: 'Constructietype bepaalt U-waarden, thermische massa, ZTA (zonwering) en daarmee zowel warmte- als koelvraag. Hybride beton-biobased scoort het beste over alle seizoenen.',
       aptNote: null,
-      full: `<h3>Constructie & thermische massa</h3>
-<p><strong>Thermische massa</strong> is het vermogen van een materiaal om warmte op te slaan. Beton heeft een hoge massa, hout een lage. In de zomer absorbeert beton overdag warmte en geeft die 's nachts terug — dit <em>vlakt</em> de temperatuurpiek af.</p>
+      full: `<h3>Constructie & envelop</h3>
+<p>Het constructietype bepaalt drie dingen tegelijk: <strong>isolatiewaarde (U-waarden)</strong>, <strong>thermische massa</strong> en <strong>zonwering (ZTA)</strong>. In het nieuwe model zijn U-waarden losgekoppeld van het ventilatiesysteem — het zijn nu aparte keuzes.</p>
 
-<h4>🌡️ Effect op koeling</h4>
-<ul>
-  <li><strong>Volledig hout:</strong> −18% koelvraag (lichte structuur, snellere opwarming maar ook snellere nachtkoeling)</li>
-  <li><strong>Hybride:</strong> −7 tot −12%</li>
-  <li><strong>Volledig beton:</strong> +4% (hogere piektemperatuur maar betere nachtcompensatie)</li>
-</ul>
+<h4>📊 Typen vergeleken</h4>
+<table style="width:100%;border-collapse:collapse;font-size:0.82rem;margin-top:8px">
+  <tr><th style="text-align:left;padding:4px;border-bottom:1px solid #334155">Type</th><th style="padding:4px;border-bottom:1px solid #334155">U-gevel</th><th style="padding:4px;border-bottom:1px solid #334155">U-glas</th><th style="padding:4px;border-bottom:1px solid #334155">ZTA zomer</th><th style="padding:4px;border-bottom:1px solid #334155">Massa-koeling</th></tr>
+  <tr><td style="padding:4px">Conventioneel beton</td><td style="padding:4px">0.25</td><td style="padding:4px">1.1</td><td style="padding:4px">0.30</td><td style="padding:4px">×1.00</td></tr>
+  <tr><td style="padding:4px">Bio-based licht</td><td style="padding:4px">0.30</td><td style="padding:4px">1.2</td><td style="padding:4px">0.12</td><td style="padding:4px">×1.50</td></tr>
+  <tr><td style="padding:4px">Bio-based zwaar</td><td style="padding:4px">0.25</td><td style="padding:4px">1.1</td><td style="padding:4px">0.12</td><td style="padding:4px">×1.30</td></tr>
+  <tr><td style="padding:4px">Hybride beton-biobased</td><td style="padding:4px">0.20</td><td style="padding:4px">0.8</td><td style="padding:4px">0.15</td><td style="padding:4px">×1.15</td></tr>
+</table>
 
-<h4>♻️ CO₂ in materialen</h4>
-<p>Houtconstructies binden CO₂ tijdens de groei van het hout (negatieve CO₂ balans). Beton produceert veel CO₂ bij de productie. Dit model berekent alleen <em>gebruiksenergie</em> — de embodied carbon zit er niet in.</p>`,
+<h4>🌡️ Thermische massa & koeling</h4>
+<p>Beton is zwaar: het slaat overdag warmte op en geeft die 's nachts langzaam vrij. Als 's nachts wordt geventileerd, verdwijnt die opgeslagen warmte passief. Resultaat: <em>minder actieve koeling nodig</em>. Bio-based licht heeft geen buffer — elke warmtetoevoer vereist direct mechanische koeling.</p>
+
+<h4>☀️ ZTA = zontoetredingsfactor</h4>
+<p>ZTA-zomer (met zonwering actief) bepaalt hoeveel zomerse zonnestraling door het glas komt. Bio-based types hebben betere externe zonwering (ZTA 0.12) dan beton (ZTA 0.30) — dit helpt koeling, maar compenseert het gebrek aan thermische massa niet volledig.</p>
+
+<h4>🌿 CO₂ in materialen</h4>
+<p>Dit model berekent alleen <em>gebruiksenergie</em> — de CO₂ in de materiaalproductie (embodied carbon) zit er niet in. Bio-based constructies binden CO₂ in het hout; beton is CO₂-intensief in productie.</p>`,
     },
     en: {
-      tooltip: 'Heavy construction (concrete) stores heat during the day and releases it at night — dampening peak temperatures and reducing cooling demand.',
+      tooltip: 'Construction type sets U-values, thermal mass, ZTA (solar shading) — affecting both heating and cooling. Hybrid concrete-biobased is best across all seasons.',
       aptNote: null,
-      full: `<h3>Construction & thermal mass</h3>
-<p><strong>Thermal mass</strong> is the ability of a material to store heat. Concrete has high mass, wood has low mass. In summer, concrete absorbs heat during the day and releases it at night — flattening the temperature peak.</p>
-<p>Wood construction: −18% cooling demand. Full concrete: +4% (higher peak but better night compensation).</p>`,
+      full: `<h3>Construction & building envelope</h3>
+<p>The construction type determines three things simultaneously: <strong>insulation quality (U-values)</strong>, <strong>thermal mass</strong>, and <strong>solar shading (ZTA)</strong>. In the new model, U-values are decoupled from the ventilation system — they are now independent choices.</p>
+
+<h4>📊 Types compared</h4>
+<table style="width:100%;border-collapse:collapse;font-size:0.82rem;margin-top:8px">
+  <tr><th style="text-align:left;padding:4px;border-bottom:1px solid #334155">Type</th><th style="padding:4px;border-bottom:1px solid #334155">U-wall</th><th style="padding:4px;border-bottom:1px solid #334155">U-glass</th><th style="padding:4px;border-bottom:1px solid #334155">ZTA summer</th><th style="padding:4px;border-bottom:1px solid #334155">Mass-cooling</th></tr>
+  <tr><td style="padding:4px">Conventional concrete</td><td style="padding:4px">0.25</td><td style="padding:4px">1.1</td><td style="padding:4px">0.30</td><td style="padding:4px">×1.00</td></tr>
+  <tr><td style="padding:4px">Bio-based light</td><td style="padding:4px">0.30</td><td style="padding:4px">1.2</td><td style="padding:4px">0.12</td><td style="padding:4px">×1.50</td></tr>
+  <tr><td style="padding:4px">Bio-based heavily ins.</td><td style="padding:4px">0.25</td><td style="padding:4px">1.1</td><td style="padding:4px">0.12</td><td style="padding:4px">×1.30</td></tr>
+  <tr><td style="padding:4px">Hybrid concrete-biobased</td><td style="padding:4px">0.20</td><td style="padding:4px">0.8</td><td style="padding:4px">0.15</td><td style="padding:4px">×1.15</td></tr>
+</table>
+
+<h4>🌡️ Thermal mass & cooling</h4>
+<p>Concrete is heavy: it absorbs heat during the day and releases it slowly at night. With night ventilation, that stored heat escapes passively. Result: <em>less active cooling needed</em>. Bio-based light has no buffer — any heat input requires immediate mechanical cooling.</p>
+
+<h4>☀️ ZTA = solar transmittance</h4>
+<p>ZTA-summer (with shading active) determines how much summer solar radiation passes through the glass. Bio-based types have better external shading (ZTA 0.12 vs. concrete's 0.30) — this helps cooling, but doesn't fully compensate for the lack of thermal mass.</p>`,
     },
   },
 
@@ -262,39 +284,71 @@ const INFO = {
     icon: '💨',
     affects3D: false,
     nl: {
-      tooltip: 'Ventilatiesysteem bepaalt warmteterugwinning (WTW) én de thermische kwaliteit van de schil (U-waarden). Passive House combineert 90% WTW met superieure isolatie.',
+      tooltip: 'Ventilatiesysteem bepaalt WTW-efficiëntie (warmteterugwinning) én vrije-koeling-capaciteit. Hoge WTW = minder verwarmingsverlies; hoge vrije koeling = minder actieve koeling nodig.',
       aptNote: [
-        '⚠️ Eenzijdig toren met nat.+mech.: geen kruisventilatie mogelijk. Volledig afhankelijk van mechanisch systeem — hogere ventilatie-elektriciteit.',
-        'Hoekappartement: twee gevels helpen bij indirecte WTW of balans-systemen.',
-        '✅ Gallerij + nat.+mech.: de open galerij compenseert het gebrek aan WTW door passieve kruisventilatie. Dit systeem werkt goed voor gallerij-flats.',
+        '⚠️ Eenzijdig toren: geen kruisventilatie mogelijk. Fan draait op volledig vermogen — hogere ventilatie-elektriciteit.',
+        'Hoekappartement: twee gevels geven iets meer luchtbeweging; balans-systemen werken hier goed.',
+        '✅ Gallerij: open galerij aan de achterzijde maakt kruisventilatie mogelijk — wind drijft de lucht door het appartement (~55% minder fan-energie, stapelt op het systeemeffect).',
       ],
       full: `<h3>Ventilatiesysteem</h3>
+<p>Het ventilatiesysteem heeft twee onafhankelijke effecten op energie:</p>
+<ol>
+  <li><strong>WTW (warmteterugwinning)</strong> — terugwinning van warmte uit de afvoerlucht. Hoge WTW = minder verwarmingsverlies via ventilatie.</li>
+  <li><strong>Vrije koeling</strong> — passieve koeling door koude buitenlucht 's nachts. Open systemen (nat., afvoer) kunnen 's nachts veel koele lucht doorlaten. Dichte balans-systemen kunnen dat niet.</li>
+</ol>
+<p>⚠️ <strong>Let op:</strong> U-waarden staan nu apart in het constructietype, niet meer gekoppeld aan het ventilatiesysteem.</p>
 
 <h4>📊 Systemen vergeleken</h4>
 <table style="width:100%;border-collapse:collapse;font-size:0.82rem;margin-top:8px">
-  <tr><th style="text-align:left;padding:4px;border-bottom:1px solid #334155">Systeem</th><th style="padding:4px;border-bottom:1px solid #334155">WTW %</th><th style="padding:4px;border-bottom:1px solid #334155">U-gevel</th><th style="padding:4px;border-bottom:1px solid #334155">U-glas</th></tr>
-  <tr><td style="padding:4px">Nat. + mech. afzuiging</td><td style="padding:4px">0%</td><td style="padding:4px">0.30</td><td style="padding:4px">1.20</td></tr>
-  <tr><td style="padding:4px">Nat. + indirecte WTW</td><td style="padding:4px">40%</td><td style="padding:4px">0.20</td><td style="padding:4px">1.20</td></tr>
-  <tr><td style="padding:4px">Passive House</td><td style="padding:4px">90%</td><td style="padding:4px">0.15</td><td style="padding:4px">0.80</td></tr>
-  <tr><td style="padding:4px">Balans met WTW</td><td style="padding:4px">80%</td><td style="padding:4px">0.25</td><td style="padding:4px">1.00</td></tr>
+  <tr><th style="text-align:left;padding:4px;border-bottom:1px solid #334155">Systeem</th><th style="padding:4px;border-bottom:1px solid #334155">WTW</th><th style="padding:4px;border-bottom:1px solid #334155">Vrije koeling*</th><th style="padding:4px;border-bottom:1px solid #334155">Fan W/m²</th></tr>
+  <tr><td style="padding:4px">Natuurlijke ventilatie</td><td style="padding:4px">0%</td><td style="padding:4px">↑↑ 30%</td><td style="padding:4px">0 (geen fan)</td></tr>
+  <tr><td style="padding:4px">Mechanische afvoer</td><td style="padding:4px">0%</td><td style="padding:4px">↑↑ 30%</td><td style="padding:4px">laag</td></tr>
+  <tr><td style="padding:4px">Mechanische toevoer</td><td style="padding:4px">0%</td><td style="padding:4px">↑ 20%</td><td style="padding:4px">laag</td></tr>
+  <tr><td style="padding:4px">Gebalanceerd lokaal</td><td style="padding:4px">55%</td><td style="padding:4px">↓ 7%</td><td style="padding:4px">hoog</td></tr>
+  <tr><td style="padding:4px">Gebalanceerd centraal</td><td style="padding:4px">60%</td><td style="padding:4px">↓ 7%</td><td style="padding:4px">hoog</td></tr>
+  <tr><td style="padding:4px">Gebalanceerd HR++</td><td style="padding:4px">75%</td><td style="padding:4px">↓↓ 3%</td><td style="padding:4px">zeer hoog</td></tr>
+  <tr><td style="padding:4px">Mech. afzuiging innov.</td><td style="padding:4px">20%</td><td style="padding:4px">↑↑ 32%</td><td style="padding:4px">laag</td></tr>
+  <tr><td style="padding:4px">EWF systeem</td><td style="padding:4px">40%</td><td style="padding:4px">↑↑↑ 80%</td><td style="padding:4px">laag</td></tr>
 </table>
+<p style="font-size:0.78rem;color:#94a3b8">* Vrije koeling = % koelvraag-reductie via passieve nachtventilatie t.o.v. basislijn.</p>
 
-<h4>♻️ WTW = warmteterugwinning</h4>
-<p>In een WTW-systeem geeft warme uitlaatlucht zijn warmte af aan koude inkomende lucht, zonder dat de luchtstromen mengen. Bij 90% WTW (Passive House) verlies je slechts 10% van de verwarmingsenergie via ventilatie — wat vroeger de grootste warmtepost was.</p>
+<h4>🌍 EWF — bijzonder geval</h4>
+<p>Het EWF-systeem (Energie Werk Fluïdum) voert lucht via een ondergrondse warmtewisselaar. De grondtemperatuur (~12°C) koelt de inkomende lucht passief in de zomer — een enorm vrije-koeling-voordeel (80% koelreductie). In de winter verwarmt diezelfde grond de binnenkomende lucht voor.</p>
 
-<h4>🌬️ Gallerij-bonus</h4>
-<p>Bij gallerij-flats kan <strong>nat. toevoer + mech. afzuiging</strong> werken als een quasi-passief systeem: wind drijft de ventilatie aan zonder elektriciteit. De galerij fungeert als afvoerkanaal. Resultaat: ~55% minder ventilatie-elektriciteit dan een toren met hetzelfde systeem.</p>`,
+<h4>🌬️ Gallerij-bonus (stapelbaar)</h4>
+<p>De gallerij-kruisventilatie (−25% extra koeling, −55% fan-energie) stapelt bovenop het systeem-effect. EWF + gallerij = de laagste koelvraag van alle combinaties.</p>`,
     },
     en: {
-      tooltip: 'Ventilation system determines heat recovery (HRV) AND shell quality (U-values). Passive House combines 90% HRV with superior insulation.',
+      tooltip: 'Ventilation system determines WTW efficiency (heat recovery) AND free cooling capacity. High WTW = less heating loss; high free cooling = less active cooling needed.',
       aptNote: [
-        '⚠️ Single-sided tower with nat.+mech.: no cross-ventilation possible. Fully dependent on mechanical system — higher fan electricity.',
-        'Corner apartment: two façades help with indirect HRV or balanced systems.',
-        '✅ Gallery + nat.+mech.: open gallery compensates for lack of HRV through passive cross-ventilation. Works well for gallery flats.',
+        '⚠️ Single-sided tower: no cross-ventilation. Fan runs at full power — higher electricity.',
+        'Corner apartment: two façades give slightly more airflow; balanced systems work well here.',
+        '✅ Gallery: open corridor at the back enables cross-ventilation — wind drives airflow through the apartment (~55% less fan energy, stacked on top of the system effect).',
       ],
       full: `<h3>Ventilation system</h3>
-<p>The ventilation system determines two key things: <strong>heat recovery efficiency</strong> and <strong>building shell quality</strong> (U-values are linked to the system in the scenarios).</p>
-<p>Passive House: 90% heat recovery means only 10% of ventilation heat loss vs. nat+mech. Combined with U-wall=0.15, this is the most efficient option but requires airtight construction.</p>`,
+<p>The ventilation system has two independent energy effects:</p>
+<ol>
+  <li><strong>WTW (heat recovery)</strong> — recovering heat from exhaust air. Higher WTW = less heating loss through ventilation.</li>
+  <li><strong>Free cooling</strong> — passive cooling via cold outdoor air at night. Open systems (natural, extract) can flush cool air freely. Sealed balanced systems cannot.</li>
+</ol>
+<p>⚠️ <strong>Note:</strong> U-values are now set separately in the construction type, no longer coupled to the ventilation system.</p>
+
+<h4>📊 Systems compared</h4>
+<table style="width:100%;border-collapse:collapse;font-size:0.82rem;margin-top:8px">
+  <tr><th style="text-align:left;padding:4px;border-bottom:1px solid #334155">System</th><th style="padding:4px;border-bottom:1px solid #334155">HRV</th><th style="padding:4px;border-bottom:1px solid #334155">Free cooling*</th></tr>
+  <tr><td style="padding:4px">Natural ventilation</td><td style="padding:4px">0%</td><td style="padding:4px">↑↑ 30%</td></tr>
+  <tr><td style="padding:4px">Mechanical extract</td><td style="padding:4px">0%</td><td style="padding:4px">↑↑ 30%</td></tr>
+  <tr><td style="padding:4px">Mechanical supply</td><td style="padding:4px">0%</td><td style="padding:4px">↑ 20%</td></tr>
+  <tr><td style="padding:4px">Balanced local</td><td style="padding:4px">55%</td><td style="padding:4px">↓ 7%</td></tr>
+  <tr><td style="padding:4px">Balanced central</td><td style="padding:4px">60%</td><td style="padding:4px">↓ 7%</td></tr>
+  <tr><td style="padding:4px">Balanced HR++</td><td style="padding:4px">75%</td><td style="padding:4px">↓↓ 3%</td></tr>
+  <tr><td style="padding:4px">Innovative mech. extract</td><td style="padding:4px">20%</td><td style="padding:4px">↑↑ 32%</td></tr>
+  <tr><td style="padding:4px">EWF system</td><td style="padding:4px">40%</td><td style="padding:4px">↑↑↑ 80%</td></tr>
+</table>
+<p style="font-size:0.78rem;color:#94a3b8">* Free cooling = % cooling demand reduction via passive night ventilation vs. baseline.</p>
+
+<h4>🌍 EWF — special case</h4>
+<p>The EWF system routes air via an underground heat exchanger. Ground temperature (~12°C) passively pre-cools incoming air in summer — massive free cooling advantage (80% cooling reduction). In winter, the same ground pre-warms the incoming air.</p>`,
     },
   },
 

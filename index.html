@@ -491,11 +491,10 @@
           <div>
             <div class="plabel"><button class="iBtn" onclick="openDr('construction')">i</button><span data-nl="Constructie" data-en="Construction">Constructie</span></div>
             <select id="in-construction" onchange="onInput()">
-              <option value="0" data-nl="Volledig hout"        data-en="Full timber">Volledig hout</option>
-              <option value="1" data-nl="Hybride hout-staal"   data-en="Hybrid timber-steel">Hybride hout-staal</option>
-              <option value="2" data-nl="Hybride hout-beton"   data-en="Hybrid timber-concrete">Hybride hout-beton</option>
-              <option value="3" selected data-nl="Beton + staal" data-en="Concrete + steel">Beton + staal</option>
-              <option value="4" data-nl="Volledig beton"       data-en="Full concrete">Volledig beton</option>
+              <option value="0" selected data-nl="Conventioneel beton"        data-en="Conventional concrete">Conventioneel beton</option>
+              <option value="1" data-nl="Bio-based licht"                     data-en="Bio-based light">Bio-based licht</option>
+              <option value="2" data-nl="Bio-based zwaar geïsoleerd"          data-en="Bio-based heavily insulated">Bio-based zwaar geïsoleerd</option>
+              <option value="3" data-nl="Hybride beton-biobased"              data-en="Hybrid concrete-biobased">Hybride beton-biobased</option>
             </select>
           </div>
           <div style="grid-column:1/-1">
@@ -516,10 +515,14 @@
           <div>
             <div class="plabel"><button class="iBtn" onclick="openDr('ventilation')">i</button><span data-nl="Ventilatie" data-en="Ventilation">Ventilatie</span></div>
             <select id="in-ventilation" onchange="onInput()">
-              <option value="0" data-nl="Nat. + mech. afzuiging" data-en="Nat. + mech. extraction">Nat. + mech. afzuiging</option>
-              <option value="1" data-nl="Nat. + indirecte WTW"   data-en="Nat. + indirect HRV">Indirecte WTW</option>
-              <option value="2" data-nl="Passive House"           data-en="Passive House">Passive House</option>
-              <option value="3" selected data-nl="Balans met WTW" data-en="Balanced with HRV">Balans met WTW</option>
+              <option value="0" data-nl="Natuurlijke ventilatie"             data-en="Natural ventilation">Natuurlijke ventilatie</option>
+              <option value="1" data-nl="Mechanische afvoer"                 data-en="Mechanical extract">Mechanische afvoer</option>
+              <option value="2" data-nl="Mechanische toevoer"                data-en="Mechanical supply">Mechanische toevoer</option>
+              <option value="3" selected data-nl="Gebalanceerd lokaal"       data-en="Balanced local">Gebalanceerd lokaal</option>
+              <option value="4" data-nl="Gebalanceerd centraal"              data-en="Balanced central">Gebalanceerd centraal</option>
+              <option value="5" data-nl="Gebalanceerd HR++"                  data-en="Balanced HR++">Gebalanceerd HR++</option>
+              <option value="6" data-nl="Mechanische afzuiging innovatief"   data-en="Innovative mech. extract">Mech. afzuiging innovatief</option>
+              <option value="7" data-nl="EWF systeem"                        data-en="EWF system">EWF systeem</option>
             </select>
             <div id="ventnote" style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-top:3px;letter-spacing:.5px"></div>
           </div>
@@ -1192,7 +1195,8 @@ function updateAptNote(inp) {
 function updateVentNote(inp) {
   const L=APP.lang;
   const sys=ENERGY_CONFIG.ventilation[inp.ventilation];
-  document.getElementById('ventnote').textContent=`${L==='nl'?'U-gevel':'U-wall'} ${sys.uWall} · ${L==='nl'?'U-glas':'U-glass'} ${sys.uGlass} W/m²K · ${L==='nl'?'WTW':'HRV'} ${Math.round(sys.wtw*100)}%`;
+  const cType=ENERGY_CONFIG.constructionTypes[inp.construction];
+  document.getElementById('ventnote').textContent=`${L==='nl'?'WTW':'HRV'} ${Math.round(sys.wtw*100)}% · ${L==='nl'?'U-gevel':'U-wall'} ${cType.uWall} · ${L==='nl'?'U-glas':'U-glass'} ${cType.uGlass} W/m²K`;
 }
 function updateLiftInfo(r, inp) {
   const L=APP.lang, el=document.getElementById('liftinfo');
@@ -1210,7 +1214,7 @@ function updateInsight(r, inp) {
   if(inp.orientation>=4&&inp.orientation<=6&&inp.glassRatio>0.55) tips.push(L==='nl'?'☀️ Veel glas op zonnige gevel → grote koelbelasting, zeker in 2050.':'☀️ Much glazing on sunny façade → high cooling load, especially in 2050.');
   if(inp.aptType===2) tips.push(L==='nl'?'🌬️ Gallerij: kruisventilatie actief — ~55% minder fan-energie, ~65% minder lift.':'🌬️ Gallery: cross-ventilation active — ~55% less fan energy, ~65% less lift.');
   if(inp.floor>=8&&inp.buildingType!==1) tips.push(L==='nl'?`🛗 Verdieping ${inp.floor}: liftenergie (${r.lift} kWh/j) wordt significant.`:`🛗 Floor ${inp.floor}: lift energy (${r.lift} kWh/yr) becomes significant.`);
-  if(inp.climate2050&&r.cooling>500) tips.push(L==='nl'?'🌡️ In 2050 stijgt koeling sterk. Gallerij + Passive House meest weerbaar.':'🌡️ In 2050 cooling rises sharply. Gallery + Passive House most resilient.');
+  if(inp.climate2050&&r.cooling>500) tips.push(L==='nl'?'🌡️ In 2050 stijgt koeling sterk. Gallerij + EWF of HR++ meest weerbaar.':'🌡️ In 2050 cooling rises sharply. Gallery + EWF or HR++ most resilient.');
   if(r.appliances+r.media>r.heating+r.cooling) tips.push(L==='nl'?'💡 Gebruikersapparaten > klimaatinstallaties — gedrag telt!':'💡 User appliances > climate systems — behaviour matters!');
   if(inp.showerWTW===0) tips.push(L==='nl'?'🚿 Douche WTW bespaart 30–40% warm water energie.':'🚿 Shower HRV saves 30–40% hot water energy.');
   if(r.totalPerM2<40) tips.push(L==='nl'?'🏆 Bijna energieneutraal niveau!':'🏆 Near zero energy level!');

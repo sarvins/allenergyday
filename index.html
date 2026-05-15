@@ -578,11 +578,6 @@
             <div id="occ-profile" style="font-size:11px;font-family:var(--mono);color:var(--text2);margin-top:3px;font-weight:600">—</div>
             <div style="font-size:9px;font-family:var(--mono);color:var(--text3);margin-top:2px" data-nl="volgt uit appartementgrootte" data-en="derived from apartment size">volgt uit appartementgrootte</div>
           </div>
-          <div>
-            <div class="plabel"><span data-nl="Auto-bezit" data-en="Car ownership">Auto-bezit</span>: <span id="cov" class="rv">1 op 5</span></div>
-            <input type="range" id="in-carOwnership" min="0" max="4" value="1" step="1" oninput="APP.carOwnership=+this.value;updateCarOwnershipLabel();onInput()"/>
-            <div class="range-labels"><span data-nl="Autoluw" data-en="Car-light">Autoluw</span><span data-nl="1 per woning" data-en="1 per unit">1 per woning</span></div>
-          </div>
           <label id="climlabel" style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;padding:10px;border:1px solid var(--border);border-radius:8px;transition:border-color .2s,box-shadow .2s">
             <input type="checkbox" id="in-climate2050" onchange="onInput()" style="margin-top:2px"/>
             <div>
@@ -767,8 +762,8 @@ function applyLang() {
   const nlBtn = document.getElementById('hdr-lang-nl');
   if (enBtn) { enBtn.style.background = L==='en'?'var(--accent)':'var(--bg3)'; enBtn.style.color = L==='en'?'#ffffff':'var(--text2)'; }
   if (nlBtn) { nlBtn.style.background = L==='nl'?'var(--accent)':'var(--bg3)'; nlBtn.style.color = L==='nl'?'#ffffff':'var(--text2)'; }
-  if(APP.lastResults) { updateAptNote(getInputs()); }
   updateCarOwnershipLabel();
+  if (APP.lastResults) onInput();
 }
 
 // ── THEME ────────────────────────────────────────────────────────────────────
@@ -969,8 +964,8 @@ function updateWeii(r, overview, inputs) {
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
       <div style="font-family:var(--mono);font-size:9px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px">${L==='nl'?'WEii – Appartement':'WEii – Apartment'}</div>
       ${isTower ? `<div style="display:flex;gap:3px">
-        <button onclick="APP.weiiAptType='eenz';updateWeii(APP.lastResults,APP.lastOverview,APP.lastInputs)" style="font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:3px;border:1px solid var(--border);cursor:pointer;background:${APP.weiiAptType!=='hoek'?'var(--accent)':'var(--bg2)'};color:${APP.weiiAptType!=='hoek'?'#fff':'var(--text3)'};font-weight:600">Eenzijdig</button>
-        <button onclick="APP.weiiAptType='hoek';updateWeii(APP.lastResults,APP.lastOverview,APP.lastInputs)" style="font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:3px;border:1px solid var(--border);cursor:pointer;background:${APP.weiiAptType==='hoek'?'var(--accent)':'var(--bg2)'};color:${APP.weiiAptType==='hoek'?'#fff':'var(--text3)'};font-weight:600">Hoek</button>
+        <button onclick="APP.weiiAptType='eenz';updateWeii(APP.lastResults,APP.lastOverview,APP.lastInputs)" style="font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:3px;border:1px solid var(--border);cursor:pointer;background:${APP.weiiAptType!=='hoek'?'var(--accent)':'var(--bg2)'};color:${APP.weiiAptType!=='hoek'?'#fff':'var(--text3)'};font-weight:600">${L==='nl'?'Eenzijdig':'1-sided'}</button>
+        <button onclick="APP.weiiAptType='hoek';updateWeii(APP.lastResults,APP.lastOverview,APP.lastInputs)" style="font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:3px;border:1px solid var(--border);cursor:pointer;background:${APP.weiiAptType==='hoek'?'var(--accent)':'var(--bg2)'};color:${APP.weiiAptType==='hoek'?'#fff':'var(--text3)'};font-weight:600">${L==='nl'?'Hoek':'Corner'}</button>
       </div>` : ''}
     </div>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
@@ -1019,7 +1014,7 @@ function updateMetricCards(r, inp) {
   const userTotal=r.appliances+r.media;
   const userPct=Math.round(userTotal/r.total*100);
   document.getElementById('mc-user-pct').textContent=userPct+'%';
-  document.getElementById('mc-usersub').textContent=`${userTotal.toLocaleString(L==='nl'?'nl':'en-US')} kWh/yr — ${L==='nl'?'gedrag telt!':'behaviour matters!'}`;
+  document.getElementById('mc-usersub').textContent=`${userTotal.toLocaleString(L==='nl'?'nl':'en-US')} ${L==='nl'?'kWh/jaar':'kWh/yr'} — ${L==='nl'?'gedrag telt!':'behaviour matters!'}`;
 }
 
 // ── CHART ────────────────────────────────────────────────────────────────────
@@ -1069,7 +1064,7 @@ function updateDetail(r, inp) {
     ['🔴',L==='nl'?'Verwarming':'Heating',    r.heating,   `${r.heatingThermal} kWh th · COP ${hc.copHeat}`],
     ['🟠',L==='nl'?'Warm water':'Hot water',  r.hotWater,  `${r.hotWaterThermal} kWh th · COP ${hc.copHW}`],
     ['🔵',L==='nl'?'Koeling':'Cooling',       r.cooling,   `${r.coolingThermal} kWh th · COP ${hc.copCool}`],
-    ['🩵',L==='nl'?'Ventilatie':'Ventilation',r.ventilation,inp.buildingType===1?'✅ gallerij-bonus':''],
+    ['🩵',L==='nl'?'Ventilatie':'Ventilation',r.ventilation,inp.buildingType===1?(L==='nl'?'✅ gallerij-bonus':'✅ gallery bonus'):''],
     ['🟡',L==='nl'?'Verlichting':'Lighting',  r.lighting,  ''],
     ['🟢',L==='nl'?'Apparaten':'Appliances',  r.appliances,L==='nl'?'(wasmachine, droger, vaatwasser)':'(washer, dryer, dishwasher)'],
     ['🟣','Media',                            r.media,     ''],
@@ -1152,7 +1147,7 @@ function updateBriefCard(ov, inp) {
       <div style="background:var(--bg3);border-radius:5px;padding:7px 8px;text-align:center;border:1px solid ${aptOk?'rgba(94,196,122,0.3)':'rgba(232,128,74,0.25)'}">
         <div style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.5px;margin-bottom:2px">${L==='nl'?'Appartementen':'Apartments'}</div>
         <div style="font-weight:700;font-size:13px;color:${aptOk?'var(--green)':'var(--amber)'}">${ov.totalApts}</div>
-        <div style="font-family:var(--mono);font-size:9px;color:var(--text3)">doel 100–120</div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--text3)">${L==='nl'?'doel':'target'} 100–120</div>
       </div>
       <div style="background:var(--bg3);border-radius:5px;padding:7px 8px;text-align:center">
         <div style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.5px;margin-bottom:2px">${L==='nl'?'Bewoners':'Residents'}</div>
@@ -1226,8 +1221,7 @@ const CAR_LABELS = {
   en: ['Car-light', '1-in-5', '1-in-3', '1-in-2', '1 per unit'],
 };
 function updateCarOwnershipLabel() {
-  const el = document.getElementById('cov');
-  if (el) el.textContent = (CAR_LABELS[APP.lang] || CAR_LABELS.nl)[APP.carOwnership];
+  // no-op: label is rendered inside updateGridPanel
 }
 function updateGridPanel(results, overview, inputs) {
   const el = document.getElementById('col-grid');
@@ -1271,11 +1265,17 @@ function updateGridPanel(results, overview, inputs) {
   const scenarioLabel  = inputs.climate2050 ? '2050' : '2025';
   const scenarioColour = inputs.climate2050 ? 'var(--amber)' : 'var(--text3)';
 
+  const carLabelText = (CAR_LABELS[L] || CAR_LABELS.nl)[inputs.carOwnership];
   el.innerHTML = `
     <div style="padding:2px 0 12px">
       <div style="font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent)">· 05 ${L==='nl'?'Netcongestie':'Grid Congestion'}</div>
     </div>
     <div class="card" style="padding:14px;display:flex;flex-direction:column;gap:10px">
+      <div>
+        <div style="font-family:var(--mono);font-size:9px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">${L==='nl'?'Auto-bezit':'Car ownership'}: <span style="color:var(--text);font-weight:700">${carLabelText}</span></div>
+        <input type="range" min="0" max="4" value="${inputs.carOwnership}" step="1" oninput="APP.carOwnership=+this.value;onInput()"/>
+        <div style="display:flex;justify-content:space-between;font-size:9px;font-family:var(--mono);color:var(--text3);margin-top:3px"><span>${L==='nl'?'Autoluw':'Car-light'}</span><span>${L==='nl'?'1 per woning':'1 per unit'}</span></div>
+      </div>
       <div style="display:flex;align-items:center;justify-content:space-between">
         <div style="font-family:var(--mono);font-size:9px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px">${L==='nl'?'Piekvermogen gebouw':'Building peak loads'}</div>
         <div style="font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:3px;border:1px solid var(--border);color:${scenarioColour};font-weight:600;background:var(--bg2)">${scenarioLabel} scenario</div>

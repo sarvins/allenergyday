@@ -1163,6 +1163,32 @@ function updateBuildingOverview(ov, inp) {
   const el = document.getElementById('bov-card');
   if (!el) return;
   const L = APP.lang;
+
+  // Peak heating demand: 8.3 W/m² from Excel Uitvoer winter peak (08:00).
+  // This is thermal demand; electrical = thermal / COP (done in the worksheet).
+  const heatingPeakKw  = Math.round(ov.totalApts * inp.size * 8.3 / 1000);
+  // EV estimate: ~1 per 5 apartments (urban Rotterdam, new development ~2030).
+  // Peak charging: 7.4 kW per EV (standard home charger), coincident at 18:00–20:00.
+  const evCount        = Math.round(ov.totalApts / 5);
+  const evPeakKw       = Math.round(evCount * 7.4);
+
+  const congestionHtml = `
+    <div style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px">
+      <div style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.5px;margin-bottom:6px;text-transform:uppercase">${L==='nl'?'Netcongestie indicatoren':'Grid congestion indicators'}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        <div style="background:var(--bg3);border-radius:5px;padding:7px 8px">
+          <div style="font-size:9px;font-family:var(--mono);color:var(--text3)">${L==='nl'?'Verw. piek (thermisch)':'Heating peak (thermal)'}</div>
+          <div style="font-size:1.15rem;font-weight:700;color:var(--amber);font-family:var(--mono);line-height:1.2;margin-top:2px">${heatingPeakKw} kW</div>
+          <div style="font-size:9px;font-family:var(--mono);color:var(--text3);margin-top:2px">08:00 · ÷ COP = el.</div>
+        </div>
+        <div style="background:var(--bg3);border-radius:5px;padding:7px 8px">
+          <div style="font-size:9px;font-family:var(--mono);color:var(--text3)">~${evCount} EV · ${L==='nl'?'laadpiek':'charge peak'}</div>
+          <div style="font-size:1.15rem;font-weight:700;color:var(--amber);font-family:var(--mono);line-height:1.2;margin-top:2px">${evPeakKw} kW</div>
+          <div style="font-size:9px;font-family:var(--mono);color:var(--text3);margin-top:2px">18:00–20:00 · 7.4 kW/EV</div>
+        </div>
+      </div>
+    </div>`;
+
   if (ov.type === 'gallery') {
     el.innerHTML = `
       <div style="font-family:var(--mono);font-size:9px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">${L==='nl'?'🏗️ Gebouwoverzicht – gallerij':'🏗️ Building overview – gallery'}</div>
@@ -1177,7 +1203,8 @@ function updateBuildingOverview(ov, inp) {
           <div style="color:var(--text2);font-size:10px;font-family:var(--mono);margin-top:2px">MWh / ${L==='nl'?'jaar':'year'}</div>
           <div style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-top:2px">${inp.totalFloors} ${L==='nl'?'verd. ×':'floors ×'} ${ov.perFloor} app</div>
         </div>
-      </div>`;
+      </div>
+      ${congestionHtml}`;
   } else {
     el.innerHTML = `
       <div style="font-family:var(--mono);font-size:9px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">${L==='nl'?'🏗️ Gebouwoverzicht – toren':'🏗️ Building overview – tower'}</div>
@@ -1191,7 +1218,7 @@ function updateBuildingOverview(ov, inp) {
           <div style="color:var(--text2);font-size:10px;font-family:var(--mono);margin-top:2px">MWh / ${L==='nl'?'jaar':'year'}</div>
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;margin-bottom:0">
         <div style="padding:8px;background:var(--bg3);border-radius:6px">
           <div style="color:var(--text2);font-size:10px;font-family:var(--mono);margin-bottom:2px">1-${L==='nl'?'zijdig':'sided'} (${ov.eenzPerFloor}×)</div>
           <div style="font-weight:700;font-family:var(--mono)">${ov.rEenz.total.toLocaleString(L==='nl'?'nl':'en-US')} kWh</div>
@@ -1202,7 +1229,8 @@ function updateBuildingOverview(ov, inp) {
           <div style="font-weight:700;font-family:var(--mono)">${ov.rHoek.total.toLocaleString(L==='nl'?'nl':'en-US')} kWh</div>
           <div style="font-size:10px;font-family:var(--mono);color:var(--text3)">${ov.rHoek.totalPerM2} kWh/m²</div>
         </div>
-      </div>`;
+      </div>
+      ${congestionHtml}`;
   }
 }
 function updateAptCountLegend(ov) {

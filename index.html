@@ -882,17 +882,9 @@ function onInput() {
   const canvas=document.getElementById('bcanvas');
   if(canvas) { try { drawBuilding2D(canvas, inputs, APP.isDark); } catch(e) { console.error('canvas:', e); } }
 
-  // Building-level weighted average kWh/m²/yr — for Totaal verbruik score card only.
-  // Gallery: all apartments identical. Tower: weighted avg of hoek + eenzijdig.
-  let buildingPerM2;
-  if (overview.type === 'gallery') {
-    buildingPerM2 = overview.r.totalPerM2;
-  } else {
-    const n = overview.hoekPerFloor + overview.eenzPerFloor;
-    buildingPerM2 = n > 0
-      ? Math.round((overview.rEenz.totalPerM2 * overview.eenzPerFloor + overview.rHoek.totalPerM2 * overview.hoekPerFloor) / n)
-      : results.totalPerM2;
-  }
+  // Building-level weighted average kWh/m²/yr — computed in calcBuildingOverview.
+  // Includes all floors properly: (totalFloors-1) middle floors + 1 top floor with roof.
+  const buildingPerM2 = overview.buildingPerM2 || results.totalPerM2;
   const buildingResults = { ...results, totalPerM2: buildingPerM2 };
 
   updateMetricCards(buildingResults, inputs);

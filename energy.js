@@ -602,25 +602,28 @@ function calcBuildingOverview(inputs) {
   const gfa          = footprint * totalFloors;
   const far          = +(gfa / SITE.area).toFixed(1);
 
-  // Use a representative middle floor for building-level averages.
-  // This keeps Totaal verbruik stable regardless of which floor the student explores.
-  // The student's floor choice only affects the per-apartment WEii card.
-  const repFloor = Math.max(1, Math.round(totalFloors / 2));
-  const repInputs = { ...inputs, floor: repFloor };
+  // Middle floor = representative for all floors except the top.
+  // Top floor is calculated separately so its roof effect is included
+  // in the building total with the correct weight (1 out of totalFloors).
+  const midFloor  = Math.max(1, Math.round(totalFloors / 2));
+  const midInputs = { ...inputs, floor: midFloor };
+  const topInputs = { ...inputs, floor: totalFloors };
 
   if (buildingType === 1) {
     const aptDepth  = Math.max(5, depth - 1.8);
     const perFloor  = Math.max(1, Math.floor(width * aptDepth / size));
     const totalApts = perFloor * totalFloors;
     const residents = Math.round(totalApts * occupants);
-    const r = calcAll({ ...repInputs, aptType: 2 });
+    const r    = calcAll({ ...midInputs, aptType: 2 });
+    const rTop = calcAll({ ...topInputs, aptType: 2 });
+    const buildingTotal = Math.round((totalFloors - 1) * r.total * perFloor + rTop.total * perFloor);
     return {
       type: 'gallery', perFloor, totalApts, siteCoverage, far, gfa, footprint,
       residents,
       inAptRange: totalApts >= SITE.aptMin && totalApts <= SITE.aptMax,
       inResRange: residents >= SITE.resMin && residents <= SITE.resMax,
-      r,
-      buildingTotal: Math.round(r.total * totalApts),
+      r, buildingTotal,
+      buildingPerM2: Math.round(buildingTotal / (totalApts * size)),
     };
   }
 
@@ -631,15 +634,20 @@ function calcBuildingOverview(inputs) {
   const perFloor     = hoekPerFloor + eenzPerFloor;
   const totalApts    = perFloor * totalFloors;
   const residents    = Math.round(totalApts * occupants);
-  const rHoek = calcAll({ ...repInputs, aptType: 1 });
-  const rEenz = calcAll({ ...repInputs, aptType: 0 });
+  const rHoek    = calcAll({ ...midInputs, aptType: 1 });
+  const rEenz    = calcAll({ ...midInputs, aptType: 0 });
+  const rHoekTop = calcAll({ ...topInputs, aptType: 1 });
+  const rEenzTop = calcAll({ ...topInputs, aptType: 0 });
+  const midFloorTotal = rHoek.total * hoekPerFloor + rEenz.total * eenzPerFloor;
+  const topFloorTotal = rHoekTop.total * hoekPerFloor + rEenzTop.total * eenzPerFloor;
+  const buildingTotal = Math.round((totalFloors - 1) * midFloorTotal + topFloorTotal);
   return {
     type: 'tower', perFloor, hoekPerFloor, eenzPerFloor, totalApts,
     siteCoverage, far, gfa, footprint,
     residents,
     inAptRange: totalApts >= SITE.aptMin && totalApts <= SITE.aptMax,
     inResRange: residents >= SITE.resMin && residents <= SITE.resMax,
-    rHoek, rEenz,
-    buildingTotal: Math.round((rHoek.total * hoekPerFloor + rEenz.total * eenzPerFloor) * totalFloors),
+    rHoek, rEenz, buildingTotal,
+    buildingPerM2: Math.round(buildingTotal / (totalApts * size)),
   };
 }

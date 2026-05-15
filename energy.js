@@ -313,8 +313,18 @@ function effHeatingSolar(aptType, orientation) {
 // Derived from Dutch demographic model (Basis waarden en tabellen).
 // Smaller apartments attract more young singles; larger attract families.
 // Range clamped to 1.0–4.5 persons.
+// Occupancy is NOT a user input — it is a result of the apartment size choice.
 function calcOccupancy(size) {
   return Math.max(1.0, Math.min(4.5, 0.60 + size / 50.0));
+}
+
+// Returns the typical resident profile for an apartment of this size.
+// Boundaries based on the occupancy curve and Dutch housing demographics.
+function getResidentProfile(size) {
+  if (size <= 65)  return { nl: 'Starter / alleenstaande', en: 'Starter / single'   };
+  if (size <= 85)  return { nl: 'Stel',                    en: 'Couple'             };
+  if (size <= 105) return { nl: 'Klein gezin',              en: 'Small family'      };
+                   return { nl: 'Gezin',                    en: 'Family'            };
 }
 
 // ─── HOT WATER ────────────────────────────────────────────────────────────────

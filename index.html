@@ -569,9 +569,13 @@
         <div class="shdr">· <span data-nl="Bewoners & Klimaat" data-en="Occupants & Climate">Bewoners & Klimaat</span></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start">
           <div>
-            <div class="plabel"><button class="iBtn" onclick="openDr('occupants')">i</button><span data-nl="Bewoners" data-en="Occupants">Bewoners</span>: <span id="ov" class="rv">2</span></div>
-            <input type="range" id="in-occupants" min="1" max="5" value="2" step="1" oninput="onInput();document.getElementById('ov').textContent=this.value"/>
-            <div class="range-labels"><span>1</span><span>5</span></div>
+            <div class="plabel"><button class="iBtn" onclick="openDr('occupants')">i</button><span data-nl="Bewoners" data-en="Occupants">Bewoners</span></div>
+            <div style="display:flex;align-items:baseline;gap:6px;margin-top:4px">
+              <span id="occ-count" style="font-size:1.5rem;font-weight:700;font-family:var(--sans);color:var(--accent);line-height:1">—</span>
+              <span style="font-size:10px;font-family:var(--mono);color:var(--text3)" data-nl="gem. bewoners" data-en="avg. residents">gem. bewoners</span>
+            </div>
+            <div id="occ-profile" style="font-size:11px;font-family:var(--mono);color:var(--text2);margin-top:3px;font-weight:600">—</div>
+            <div style="font-size:9px;font-family:var(--mono);color:var(--text3);margin-top:2px" data-nl="volgt uit appartementgrootte" data-en="derived from apartment size">volgt uit appartementgrootte</div>
           </div>
           <div>
             <label id="climlabel" style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;padding:10px;border:1px solid var(--border);border-radius:8px;transition:border-color .2s">
@@ -861,7 +865,7 @@ function getInputs() {
     solarCollector:+document.getElementById('in-solarCollector').value,
     showerWTW:     +document.getElementById('in-showerWTW').value,
     co2Control:    document.getElementById('in-co2Control').checked,
-    occupants:     +document.getElementById('in-occupants').value,
+    occupants:     calcOccupancy(+document.getElementById('in-size').value),
     climate2050:   document.getElementById('in-climate2050').checked,
   };
 }
@@ -899,6 +903,7 @@ function onInput() {
   updateAptCountLegend(overview);
   updateDetail(results, inputs);
   updateAptNote(inputs);
+  updateOccupantsDisplay(inputs);
   updateVentNote(inputs);
   updateLiftInfo(results, inputs);
   updateInsight(buildingResults, inputs);
@@ -1220,6 +1225,14 @@ function updateAptNote(inp) {
   const el=document.getElementById('aptnote');
   if(el) el.textContent=(notes&&notes[key]!=null)?notes[key]:'';
 }
+function updateOccupantsDisplay(inputs) {
+  const L = APP.lang;
+  const occ = calcOccupancy(inputs.size);
+  const profile = getResidentProfile(inputs.size);
+  document.getElementById('occ-count').textContent = occ.toFixed(1);
+  document.getElementById('occ-profile').textContent = profile[L] || profile.nl;
+}
+
 function updateVentNote(inp) {
   const L=APP.lang;
   const sys=ENERGY_CONFIG.ventilation[inp.ventilation];

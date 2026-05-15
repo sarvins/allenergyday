@@ -1156,11 +1156,15 @@ function updateBuildingOverview(ov, inp) {
   if (!el) return;
   const L = APP.lang;
 
-  // Peak heating demand: 8.3 W/m² thermal from Excel Uitvoer winter peak (08:00).
-  // Convert to electrical using the chosen system's COP and SV fraction.
-  // SV systems supply heat from the district network → no electrical grid impact.
+  // Peak heating demand derived from the building's actual annual heating thermal.
+  // Scales from annual average (ΔT=13.7°C, 5500h) to design peak (ΔT=29°C at −7°C outdoor):
+  //   peak_kW = annual_kWh / 5500h × (29/13.7)
+  // This responds to the student's actual design choices (U-values, WTW, construction).
   const hcSys = ENERGY_CONFIG.heatCoolSystems[inp.heatCool];
-  const heatingPeakThermal = ov.totalApts * inp.size * 8.3 / 1000;
+  const buildingHeatingThermal = ov.type === 'gallery'
+    ? ov.r.heatingThermal * ov.totalApts
+    : (ov.rEenz.heatingThermal * ov.eenzPerFloor + ov.rHoek.heatingThermal * ov.hoekPerFloor) * (ov.totalApts / ov.perFloor);
+  const heatingPeakThermal = buildingHeatingThermal / 5500 * (29 / 13.7);
   const heatingPeakElec    = Math.round(heatingPeakThermal / hcSys.copHeat * (1 - hcSys.svFraction));
   const isSV               = hcSys.svFraction > 0;
   // EV estimate: ~1 per 5 apartments (urban Rotterdam, new development ~2030).

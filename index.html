@@ -1172,20 +1172,36 @@ function updateBuildingOverview(ov, inp) {
   const evCount  = Math.round(ov.totalApts / 5);
   const evPeakKw = Math.round(evCount * 7.4);
 
+  const combinedBuildingPeak   = heatingPeakElec + evPeakKw;
+  const peakColour             = combinedBuildingPeak < 150 ? 'var(--green)' : combinedBuildingPeak <= 250 ? 'var(--amber)' : 'var(--red)';
+  const neighbourhoodPeakKw    = Math.round(combinedBuildingPeak * (500 / ov.totalApts));
+  const utilisation            = Math.round(neighbourhoodPeakKw / 2000 * 100);
+  const utilisationColour      = utilisation < 60 ? 'var(--green)' : utilisation <= 90 ? 'var(--amber)' : 'var(--red)';
+
   const congestionHtml = `
     <div style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px">
       <div style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.5px;margin-bottom:6px;text-transform:uppercase">${L==='nl'?'Netcongestie indicatoren':'Grid congestion indicators'}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
         <div style="background:var(--bg3);border-radius:5px;padding:7px 8px">
           <div style="font-size:9px;font-family:var(--mono);color:var(--text3)">${L==='nl'?'Verw. piek (elektrisch)':'Heating peak (electrical)'}</div>
-          <div style="font-size:1.15rem;font-weight:700;color:${isSV?'var(--green)':'var(--amber)'};font-family:var(--mono);line-height:1.2;margin-top:2px">${heatingPeakElec} kW</div>
+          <div style="font-size:1.15rem;font-weight:700;color:${peakColour};font-family:var(--mono);line-height:1.2;margin-top:2px">${heatingPeakElec} kW</div>
           <div style="font-size:9px;font-family:var(--mono);color:var(--text3);margin-top:2px">08:00 · COP ${hcSys.copHeat}${isSV?' · '+Math.round(hcSys.svFraction*100)+'% SV':''}</div>
         </div>
         <div style="background:var(--bg3);border-radius:5px;padding:7px 8px">
           <div style="font-size:9px;font-family:var(--mono);color:var(--text3)">~${evCount} EV · ${L==='nl'?'laadpiek':'charge peak'}</div>
-          <div style="font-size:1.15rem;font-weight:700;color:var(--amber);font-family:var(--mono);line-height:1.2;margin-top:2px">${evPeakKw} kW</div>
+          <div style="font-size:1.15rem;font-weight:700;color:${peakColour};font-family:var(--mono);line-height:1.2;margin-top:2px">${evPeakKw} kW</div>
           <div style="font-size:9px;font-family:var(--mono);color:var(--text3);margin-top:2px">18:00–20:00 · 7.4 kW/EV</div>
         </div>
+      </div>
+      <div style="margin-top:6px;background:var(--bg3);border-radius:5px;padding:7px 8px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
+          <div style="font-size:9px;font-family:var(--mono);color:var(--text3)">${L==='nl'?'× buurt →':'× neighbourhood →'} <span style="color:${utilisationColour};font-weight:700">${neighbourhoodPeakKw.toLocaleString()} kW</span> / 2 000 kW</div>
+          <div style="font-size:9px;font-family:var(--mono);font-weight:700;color:${utilisationColour}">${utilisation}%</div>
+        </div>
+        <div style="height:5px;border-radius:3px;overflow:hidden;background:rgba(255,255,255,0.06)">
+          <div style="height:100%;border-radius:3px;width:${Math.min(100, utilisation)}%;background:${utilisationColour};transition:width .4s"></div>
+        </div>
+        <div style="font-size:9px;font-family:var(--mono);color:var(--text3);margin-top:3px">500 app. · 2 MVA substation · Schiehaven Noord</div>
       </div>
     </div>`;
 

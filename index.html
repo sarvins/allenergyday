@@ -872,14 +872,14 @@ function onInput() {
   try { inputs=getInputs(); results=calcAll(inputs); overview=calcBuildingOverview(inputs); }
   catch(e) { console.error(e); document.getElementById('insightbox').textContent='⚠️ '+e.message; return; }
   APP.lastResults=results;
+  APP.lastOverview=overview;
+  APP.lastInputs=inputs;
 
   const canvas=document.getElementById('bcanvas');
   if(canvas) { try { drawBuilding2D(canvas, inputs, APP.isDark); } catch(e) { console.error('canvas:', e); } }
 
-  // Building-level weighted average kWh/m²/yr for WEii and Paris Proof display.
-  // Gallery: all apartments identical → same as individual result.
-  // Tower: weighted average of hoek (4 corners) and eenzijdig (remaining), since
-  //   hoek apartments have more facade and higher energy than eenzijdig.
+  // Building-level weighted average kWh/m²/yr — for Totaal verbruik score card only.
+  // Gallery: all apartments identical. Tower: weighted avg of hoek + eenzijdig.
   let buildingPerM2;
   if (overview.type === 'gallery') {
     buildingPerM2 = overview.r.totalPerM2;
@@ -892,7 +892,7 @@ function onInput() {
   const buildingResults = { ...results, totalPerM2: buildingPerM2 };
 
   updateMetricCards(buildingResults, inputs);
-  updateWeii(buildingResults);
+  updateWeii(results, overview, inputs);
   updateChart(results);
   updateBriefCard(overview, inputs);
   updateBuildingOverview(overview, inputs);
@@ -927,10 +927,15 @@ const WEII = [
 ];
 const WEII_SCALE = 200;
 
-function updateWeii(r) {
+function updateWeii(r, overview, inputs) {
   const el = document.getElementById('weii-card');
   if (!el) return;
-  const score = r.totalPerM2, L = APP.lang;
+  const L = APP.lang;
+  const isTower = inputs && inputs.buildingType !== 1;
+  if (!APP.weiiAptType) APP.weiiAptType = 'eenz';
+  // For tower: show selected apt type; for gallery: always the gallery result
+  const displayR = (isTower && APP.weiiAptType === 'hoek' && overview) ? overview.rHoek : r;
+  const score = displayR.totalPerM2;
   const cat = WEII.find(t => score <= t.max) || WEII[WEII.length-1];
   let segs = '';
   WEII.forEach((t, i) => {
@@ -943,7 +948,13 @@ function updateWeii(r) {
   const ticks = [45,65,100,150,180];
   const tickHtml = ticks.map(v => `<span style="position:absolute;left:${(v/WEII_SCALE*100).toFixed(1)}%;transform:translateX(-50%)">${v}</span>`).join('');
   el.innerHTML = `
-    <div style="font-family:var(--mono);font-size:9px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">WEii – ${L==='nl'?'Gebouw (gewogen)':'Building (weighted)'}</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div style="font-family:var(--mono);font-size:9px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px">${L==='nl'?'WEii – Appartement':'WEii – Apartment'}</div>
+      ${isTower ? `<div style="display:flex;gap:3px">
+        <button onclick="APP.weiiAptType='eenz';updateWeii(APP.lastResults,APP.lastOverview,APP.lastInputs)" style="font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:3px;border:1px solid var(--border);cursor:pointer;background:${APP.weiiAptType!=='hoek'?'var(--accent)':'var(--bg2)'};color:${APP.weiiAptType!=='hoek'?'#fff':'var(--text3)'};font-weight:600">Eenzijdig</button>
+        <button onclick="APP.weiiAptType='hoek';updateWeii(APP.lastResults,APP.lastOverview,APP.lastInputs)" style="font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:3px;border:1px solid var(--border);cursor:pointer;background:${APP.weiiAptType==='hoek'?'var(--accent)':'var(--bg2)'};color:${APP.weiiAptType==='hoek'?'#fff':'var(--text3)'};font-weight:600">Hoek</button>
+      </div>` : ''}
+    </div>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
       <div style="font-size:2rem;font-weight:700;line-height:1;color:${cat.color};font-family:var(--sans);letter-spacing:-1px">${score}</div>
       <div>
@@ -971,7 +982,10 @@ function updateMetricCards(r, inp) {
   const bar=document.getElementById('mc-bar');
   bar.style.width=Math.min(100,(v/120)*100)+'%';
   bar.style.background=v<40?'var(--green)':v<80?'var(--yellow)':'var(--red)';
-  document.getElementById('mc-rating').textContent=v<40?(L==='nl'?'· Bijna energieneutraal':'· Near zero energy'):v<80?(L==='nl'?'· Gemiddeld goed':'· Average good'):(L==='nl'?'· Verbeteringen mogelijk':'· Room to improve');
+  const pp = v <= 45;
+  document.getElementById('mc-rating').innerHTML = pp
+    ? `<span style="color:var(--green);font-weight:700">✓ Paris Proof</span>`
+    : `<span style="color:var(--red);font-weight:700">✗ Paris Proof</span><span style="color:var(--text3)"> (≤ 45)</span>`;
 
   document.getElementById('mc-co2').textContent=r.co2.toLocaleString(L==='nl'?'nl':'en-US');
   document.getElementById('mc-co2sub').textContent=L==='nl'?`≈ ${Math.round(r.co2/1000*2.5)} kg vliegtuig-equiv.`:`≈ ${Math.round(r.co2/1000*2.5)} kg flight-equiv.`;

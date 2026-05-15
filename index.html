@@ -240,7 +240,7 @@
     /* ── MAIN GRID ──────────────────────────────────────────────────── */
     #mgrid {
       display: grid;
-      grid-template-columns: var(--col-left, 340px) 14px 1fr 14px var(--col-right, 560px);
+      grid-template-columns: var(--col-left, 340px) 14px 1fr 14px var(--col-right, 560px) 14px 0px;
       grid-template-rows: 1fr;
       gap: 0; padding: 10px;
       width: 100%;
@@ -249,6 +249,7 @@
     }
     #mgrid > *:not(.col-div) { min-width: 0; overflow: hidden; height: 100%; }
     #mgrid > #col-inputs { overflow-y: auto; overflow-x: hidden; padding-right: 5px; }
+    #mgrid > #col-grid  { overflow-y: auto; overflow-x: hidden; padding-left: 5px; }
     #col-results { padding-left: 5px; }
 
     /* ── COLUMN DIVIDERS ──────────────────────────────────────────── */
@@ -567,7 +568,7 @@
       <!-- Occupants & Climate -->
       <div class="card" style="padding:14px">
         <div class="shdr">· <span data-nl="Bewoners & Klimaat" data-en="Occupants & Climate">Bewoners & Klimaat</span></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start">
+        <div style="display:flex;flex-direction:column;gap:10px">
           <div>
             <div class="plabel"><button class="iBtn" onclick="openDr('occupants')">i</button><span data-nl="Bewoners" data-en="Occupants">Bewoners</span></div>
             <div style="display:flex;align-items:baseline;gap:6px;margin-top:4px">
@@ -578,14 +579,17 @@
             <div style="font-size:9px;font-family:var(--mono);color:var(--text3);margin-top:2px" data-nl="volgt uit appartementgrootte" data-en="derived from apartment size">volgt uit appartementgrootte</div>
           </div>
           <div>
-            <label id="climlabel" style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;padding:10px;border:1px solid var(--border);border-radius:8px;transition:border-color .2s">
-              <input type="checkbox" id="in-climate2050" onchange="onInput()" style="margin-top:2px"/>
-              <div>
-                <span style="font-size:12px;font-weight:700;color:var(--amber)" data-nl="🌡️ Klimaat 2050" data-en="🌡️ Climate 2050">🌡️ Klimaat 2050</span>
-                <span style="font-size:10px;font-family:var(--mono);color:var(--text3);display:block;margin-top:2px" data-nl="+40% koeling · −18% verwarming" data-en="+40% cooling · −18% heating">+40% koeling · −18% verwarming</span>
-              </div>
-            </label>
+            <div class="plabel"><span data-nl="Auto-bezit" data-en="Car ownership">Auto-bezit</span>: <span id="cov" class="rv">1 op 5</span></div>
+            <input type="range" id="in-carOwnership" min="0" max="4" value="1" step="1" oninput="APP.carOwnership=+this.value;updateCarOwnershipLabel();onInput()"/>
+            <div class="range-labels"><span data-nl="Autoluw" data-en="Car-light">Autoluw</span><span data-nl="1 per woning" data-en="1 per unit">1 per woning</span></div>
           </div>
+          <label id="climlabel" style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;padding:10px;border:1px solid var(--border);border-radius:8px;transition:border-color .2s,box-shadow .2s">
+            <input type="checkbox" id="in-climate2050" onchange="onInput()" style="margin-top:2px"/>
+            <div>
+              <span style="font-size:14px;font-weight:700;color:var(--amber)" data-nl="🌡️ Klimaat 2050" data-en="🌡️ Climate 2050">🌡️ Klimaat 2050</span>
+              <span style="font-size:10px;font-family:var(--mono);color:var(--text3);display:block;margin-top:2px" data-nl="+40% koeling · −18% verwarming" data-en="+40% cooling · −18% heating">+40% koeling · −18% verwarming</span>
+            </div>
+          </label>
         </div>
       </div>
 
@@ -703,6 +707,15 @@
       </div><!-- /sub-col B -->
 
     </div><!-- /results -->
+
+    <div class="col-div" id="gdiv" style="flex-direction:column;justify-content:flex-start;padding-top:12px;gap:4px">
+      <div class="col-toggle" id="gtog" title="Toon/verberg netcongestie" onclick="colToggle('grid')">⚡</div>
+      <span id="gdiv-label" style="writing-mode:vertical-lr;font-size:8px;font-family:var(--mono);font-weight:700;color:var(--text3);letter-spacing:2px;text-transform:uppercase;transform:rotate(180deg);user-select:none;margin-top:6px">CONGESTIE</span>
+    </div>
+
+    <!-- ══ GRID: Congestion panel ══ -->
+    <div id="col-grid"></div>
+
   </div><!-- /mgrid -->
 </div><!-- /mscreen -->
 
@@ -726,6 +739,7 @@ const APP = {
   lang:'nl', isDark:true, workshopCode:'', groupLetter:'', groupName:'',
   db:null, fbReady:false, brkChart:null, cmpChart:null,
   compareOpen:false, lastResults:null, saveTimer:null, buildingType:0,
+  carOwnership: 1,
   hud: { drawerOpen: false, activeKey: null },
 };
 const GC = { A:'#ef4444',B:'#f97316',C:'#eab308',D:'#22c55e',E:'#3b82f6',F:'#a855f7' };
@@ -754,6 +768,7 @@ function applyLang() {
   if (enBtn) { enBtn.style.background = L==='en'?'var(--accent)':'var(--bg3)'; enBtn.style.color = L==='en'?'#ffffff':'var(--text2)'; }
   if (nlBtn) { nlBtn.style.background = L==='nl'?'var(--accent)':'var(--bg3)'; nlBtn.style.color = L==='nl'?'#ffffff':'var(--text2)'; }
   if(APP.lastResults) { updateAptNote(getInputs()); }
+  updateCarOwnershipLabel();
 }
 
 // ── THEME ────────────────────────────────────────────────────────────────────
@@ -840,6 +855,7 @@ function showMain() {
     initChart();
     setBuildingType(APP.buildingType);
     updateFootprintHint();
+    _setCols();
     if(typeof INFO!=='undefined') initTooltipContent();
     onInput();
   }));
@@ -867,6 +883,7 @@ function getInputs() {
     co2Control:    document.getElementById('in-co2Control').checked,
     occupants:     calcOccupancy(+document.getElementById('in-size').value),
     climate2050:   document.getElementById('in-climate2050').checked,
+    carOwnership:  APP.carOwnership,
   };
 }
 
@@ -892,15 +909,19 @@ function onInput() {
   updateChart(results);
   updateBriefCard(overview, inputs);
   updateBuildingOverview(overview, inputs);
+  updateGridPanel(results, overview, inputs);
   updateAptCountLegend(overview);
   updateDetail(results, inputs);
   updateAptNote(inputs);
   updateOccupantsDisplay(inputs);
+  updateCarOwnershipLabel();
   updateVentNote(inputs);
   updateLiftInfo(results, inputs);
   updateInsight(buildingResults, inputs);
 
-  document.getElementById('climlabel').style.borderColor = inputs.climate2050?'var(--amber)':'var(--border)';
+  const climLabel = document.getElementById('climlabel');
+  climLabel.style.borderColor = inputs.climate2050 ? 'var(--amber)' : 'var(--border)';
+  climLabel.style.boxShadow  = inputs.climate2050 ? '0 0 0 2px rgba(73,215,231,0.28)' : 'none';
 
   const v=buildingPerM2;
   const hs=document.getElementById('hscore');
@@ -1156,62 +1177,6 @@ function updateBuildingOverview(ov, inp) {
   if (!el) return;
   const L = APP.lang;
 
-  // Peak heating demand derived from the building's actual annual heating thermal.
-  // Scales from annual average (ΔT=13.7°C, 5500h) to design peak (ΔT=29°C at −7°C outdoor):
-  //   peak_kW = annual_kWh / 5500h × (29/13.7)
-  // This responds to the student's actual design choices (U-values, WTW, construction).
-  const hcSys = ENERGY_CONFIG.heatCoolSystems[inp.heatCool];
-  const buildingHeatingThermal = ov.type === 'gallery'
-    ? ov.r.heatingThermal * ov.totalApts
-    : (ov.rEenz.heatingThermal * ov.eenzPerFloor + ov.rHoek.heatingThermal * ov.hoekPerFloor) * (ov.totalApts / ov.perFloor);
-  const heatingPeakThermal = buildingHeatingThermal / 5500 * (29 / 13.7);
-  const heatingPeakElec    = Math.round(heatingPeakThermal / hcSys.copHeat * (1 - hcSys.svFraction));
-  const isSV               = hcSys.svFraction > 0;
-  // EV assumptions scale with the climate2050 toggle.
-  const evPerApt   = inp.climate2050 ? 0.5  : 0.2;
-  const evKwPerCar = inp.climate2050 ? 11.0 : 7.4;
-  const evCount    = Math.round(ov.totalApts * evPerApt);
-  const evPeakKw   = Math.round(evCount * evKwPerCar);
-
-  const combinedBuildingPeak   = heatingPeakElec + evPeakKw;
-  const peakColour             = combinedBuildingPeak < 150 ? 'var(--green)' : combinedBuildingPeak <= 250 ? 'var(--amber)' : 'var(--red)';
-  const neighbourhoodPeakKw    = Math.round(combinedBuildingPeak * (500 / ov.totalApts));
-  const utilisation            = Math.round(neighbourhoodPeakKw / 2000 * 100);
-  const utilisationColour      = utilisation < 60 ? 'var(--green)' : utilisation <= 90 ? 'var(--amber)' : 'var(--red)';
-  const scenarioColour         = inp.climate2050 ? 'var(--amber)' : 'var(--text3)';
-  const scenarioLabel          = inp.climate2050 ? (L==='nl'?'2050 scenario':'2050 scenario') : (L==='nl'?'2025 scenario':'2025 scenario');
-  const evCaption              = inp.climate2050 ? '1-in-2 · 11 kW charger' : '1-in-5 · 7.4 kW charger';
-
-  const congestionHtml = `
-    <div style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-        <div style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.5px;text-transform:uppercase">${L==='nl'?'Netcongestie indicatoren':'Grid congestion indicators'}</div>
-        <div style="font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:3px;border:1px solid var(--border);color:${scenarioColour};font-weight:600;background:var(--bg2)">${scenarioLabel}</div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-        <div style="background:var(--bg3);border-radius:5px;padding:7px 8px">
-          <div style="font-size:9px;font-family:var(--mono);color:var(--text3)">${L==='nl'?'Verw. piek (elektrisch)':'Heating peak (electrical)'}</div>
-          <div style="font-size:1.15rem;font-weight:700;color:${peakColour};font-family:var(--mono);line-height:1.2;margin-top:2px">${heatingPeakElec} kW</div>
-          <div style="font-size:9px;font-family:var(--mono);color:var(--text3);margin-top:2px">08:00 · COP ${hcSys.copHeat}${isSV?' · '+Math.round(hcSys.svFraction*100)+'% SV':''}</div>
-        </div>
-        <div style="background:var(--bg3);border-radius:5px;padding:7px 8px">
-          <div style="font-size:9px;font-family:var(--mono);color:var(--text3)">~${evCount} EV · ${L==='nl'?'laadpiek':'charge peak'}</div>
-          <div style="font-size:1.15rem;font-weight:700;color:${peakColour};font-family:var(--mono);line-height:1.2;margin-top:2px">${evPeakKw} kW</div>
-          <div style="font-size:9px;font-family:var(--mono);color:var(--text3);margin-top:2px">18:00–20:00 · ${evCaption}</div>
-        </div>
-      </div>
-      <div style="margin-top:6px;background:var(--bg3);border-radius:5px;padding:7px 8px">
-        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
-          <div style="font-size:9px;font-family:var(--mono);color:var(--text3)">${L==='nl'?'× buurt →':'× neighbourhood →'} <span style="color:${utilisationColour};font-weight:700">${neighbourhoodPeakKw.toLocaleString()} kW</span> / 2 000 kW</div>
-          <div style="font-size:9px;font-family:var(--mono);font-weight:700;color:${utilisationColour}">${utilisation}%</div>
-        </div>
-        <div style="height:5px;border-radius:3px;overflow:hidden;background:rgba(255,255,255,0.06)">
-          <div style="height:100%;border-radius:3px;width:${Math.min(100, utilisation)}%;background:${utilisationColour};transition:width .4s"></div>
-        </div>
-        <div style="font-size:9px;font-family:var(--mono);color:var(--text3);margin-top:3px">500 app. · 2 MVA substation · Schiehaven Noord</div>
-      </div>
-    </div>`;
-
   if (ov.type === 'gallery') {
     el.innerHTML = `
       <div style="font-family:var(--mono);font-size:9px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">${L==='nl'?'🏗️ Gebouwoverzicht – gallerij':'🏗️ Building overview – gallery'}</div>
@@ -1226,8 +1191,7 @@ function updateBuildingOverview(ov, inp) {
           <div style="color:var(--text2);font-size:10px;font-family:var(--mono);margin-top:2px">MWh / ${L==='nl'?'jaar':'year'}</div>
           <div style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-top:2px">${inp.totalFloors} ${L==='nl'?'verd. ×':'floors ×'} ${ov.perFloor} app</div>
         </div>
-      </div>
-      ${congestionHtml}`;
+      </div>`;
   } else {
     el.innerHTML = `
       <div style="font-family:var(--mono);font-size:9px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">${L==='nl'?'🏗️ Gebouwoverzicht – toren':'🏗️ Building overview – tower'}</div>
@@ -1252,10 +1216,115 @@ function updateBuildingOverview(ov, inp) {
           <div style="font-weight:700;font-family:var(--mono)">${ov.rHoek.total.toLocaleString(L==='nl'?'nl':'en-US')} kWh</div>
           <div style="font-size:10px;font-family:var(--mono);color:var(--text3)">${ov.rHoek.totalPerM2} kWh/m²</div>
         </div>
-      </div>
-      ${congestionHtml}`;
+      </div>`;
   }
 }
+// ── GRID CONGESTION PANEL ─────────────────────────────────────────────────────
+const CAR_FRACTIONS = [0.05, 0.2, 0.333, 0.5, 1.0];
+const CAR_LABELS = {
+  nl: ['Autoluw', '1 op 5', '1 op 3', '1 op 2', '1 per woning'],
+  en: ['Car-light', '1-in-5', '1-in-3', '1-in-2', '1 per unit'],
+};
+function updateCarOwnershipLabel() {
+  const el = document.getElementById('cov');
+  if (el) el.textContent = (CAR_LABELS[APP.lang] || CAR_LABELS.nl)[APP.carOwnership];
+}
+function updateGridPanel(results, overview, inputs) {
+  const el = document.getElementById('col-grid');
+  if (!el) return;
+  const L = APP.lang;
+  const hcSys = ENERGY_CONFIG.heatCoolSystems[inputs.heatCool];
+
+  // Heating peak kW (building, electrical, design day −7°C)
+  const buildingHeatingThermal = overview.type === 'gallery'
+    ? overview.r.heatingThermal * overview.totalApts
+    : (overview.rEenz.heatingThermal * overview.eenzPerFloor + overview.rHoek.heatingThermal * overview.hoekPerFloor) * (overview.totalApts / overview.perFloor);
+  const heatingPeakElec = Math.round(buildingHeatingThermal / 5500 * (29 / 13.7) / hcSys.copHeat * (1 - hcSys.svFraction));
+
+  // Cooling peak kW (building, electrical, design summer day)
+  const buildingCoolingThermal = overview.type === 'gallery'
+    ? overview.r.coolingThermal * overview.totalApts
+    : (overview.rEenz.coolingThermal * overview.eenzPerFloor + overview.rHoek.coolingThermal * overview.hoekPerFloor) * (overview.totalApts / overview.perFloor);
+  const coolingPeakElec = Math.round(buildingCoolingThermal / 1500 * 2 / hcSys.copCool);
+
+  // EV peak kW (evening 18–20:00) — fraction from slider, power from climate2050
+  const evFraction = CAR_FRACTIONS[inputs.carOwnership] || 0.2;
+  const evKwPerCar = inputs.climate2050 ? 11.0 : 7.4;
+  const evCount    = Math.round(overview.totalApts * evFraction);
+  const evPeakKw   = Math.round(evCount * evKwPerCar);
+
+  // Background kW — continuous ventilation + lighting load
+  const bgAnnualKwh = (results.ventilation + results.lighting) * overview.totalApts;
+  const backgroundKw = Math.round(bgAnnualKwh / 8760);
+
+  // Transformer check: heating + EV worst-case morning vs 300 kW building connection
+  const combinedPeak = heatingPeakElec + evPeakKw;
+  const transKw      = 300;
+  const transUtil    = Math.round(combinedPeak / transKw * 100);
+  const transColour  = transUtil < 60 ? 'var(--green)' : transUtil <= 90 ? 'var(--amber)' : 'var(--red)';
+
+  // Neighbourhood check: scale to 500-apt equivalent vs 2 MVA substation
+  const neighPeak   = Math.round(combinedPeak * (500 / overview.totalApts));
+  const neighUtil   = Math.round(neighPeak / 2000 * 100);
+  const neighColour = neighUtil < 60 ? 'var(--green)' : neighUtil <= 90 ? 'var(--amber)' : 'var(--red)';
+
+  const scenarioLabel  = inputs.climate2050 ? '2050' : '2025';
+  const scenarioColour = inputs.climate2050 ? 'var(--amber)' : 'var(--text3)';
+
+  el.innerHTML = `
+    <div style="padding:2px 0 12px">
+      <div style="font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent)">· 05 ${L==='nl'?'Netcongestie':'Grid Congestion'}</div>
+    </div>
+    <div class="card" style="padding:14px;display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="font-family:var(--mono);font-size:9px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px">${L==='nl'?'Piekvermogen gebouw':'Building peak loads'}</div>
+        <div style="font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:3px;border:1px solid var(--border);color:${scenarioColour};font-weight:600;background:var(--bg2)">${scenarioLabel} scenario</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        <div style="background:var(--bg3);border-radius:6px;padding:8px">
+          <div style="font-size:9px;font-family:var(--mono);color:var(--text3)">${L==='nl'?'Verwarming piek':'Heating peak'}</div>
+          <div style="font-size:1.2rem;font-weight:700;font-family:var(--mono);color:var(--orange);line-height:1.2;margin-top:2px">${heatingPeakElec} kW</div>
+          <div style="font-size:9px;font-family:var(--mono);color:var(--text3);margin-top:2px">08:00 · COP ${hcSys.copHeat}</div>
+        </div>
+        <div style="background:var(--bg3);border-radius:6px;padding:8px">
+          <div style="font-size:9px;font-family:var(--mono);color:var(--text3)">${L==='nl'?'Koeling piek':'Cooling peak'}</div>
+          <div style="font-size:1.2rem;font-weight:700;font-family:var(--mono);color:var(--accent);line-height:1.2;margin-top:2px">${coolingPeakElec} kW</div>
+          <div style="font-size:9px;font-family:var(--mono);color:var(--text3);margin-top:2px">14:00 · COP ${hcSys.copCool}</div>
+        </div>
+        <div style="background:var(--bg3);border-radius:6px;padding:8px">
+          <div style="font-size:9px;font-family:var(--mono);color:var(--text3)">~${evCount} EV · ${L==='nl'?'laadpiek':'charge peak'}</div>
+          <div style="font-size:1.2rem;font-weight:700;font-family:var(--mono);color:var(--yellow);line-height:1.2;margin-top:2px">${evPeakKw} kW</div>
+          <div style="font-size:9px;font-family:var(--mono);color:var(--text3);margin-top:2px">18:00–20:00 · ${evKwPerCar} kW/EV</div>
+        </div>
+        <div style="background:var(--bg3);border-radius:6px;padding:8px">
+          <div style="font-size:9px;font-family:var(--mono);color:var(--text3)">${L==='nl'?'Achtergrond':'Background'}</div>
+          <div style="font-size:1.2rem;font-weight:700;font-family:var(--mono);color:var(--text2);line-height:1.2;margin-top:2px">${backgroundKw} kW</div>
+          <div style="font-size:9px;font-family:var(--mono);color:var(--text3);margin-top:2px">${L==='nl'?'vent. + verlichting':'vent. + lighting'}</div>
+        </div>
+      </div>
+      <div style="background:var(--bg3);border-radius:6px;padding:8px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
+          <div style="font-size:9px;font-family:var(--mono);color:var(--text3)">${L==='nl'?'Gebouw piek (verw. + EV)':'Building peak (heat + EV)'}: <span style="color:${transColour};font-weight:700">${combinedPeak} kW</span> / ${transKw} kW</div>
+          <div style="font-size:9px;font-family:var(--mono);font-weight:700;color:${transColour}">${transUtil}%</div>
+        </div>
+        <div style="height:5px;border-radius:3px;overflow:hidden;background:rgba(255,255,255,0.06)">
+          <div style="height:100%;border-radius:3px;width:${Math.min(100,transUtil)}%;background:${transColour};transition:width .4s"></div>
+        </div>
+        <div style="font-size:9px;font-family:var(--mono);color:var(--text3);margin-top:3px">${overview.totalApts} ${L==='nl'?'won. · 300 kW aansluiting':'units · 300 kW connection'}</div>
+      </div>
+      <div style="background:var(--bg3);border-radius:6px;padding:8px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
+          <div style="font-size:9px;font-family:var(--mono);color:var(--text3)">${L==='nl'?'× buurt →':'× neighbourhood →'} <span style="color:${neighColour};font-weight:700">${neighPeak.toLocaleString()} kW</span> / 2 000 kW</div>
+          <div style="font-size:9px;font-family:var(--mono);font-weight:700;color:${neighColour}">${neighUtil}%</div>
+        </div>
+        <div style="height:5px;border-radius:3px;overflow:hidden;background:rgba(255,255,255,0.06)">
+          <div style="height:100%;border-radius:3px;width:${Math.min(100,neighUtil)}%;background:${neighColour};transition:width .4s"></div>
+        </div>
+        <div style="font-size:9px;font-family:var(--mono);color:var(--text3);margin-top:3px">500 ${L==='nl'?'app. · 2 MVA substation · Schiehaven Noord':'apts · 2 MVA substation · Schiehaven Noord'}</div>
+      </div>
+    </div>`;
+}
+
 function updateAptCountLegend(ov) {
   const el = document.getElementById('apt-count-legend');
   if (!el) return;
@@ -1403,12 +1472,13 @@ function clampFloor(){
 function setMsg(id,msg,sty){const e=document.getElementById(id);e.textContent=msg;e.style.cssText=(sty||'');setTimeout(()=>e.textContent='',5000);}
 
 // ── COLUMN RESIZE / COLLAPSE ─────────────────────────────────────────────────
-const COL = { leftW: 340, rightW: 560, leftOn: true, rightOn: true };
+const COL = { leftW: 340, rightW: 560, gridW: 360, leftOn: true, rightOn: true, gridOn: false };
 function _setCols() {
   const lw = COL.leftOn  ? COL.leftW  : 0;
   const rw = COL.rightOn ? COL.rightW : 0;
+  const gw = COL.gridOn  ? COL.gridW  : 0;
   document.getElementById('mgrid').style.gridTemplateColumns =
-    `${lw}px 14px 1fr 14px ${rw}px`;
+    `${lw}px 14px 1fr 14px ${rw}px 14px ${gw}px`;
   requestAnimationFrame(() => {
     const c = document.getElementById('bcanvas');
     if (c && APP.lastResults) drawBuilding2D(c, getInputs(), APP.isDark);
@@ -1418,9 +1488,15 @@ function colToggle(side) {
   if (side === 'left') {
     COL.leftOn = !COL.leftOn;
     document.getElementById('ltog').textContent = COL.leftOn ? '‹' : '›';
-  } else {
+  } else if (side === 'right') {
     COL.rightOn = !COL.rightOn;
     document.getElementById('rtog').textContent = COL.rightOn ? '›' : '‹';
+  } else if (side === 'grid') {
+    COL.gridOn = !COL.gridOn;
+    const gtog   = document.getElementById('gtog');
+    const glabel = document.getElementById('gdiv-label');
+    if (gtog)   gtog.textContent          = COL.gridOn ? '›' : '⚡';
+    if (glabel) glabel.style.display      = COL.gridOn ? 'none' : 'block';
   }
   _setCols();
 }
@@ -1431,7 +1507,7 @@ function colToggle(side) {
       if (e.target.classList.contains('col-toggle')) return;
       e.preventDefault();
       const startX = e.clientX;
-      const startW = side === 'left' ? COL.leftW : COL.rightW;
+      const startW = side === 'left' ? COL.leftW : side === 'right' ? COL.rightW : COL.gridW;
       document.body.style.cursor = 'col-resize';
       document.body.style.userSelect = 'none';
       const onMove = ev => {
@@ -1439,9 +1515,16 @@ function colToggle(side) {
         if (side === 'left') {
           COL.leftW = Math.max(160, Math.min(600, startW + dx));
           if (!COL.leftOn) { COL.leftOn = true; document.getElementById('ltog').textContent = '‹'; }
-        } else {
+        } else if (side === 'right') {
           COL.rightW = Math.max(200, Math.min(800, startW - dx));
           if (!COL.rightOn) { COL.rightOn = true; document.getElementById('rtog').textContent = '›'; }
+        } else {
+          COL.gridW = Math.max(200, Math.min(600, startW - dx));
+          if (!COL.gridOn) {
+            COL.gridOn = true;
+            const gtog = document.getElementById('gtog'); if (gtog) gtog.textContent = '›';
+            const gl   = document.getElementById('gdiv-label'); if (gl) gl.style.display = 'none';
+          }
         }
         _setCols();
       };
@@ -1457,6 +1540,7 @@ function colToggle(side) {
   }
   _initColDrag('ldiv', 'left');
   _initColDrag('rdiv', 'right');
+  _initColDrag('gdiv', 'grid');
 })();
 
 // ── BOOT ─────────────────────────────────────────────────────────────────────

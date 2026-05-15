@@ -1156,22 +1156,26 @@ function updateBuildingOverview(ov, inp) {
   if (!el) return;
   const L = APP.lang;
 
-  // Peak heating demand: 8.3 W/m² from Excel Uitvoer winter peak (08:00).
-  // This is thermal demand; electrical = thermal / COP (done in the worksheet).
-  const heatingPeakKw  = Math.round(ov.totalApts * inp.size * 8.3 / 1000);
+  // Peak heating demand: 8.3 W/m² thermal from Excel Uitvoer winter peak (08:00).
+  // Convert to electrical using the chosen system's COP and SV fraction.
+  // SV systems supply heat from the district network → no electrical grid impact.
+  const hcSys = ENERGY_CONFIG.heatCoolSystems[inp.heatCool];
+  const heatingPeakThermal = ov.totalApts * inp.size * 8.3 / 1000;
+  const heatingPeakElec    = Math.round(heatingPeakThermal / hcSys.copHeat * (1 - hcSys.svFraction));
+  const isSV               = hcSys.svFraction > 0;
   // EV estimate: ~1 per 5 apartments (urban Rotterdam, new development ~2030).
   // Peak charging: 7.4 kW per EV (standard home charger), coincident at 18:00–20:00.
-  const evCount        = Math.round(ov.totalApts / 5);
-  const evPeakKw       = Math.round(evCount * 7.4);
+  const evCount  = Math.round(ov.totalApts / 5);
+  const evPeakKw = Math.round(evCount * 7.4);
 
   const congestionHtml = `
     <div style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px">
       <div style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.5px;margin-bottom:6px;text-transform:uppercase">${L==='nl'?'Netcongestie indicatoren':'Grid congestion indicators'}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
         <div style="background:var(--bg3);border-radius:5px;padding:7px 8px">
-          <div style="font-size:9px;font-family:var(--mono);color:var(--text3)">${L==='nl'?'Verw. piek (thermisch)':'Heating peak (thermal)'}</div>
-          <div style="font-size:1.15rem;font-weight:700;color:var(--amber);font-family:var(--mono);line-height:1.2;margin-top:2px">${heatingPeakKw} kW</div>
-          <div style="font-size:9px;font-family:var(--mono);color:var(--text3);margin-top:2px">08:00 · ÷ COP = el.</div>
+          <div style="font-size:9px;font-family:var(--mono);color:var(--text3)">${L==='nl'?'Verw. piek (elektrisch)':'Heating peak (electrical)'}</div>
+          <div style="font-size:1.15rem;font-weight:700;color:${isSV?'var(--green)':'var(--amber)'};font-family:var(--mono);line-height:1.2;margin-top:2px">${heatingPeakElec} kW</div>
+          <div style="font-size:9px;font-family:var(--mono);color:var(--text3);margin-top:2px">08:00 · COP ${hcSys.copHeat}${isSV?' · '+Math.round(hcSys.svFraction*100)+'% SV':''}</div>
         </div>
         <div style="background:var(--bg3);border-radius:5px;padding:7px 8px">
           <div style="font-size:9px;font-family:var(--mono);color:var(--text3)">~${evCount} EV · ${L==='nl'?'laadpiek':'charge peak'}</div>

@@ -291,8 +291,12 @@ const ENERGY_CONFIG = {
 // For gallerij: front and back slab facades are equal area.
 // For hoek: two perpendicular facades are equal area.
 
+// orientation === 8 is a sentinel meaning "tower average" — the mean over all 8
+// compass directions. Used in calcBuildingOverview so the tower building total
+// is direction-independent (a real tower has apartments facing all directions).
 function effCoolingOrientation(aptType, orientation) {
   const co = ENERGY_CONFIG.coolingOrientation;
+  if (orientation === 8) return co.reduce((s, v) => s + v, 0) / co.length;
   if (aptType === 1) // hoek: average of the two perpendicular facades
     return 0.5 * co[(orientation - 1 + 8) % 8] + 0.5 * co[(orientation + 1) % 8];
   if (aptType === 2) // gallerij: front + opposite back
@@ -302,6 +306,7 @@ function effCoolingOrientation(aptType, orientation) {
 
 function effHeatingSolar(aptType, orientation) {
   const hs = ENERGY_CONFIG.heatingSolarByOrientation;
+  if (orientation === 8) return hs.reduce((s, v) => s + v, 0) / hs.length;
   if (aptType === 1)
     return 0.5 * hs[(orientation - 1 + 8) % 8] + 0.5 * hs[(orientation + 1) % 8];
   if (aptType === 2)
@@ -634,12 +639,19 @@ function calcBuildingOverview(inputs) {
   const perFloor     = hoekPerFloor + eenzPerFloor;
   const totalApts    = perFloor * totalFloors;
   const residents    = Math.round(totalApts * occupants);
+  // rHoek / rEenz use the student's selected orientation — shown in WEii per-apt toggle.
+  // For the building total, use orientation 8 (direction-averaged) so the tower
+  // average is independent of which way the student happens to be exploring.
   const rHoek    = calcAll({ ...midInputs, aptType: 1 });
   const rEenz    = calcAll({ ...midInputs, aptType: 0 });
-  const rHoekTop = calcAll({ ...topInputs, aptType: 1 });
-  const rEenzTop = calcAll({ ...topInputs, aptType: 0 });
-  const midFloorTotal = rHoek.total * hoekPerFloor + rEenz.total * eenzPerFloor;
-  const topFloorTotal = rHoekTop.total * hoekPerFloor + rEenzTop.total * eenzPerFloor;
+  const avgMid   = { ...midInputs, orientation: 8 };
+  const avgTop   = { ...topInputs, orientation: 8 };
+  const rHoekAvg = calcAll({ ...avgMid, aptType: 1 });
+  const rEenzAvg = calcAll({ ...avgMid, aptType: 0 });
+  const rHoekTopAvg = calcAll({ ...avgTop, aptType: 1 });
+  const rEenzTopAvg = calcAll({ ...avgTop, aptType: 0 });
+  const midFloorTotal = rHoekAvg.total * hoekPerFloor + rEenzAvg.total * eenzPerFloor;
+  const topFloorTotal = rHoekTopAvg.total * hoekPerFloor + rEenzTopAvg.total * eenzPerFloor;
   const buildingTotal = Math.round((totalFloors - 1) * midFloorTotal + topFloorTotal);
   return {
     type: 'tower', perFloor, hoekPerFloor, eenzPerFloor, totalApts,

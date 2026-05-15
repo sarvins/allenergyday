@@ -602,12 +602,18 @@ function calcBuildingOverview(inputs) {
   const gfa          = footprint * totalFloors;
   const far          = +(gfa / SITE.area).toFixed(1);
 
+  // Use a representative middle floor for building-level averages.
+  // This keeps Totaal verbruik stable regardless of which floor the student explores.
+  // The student's floor choice only affects the per-apartment WEii card.
+  const repFloor = Math.max(1, Math.round(totalFloors / 2));
+  const repInputs = { ...inputs, floor: repFloor };
+
   if (buildingType === 1) {
     const aptDepth  = Math.max(5, depth - 1.8);
     const perFloor  = Math.max(1, Math.floor(width * aptDepth / size));
     const totalApts = perFloor * totalFloors;
     const residents = Math.round(totalApts * occupants);
-    const r = calcAll({ ...inputs, aptType: 2 });
+    const r = calcAll({ ...repInputs, aptType: 2 });
     return {
       type: 'gallery', perFloor, totalApts, siteCoverage, far, gfa, footprint,
       residents,
@@ -625,8 +631,8 @@ function calcBuildingOverview(inputs) {
   const perFloor     = hoekPerFloor + eenzPerFloor;
   const totalApts    = perFloor * totalFloors;
   const residents    = Math.round(totalApts * occupants);
-  const rHoek = calcAll({ ...inputs, aptType: 1 });
-  const rEenz = calcAll({ ...inputs, aptType: 0 });
+  const rHoek = calcAll({ ...repInputs, aptType: 1 });
+  const rEenz = calcAll({ ...repInputs, aptType: 0 });
   return {
     type: 'tower', perFloor, hoekPerFloor, eenzPerFloor, totalApts,
     siteCoverage, far, gfa, footprint,

@@ -1115,8 +1115,7 @@ function updateBriefCard(ov, inp) {
   if (!el) return;
   const L = APP.lang;
   const aptOk  = ov.inAptRange;
-  const resOk  = ov.inResRange;
-  const allOk  = aptOk && resOk;
+  const allOk  = aptOk;
   const aptOver  = ov.totalApts > 120;
   const aptUnder = ov.totalApts < 100;
   const statusColor = allOk ? 'var(--green)' : 'var(--amber)';
@@ -1142,10 +1141,10 @@ function updateBriefCard(ov, inp) {
         <div style="font-weight:700;font-size:13px;color:${aptOk?'var(--green)':'var(--amber)'}">${ov.totalApts}</div>
         <div style="font-family:var(--mono);font-size:9px;color:var(--text3)">doel 100–120</div>
       </div>
-      <div style="background:var(--bg3);border-radius:5px;padding:7px 8px;text-align:center;border:1px solid ${resOk?'rgba(94,196,122,0.3)':'rgba(232,128,74,0.25)'}">
+      <div style="background:var(--bg3);border-radius:5px;padding:7px 8px;text-align:center">
         <div style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.5px;margin-bottom:2px">${L==='nl'?'Bewoners':'Residents'}</div>
-        <div style="font-weight:700;font-size:13px;color:${resOk?'var(--green)':'var(--amber)'}">${ov.residents}</div>
-        <div style="font-family:var(--mono);font-size:9px;color:var(--text3)">doel 270–320</div>
+        <div style="font-weight:700;font-size:13px;color:var(--text)">${ov.residents}</div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--text3)">${L==='nl'?'resultaat':'result'}</div>
       </div>
     </div>
     <div style="display:flex;gap:12px;font-family:var(--mono);font-size:10px;color:var(--text3);flex-wrap:wrap">

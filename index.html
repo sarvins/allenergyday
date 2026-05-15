@@ -1167,20 +1167,27 @@ function updateBuildingOverview(ov, inp) {
   const heatingPeakThermal = buildingHeatingThermal / 5500 * (29 / 13.7);
   const heatingPeakElec    = Math.round(heatingPeakThermal / hcSys.copHeat * (1 - hcSys.svFraction));
   const isSV               = hcSys.svFraction > 0;
-  // EV estimate: ~1 per 5 apartments (urban Rotterdam, new development ~2030).
-  // Peak charging: 7.4 kW per EV (standard home charger), coincident at 18:00–20:00.
-  const evCount  = Math.round(ov.totalApts / 5);
-  const evPeakKw = Math.round(evCount * 7.4);
+  // EV assumptions scale with the climate2050 toggle.
+  const evPerApt   = inp.climate2050 ? 0.5  : 0.2;
+  const evKwPerCar = inp.climate2050 ? 11.0 : 7.4;
+  const evCount    = Math.round(ov.totalApts * evPerApt);
+  const evPeakKw   = Math.round(evCount * evKwPerCar);
 
   const combinedBuildingPeak   = heatingPeakElec + evPeakKw;
   const peakColour             = combinedBuildingPeak < 150 ? 'var(--green)' : combinedBuildingPeak <= 250 ? 'var(--amber)' : 'var(--red)';
   const neighbourhoodPeakKw    = Math.round(combinedBuildingPeak * (500 / ov.totalApts));
   const utilisation            = Math.round(neighbourhoodPeakKw / 2000 * 100);
   const utilisationColour      = utilisation < 60 ? 'var(--green)' : utilisation <= 90 ? 'var(--amber)' : 'var(--red)';
+  const scenarioColour         = inp.climate2050 ? 'var(--amber)' : 'var(--text3)';
+  const scenarioLabel          = inp.climate2050 ? (L==='nl'?'2050 scenario':'2050 scenario') : (L==='nl'?'2025 scenario':'2025 scenario');
+  const evCaption              = inp.climate2050 ? '1-in-2 · 11 kW charger' : '1-in-5 · 7.4 kW charger';
 
   const congestionHtml = `
     <div style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px">
-      <div style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.5px;margin-bottom:6px;text-transform:uppercase">${L==='nl'?'Netcongestie indicatoren':'Grid congestion indicators'}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.5px;text-transform:uppercase">${L==='nl'?'Netcongestie indicatoren':'Grid congestion indicators'}</div>
+        <div style="font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:3px;border:1px solid var(--border);color:${scenarioColour};font-weight:600;background:var(--bg2)">${scenarioLabel}</div>
+      </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
         <div style="background:var(--bg3);border-radius:5px;padding:7px 8px">
           <div style="font-size:9px;font-family:var(--mono);color:var(--text3)">${L==='nl'?'Verw. piek (elektrisch)':'Heating peak (electrical)'}</div>
@@ -1190,7 +1197,7 @@ function updateBuildingOverview(ov, inp) {
         <div style="background:var(--bg3);border-radius:5px;padding:7px 8px">
           <div style="font-size:9px;font-family:var(--mono);color:var(--text3)">~${evCount} EV · ${L==='nl'?'laadpiek':'charge peak'}</div>
           <div style="font-size:1.15rem;font-weight:700;color:${peakColour};font-family:var(--mono);line-height:1.2;margin-top:2px">${evPeakKw} kW</div>
-          <div style="font-size:9px;font-family:var(--mono);color:var(--text3);margin-top:2px">18:00–20:00 · 7.4 kW/EV</div>
+          <div style="font-size:9px;font-family:var(--mono);color:var(--text3);margin-top:2px">18:00–20:00 · ${evCaption}</div>
         </div>
       </div>
       <div style="margin-top:6px;background:var(--bg3);border-radius:5px;padding:7px 8px">

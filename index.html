@@ -876,8 +876,23 @@ function onInput() {
   const canvas=document.getElementById('bcanvas');
   if(canvas) { try { drawBuilding2D(canvas, inputs, APP.isDark); } catch(e) { console.error('canvas:', e); } }
 
-  updateMetricCards(results, inputs);
-  updateWeii(results);
+  // Building-level weighted average kWh/m²/yr for WEii and Paris Proof display.
+  // Gallery: all apartments identical → same as individual result.
+  // Tower: weighted average of hoek (4 corners) and eenzijdig (remaining), since
+  //   hoek apartments have more facade and higher energy than eenzijdig.
+  let buildingPerM2;
+  if (overview.type === 'gallery') {
+    buildingPerM2 = overview.r.totalPerM2;
+  } else {
+    const n = overview.hoekPerFloor + overview.eenzPerFloor;
+    buildingPerM2 = n > 0
+      ? Math.round((overview.rEenz.totalPerM2 * overview.eenzPerFloor + overview.rHoek.totalPerM2 * overview.hoekPerFloor) / n)
+      : results.totalPerM2;
+  }
+  const buildingResults = { ...results, totalPerM2: buildingPerM2 };
+
+  updateMetricCards(buildingResults, inputs);
+  updateWeii(buildingResults);
   updateChart(results);
   updateBriefCard(overview, inputs);
   updateBuildingOverview(overview, inputs);
@@ -886,11 +901,11 @@ function onInput() {
   updateAptNote(inputs);
   updateVentNote(inputs);
   updateLiftInfo(results, inputs);
-  updateInsight(results, inputs);
+  updateInsight(buildingResults, inputs);
 
   document.getElementById('climlabel').style.borderColor = inputs.climate2050?'var(--amber)':'var(--border)';
 
-  const v=results.totalPerM2;
+  const v=buildingPerM2;
   const hs=document.getElementById('hscore');
   hs.textContent=v+' kWh/m²';
   hs.className='badge '+(v<40?'score-g':v<80?'score-y':'score-r');
@@ -928,7 +943,7 @@ function updateWeii(r) {
   const ticks = [45,65,100,150,180];
   const tickHtml = ticks.map(v => `<span style="position:absolute;left:${(v/WEII_SCALE*100).toFixed(1)}%;transform:translateX(-50%)">${v}</span>`).join('');
   el.innerHTML = `
-    <div style="font-family:var(--mono);font-size:9px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">WEii – ${L==='nl'?'Appartement':'Apartment'}</div>
+    <div style="font-family:var(--mono);font-size:9px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">WEii – ${L==='nl'?'Gebouw (gewogen)':'Building (weighted)'}</div>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
       <div style="font-size:2rem;font-weight:700;line-height:1;color:${cat.color};font-family:var(--sans);letter-spacing:-1px">${score}</div>
       <div>

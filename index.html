@@ -477,22 +477,22 @@
               <option value="1" data-nl="NO – Noordoost" data-en="NE – Northeast">NO – Noordoost</option>
               <option value="2" data-nl="O – Oost"       data-en="E – East">O – Oost</option>
               <option value="3" data-nl="ZO – Zuidoost"  data-en="SE – Southeast">ZO – Zuidoost</option>
-              <option value="4" selected data-nl="Z – Zuid" data-en="S – South">Z – Zuid</option>
-              <option value="5" data-nl="ZW – Zuidwest"  data-en="SW – Southwest">ZW – Zuidwest</option>
+              <option value="4" data-nl="Z – Zuid" data-en="S – South">Z – Zuid</option>
+              <option value="5" selected data-nl="ZW – Zuidwest"  data-en="SW – Southwest">ZW – Zuidwest</option>
               <option value="6" data-nl="W – West"       data-en="W – West">W – West</option>
               <option value="7" data-nl="NW – Noordwest" data-en="NW – Northwest">NW – Noordwest</option>
             </select>
           </div>
           <div>
-            <div class="plabel"><button class="iBtn" onclick="openDr('glassRatio')">i</button><span data-nl="Glas %" data-en="Glass %">Glas %</span>: <span id="gv" class="rv">40%</span></div>
-            <input type="range" id="in-glassRatio" min="20" max="70" value="40" step="2" oninput="onInput();document.getElementById('gv').textContent=this.value+'%'"/>
+            <div class="plabel"><button class="iBtn" onclick="openDr('glassRatio')">i</button><span data-nl="Glas %" data-en="Glass %">Glas %</span>: <span id="gv" class="rv">60%</span></div>
+            <input type="range" id="in-glassRatio" min="20" max="70" value="60" step="2" oninput="onInput();document.getElementById('gv').textContent=this.value+'%'"/>
             <div class="range-labels"><span>20%</span><span>70%</span></div>
           </div>
           <div>
             <div class="plabel"><button class="iBtn" onclick="openDr('construction')">i</button><span data-nl="Constructie" data-en="Construction">Constructie</span></div>
             <select id="in-construction" onchange="onInput()">
-              <option value="0" selected data-nl="Conventioneel beton"        data-en="Conventional concrete">Conventioneel beton</option>
-              <option value="1" data-nl="Bio-based licht"                     data-en="Bio-based light">Bio-based licht</option>
+              <option value="0" data-nl="Conventioneel beton"        data-en="Conventional concrete">Conventioneel beton</option>
+              <option value="1" selected data-nl="Bio-based licht"            data-en="Bio-based light">Bio-based licht</option>
               <option value="2" data-nl="Bio-based zwaar geïsoleerd"          data-en="Bio-based heavily insulated">Bio-based zwaar geïsoleerd</option>
               <option value="3" data-nl="Hybride beton-biobased"              data-en="Hybrid concrete-biobased">Hybride beton-biobased</option>
             </select>
@@ -500,8 +500,8 @@
           <div style="grid-column:1/-1">
             <div class="plabel"><button class="iBtn" onclick="openDr('roofType')">i</button><span data-nl="Dak" data-en="Roof">Dak</span></div>
             <select id="in-roofType" onchange="onInput()">
-              <option value="1" data-nl="Zwart dak (bitumen)"   data-en="Black roof (bitumen)">Zwart dak (bitumen)</option>
-              <option value="2" selected data-nl="Groen dak (vegetatie)" data-en="Green roof (vegetation)">Groen dak (vegetatie)</option>
+              <option value="1" selected data-nl="Zwart dak (bitumen)"   data-en="Black roof (bitumen)">Zwart dak (bitumen)</option>
+              <option value="2" data-nl="Groen dak (vegetatie)" data-en="Green roof (vegetation)">Groen dak (vegetatie)</option>
             </select>
           </div>
         </div>
@@ -515,9 +515,9 @@
             <div class="plabel"><button class="iBtn" onclick="openDr('ventilation')">i</button><span data-nl="Ventilatie" data-en="Ventilation">Ventilatie</span></div>
             <select id="in-ventilation" onchange="onInput()">
               <option value="0" data-nl="Natuurlijke ventilatie"             data-en="Natural ventilation">Natuurlijke ventilatie</option>
-              <option value="1" data-nl="Mechanische afvoer"                 data-en="Mechanical extract">Mechanische afvoer</option>
+              <option value="1" selected data-nl="Mechanische afvoer"         data-en="Mechanical extract">Mechanische afvoer</option>
               <option value="2" data-nl="Mechanische toevoer"                data-en="Mechanical supply">Mechanische toevoer</option>
-              <option value="3" selected data-nl="Gebalanceerd lokaal"       data-en="Balanced local">Gebalanceerd lokaal</option>
+              <option value="3" data-nl="Gebalanceerd lokaal"       data-en="Balanced local">Gebalanceerd lokaal</option>
               <option value="4" data-nl="Gebalanceerd centraal"              data-en="Balanced central">Gebalanceerd centraal</option>
               <option value="5" data-nl="Gebalanceerd HR++"                  data-en="Balanced HR++">Gebalanceerd HR++</option>
               <option value="6" data-nl="Mechanische afzuiging innovatief"   data-en="Innovative mech. extract">Mech. afzuiging innovatief</option>
@@ -528,9 +528,9 @@
           <div>
             <div class="plabel"><button class="iBtn" onclick="openDr('heatCool')">i</button><span data-nl="Verw./Koeling" data-en="Heat/Cool">Verw./Koeling</span></div>
             <select id="in-heatCool" onchange="onInput()">
-              <option value="0" data-nl="WP Lucht (COP 4.5)"   data-en="Air HP (COP 4.5)">WP Lucht (COP 4.5)</option>
+              <option value="0" selected data-nl="WP Lucht (COP 4.5)"   data-en="Air HP (COP 4.5)">WP Lucht (COP 4.5)</option>
               <option value="1" data-nl="WP WKO (COP 6.0)"     data-en="Grd-src HP (COP 6.0)">WP WKO (COP 6.0)</option>
-              <option value="2" selected data-nl="SV + koelmachine" data-en="District heat + chiller">SV + koelmachine</option>
+              <option value="2" data-nl="SV + koelmachine" data-en="District heat + chiller">SV + koelmachine</option>
               <option value="3" data-nl="SV TW + WP"           data-en="District HW + HP">SV TW + WP</option>
               <option value="4" data-nl="SV + WP (T-afh.)"     data-en="District + HP (T-dep.)">SV + WP (T-afh.)</option>
             </select>
@@ -548,13 +548,13 @@
             <div class="plabel"><button class="iBtn" onclick="openDr('showerWTW')">i</button><span data-nl="Douche WTW" data-en="Shower HRV">Douche WTW</span></div>
             <select id="in-showerWTW" onchange="onInput()">
               <option value="0" data-nl="Geen"                  data-en="None">Geen</option>
-              <option value="1" selected data-nl="Individueel (−30%)" data-en="Individual (−30%)">Individueel (−30%)</option>
+              <option value="1" data-nl="Individueel (−30%)" data-en="Individual (−30%)">Individueel (−30%)</option>
               <option value="2" data-nl="Collectief (−40%)"     data-en="Collective (−40%)">Collectief (−40%)</option>
             </select>
           </div>
           <div style="grid-column:1/-1">
             <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer">
-              <input type="checkbox" id="in-co2Control" checked onchange="onInput()" style="margin-top:2px"/>
+              <input type="checkbox" id="in-co2Control" onchange="onInput()" style="margin-top:2px"/>
               <div>
                 <span style="font-size:12px;font-weight:600" data-nl="CO₂-gestuurde ventilatie" data-en="CO₂-controlled ventilation">CO₂-gestuurde ventilatie</span>
                 <span style="font-size:10px;font-family:var(--mono);color:var(--text3);display:block;margin-top:2px" data-nl="~35% besparing door vraagregeling" data-en="~35% savings via demand control">~35% besparing door vraagregeling</span>

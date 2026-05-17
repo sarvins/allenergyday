@@ -1,0 +1,1 @@
+"""AllEnergyDay self-hosted backend."""

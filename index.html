@@ -12,6 +12,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script src="data-backend.js"></script>
 
   <style>
     /* ── HUD DARK THEME ──────────────────────────────────────────────── */
@@ -719,6 +720,9 @@
 <script src="info-content.js"></script>
 <script>
 // ── FIREBASE CONFIG ──────────────────────────────────────────────────────────
+// Fallback only: used when the page is NOT served by the Python backend
+// (e.g. GitHub Pages). When served by the backend, /api/config is detected
+// and SQLite/SSE is used instead. See data-backend.js.
 const FIREBASE_CONFIG = {
   apiKey:            "AIzaSyBtsQ8tnaWK4ByFhoFsPYB2PtKihX4s_ww",
   authDomain:        "allenergyday-abt.firebaseapp.com",
@@ -732,7 +736,7 @@ const FIREBASE_CONFIG = {
 // ── STATE ────────────────────────────────────────────────────────────────────
 const APP = {
   lang:'nl', isDark:true, workshopCode:'', groupLetter:'', groupName:'',
-  db:null, fbReady:false, brkChart:null, cmpChart:null,
+  backend:null, unsubscribe:null, brkChart:null, cmpChart:null,
   compareOpen:false, lastResults:null, saveTimer:null, buildingType:0,
   carOwnership: 1,
   hud: { drawerOpen: false, activeKey: null },
@@ -808,27 +812,25 @@ function startWS() {
   if(!APP.groupLetter){setMsg('sstatus',L==='nl'?'⚠️ Kies een groep':'⚠️ Choose a group','color:var(--amber)');return;}
   APP.workshopCode=code; APP.groupName=name||(L==='nl'?'Groep ':'Group ')+APP.groupLetter;
   localStorage.setItem('ew_setup',JSON.stringify({code,letter:APP.groupLetter,name}));
-  initFB(); showMain();
+  initBackend(); showMain();
 }
 
-// ── FIREBASE ─────────────────────────────────────────────────────────────────
-function initFB() {
+// ── BACKEND (REST/SSE auto-detect, Firebase fallback) ────────────────────────
+async function initBackend() {
   try {
-    if(FIREBASE_CONFIG.apiKey==='YOUR_API_KEY') return;
-    const app=firebase.initializeApp(FIREBASE_CONFIG);
-    APP.db=firebase.database(app); APP.fbReady=true;
-    APP.db.ref('workshops/'+APP.workshopCode+'/groups').on('value', s=>{
-      if(APP.compareOpen) renderCmp(s.val()||{});
+    APP.backend = await AED_BACKEND.createBackend(FIREBASE_CONFIG);
+    if (!APP.backend) return;
+    APP.unsubscribe = APP.backend.subscribe(APP.workshopCode, (data) => {
+      if (APP.compareOpen) renderCmp(data || {});
     });
-  } catch(e){console.warn('Firebase:',e.message);}
+  } catch (e) { console.warn('Backend init:', e.message); }
 }
-function dbPath(){return 'workshops/'+APP.workshopCode+'/groups/'+APP.groupLetter;}
 function doSave() {
   if(!APP.lastResults) return;
   document.getElementById('sspin').style.display='inline-block';
   const pl={groupName:APP.groupName,letter:APP.groupLetter,inputs:getInputs(),results:APP.lastResults,savedAt:Date.now()};
-  if(APP.fbReady&&APP.db) {
-    APP.db.ref(dbPath()).set(pl)
+  if(APP.backend) {
+    APP.backend.save(APP.workshopCode, APP.groupLetter, pl)
       .then(()=>{document.getElementById('sspin').style.display='none';setMsg('savest',APP.lang==='nl'?'✅ Opgeslagen!':'✅ Saved!','color:var(--green)');})
       .catch(e=>{document.getElementById('sspin').style.display='none';setMsg('savest','⚠️ '+e.message,'color:var(--red)');});
   } else {
@@ -925,7 +927,7 @@ function onInput() {
 
   clearTimeout(APP.saveTimer);
   APP.saveTimer=setTimeout(()=>{
-    if(APP.fbReady&&APP.db) APP.db.ref(dbPath()).set({groupName:APP.groupName,letter:APP.groupLetter,inputs,results,savedAt:Date.now()}).catch(()=>{});
+    if(APP.backend) APP.backend.save(APP.workshopCode, APP.groupLetter, {groupName:APP.groupName,letter:APP.groupLetter,inputs,results,savedAt:Date.now()}).catch(()=>{});
   },1800);
 }
 
@@ -1447,8 +1449,18 @@ function toggleCompare() {
   APP.compareOpen=!APP.compareOpen;
   document.getElementById('compare-panel').style.display=APP.compareOpen?'block':'none';
   if(APP.compareOpen) {
-    if(APP.fbReady&&APP.db) APP.db.ref('workshops/'+APP.workshopCode+'/groups').once('value',s=>{document.getElementById('cspin').style.display='none';renderCmp(s.val()||{});});
-    else {document.getElementById('cspin').style.display='none';renderCmp({[APP.groupLetter]:{groupName:APP.groupName,results:APP.lastResults}});}
+    if(APP.backend) {
+      APP.backend.getOnce(APP.workshopCode).then(data=>{
+        document.getElementById('cspin').style.display='none';
+        renderCmp(data||{});
+      }).catch(e=>{
+        document.getElementById('cspin').style.display='none';
+        console.warn('compare load:', e);
+      });
+    } else {
+      document.getElementById('cspin').style.display='none';
+      renderCmp({[APP.groupLetter]:{groupName:APP.groupName,results:APP.lastResults}});
+    }
   }
 }
 function renderCmp(data) {
